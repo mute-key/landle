@@ -5,7 +5,10 @@ import { LineSelection } from '../editor/Selection';
 enum CommandId {
     removeTrailingWhitespaceFromSelection = "removeTrailingWhitespaceFromSelection",
     removeMulitpleEmptyLinesFromSelection = "removeMulitpleEmptyLinesFromSelection",
-    removeEmptyLinesFromSelection = "removeEmptyLinesFromSelection"
+    removeEmptyLinesFromSelection = "removeEmptyLinesFromSelection",
+    removeMultipleWhitespace = "removeMultipleWhitespace",
+    cleanUpWhitespace = "cleanUpWhitespace",
+    
     // commentBlock = "commentBlock",
     // addToTitle = "addToTitle",
     // createSection = "createSection",
@@ -31,6 +34,9 @@ export const CommandList: {} = (() => {
         [CommandId.removeTrailingWhitespaceFromSelection] : lineSelection.removeTrailingWhitespaceFromSelection,
         [CommandId.removeMulitpleEmptyLinesFromSelection] : lineSelection.removeMulitpleEmptyLinesFromSelection,
         [CommandId.removeEmptyLinesFromSelection] : lineSelection.removeEmptyLinesFromSelection,
+        [CommandId.removeMultipleWhitespace] : lineSelection.removeMultipleWhitespace,
+        [CommandId.cleanUpWhitespace] : lineSelection.cleanUpWhitespace,
+        // [CommandId.joinAllLines] : lineSelection.joinAllLines,
         // [CommandId.cleanWhiteSpaceLines] : LineSelection.cleanWhiteSpaceLines,
         // [CommandId.removeLine] : LineSelection.removeLine,
     };

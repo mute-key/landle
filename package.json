@@ -24,6 +24,14 @@
             {
                 "command": "deco.removeEmptyLinesFromSelection",
                  "title": "Hello World"
+            },
+            {
+                "command": "deco.removeMultipleWhitespace",
+                 "title": "Hello World"
+            },
+            {
+                "command": "deco.cleanUpWhitespace",
+                 "title": "Hello World"
             }
         ],
         "keybindings": [
@@ -38,6 +46,14 @@
             {
                 "command": "deco.removeEmptyLinesFromSelection",
                  "key": "ctrl+alt+e"
+            },
+            {
+                "command": "deco.removeMultipleWhitespace",
+                 "key": "ctrl+alt+space"
+            },
+            {
+                "command": "deco.cleanUpWhitespace",
+                "key": "ctrl+alt+c"
             }
         ]
     },

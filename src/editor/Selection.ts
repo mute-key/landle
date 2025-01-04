@@ -36,8 +36,30 @@ export class LineSelection extends Line {
         this.editorEdit(this.removeEmptyLines);
     };
 
-    public repaceTabWithSpace = () => {
+    public removeMultipleWhitespace = () :void => {
+        this.editorEdit(this.removeMultipleWhitespaceFromLine);
+        
+    };
 
+    public cleanUpWhitespace = () => {
+        this.editorEdit(async (range) => {
+            await Promise.all([
+                this.removeTrailingWhiteSpaceFromLine(range),
+                this.removeMulitpleEmptyLines(range)
+            ]);
+        });
+    };
+
+    // public joinMultipleLines = () => {
+    //     this.editorEdit(this.joinLines);
+    // };
+
+    // public joinCommnetLines = () => {
+    //     this.editorEdit(this.joinLines);
+    // };
+
+    public repaceTabWithSpace = () => {
+        
     };
 
 

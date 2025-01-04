@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
 
-import { removeTrailingWhiteSpaceString } from "../common/util";
+import { 
+    removeTrailingWhiteSpaceString,
+    removeMultipleWhiteSpaceString,
+    splitStringOn
+} from "../common/util";
 import { pushMessage, DateStamp } from "../common/util";
 
 export class Line {
@@ -97,8 +101,8 @@ export class Line {
     // > PROTECTED FUNCTIONS: 
     // =============================================================================
 
-    protected editorEdit = (callback): void => {
-        this.editor?.edit((edit) => {
+    protected editorEdit = (callback): vscode.ProviderResult<typeof callback> => {
+        return this.editor?.edit((edit) => {
             this.#edit = edit;
             this.interateSelectionLines(callback);
         });
@@ -118,9 +122,62 @@ export class Line {
         }
     };
 
+    protected removeMultipleWhitespaceFromLine = (range : vscode.Range) : void => {        
+        const findex = this.getTextLine(range).firstNonWhitespaceCharacterIndex;
+        let text = splitStringOn(this.getText(range), findex);
+        this.setLine(range,text[0] + removeMultipleWhiteSpaceString(text[1]));
+    };
+
+    protected cleanUpWhitespaceFromLines = (range : vscode.Range) : void => {        
+        // const findex = this.getTextLine(range).firstNonWhitespaceCharacterIndex;
+        // let text = splitStringOn(this.getText(range), findex);
+        // this.setLine(range,text[0] + removeMultipleWhiteSpaceString(text[1]));
+    };
+
+
+
+    
+
+    /**
+     * 
+     * i will not implement something that formatter already can do
+     * 
+     * 
+     * - need to check if selection is multiple lines if then, do.
+     * - check the language of the current editor 
+     * - if selected range is commented, join them 
+     * - if selected rnage is not comment, ignore 
+     * - if selection is plan text, just join them 
+     * - rmeove all multiple line spaces when join  
+     * 
+     * @param range 
+     */
+    protected joinLines = (range : vscode.Range) : void => {
+        // range
+        // vscode.languages.getLanguages()
+        const langId = vscode.window.activeTextEditor?.document.languageId;
+
+        // if (langId !== "plaintext" && langId !== undefined) {
+        //     if(range.isSingleLine)  {
+        //         console.log('range.isSingleLine', range.isSingleLine);
+        //     } else {
+        //         console.log('range.isSingleLine', range.isSingleLine);
+        //     }
+        // } else {
+        //     console.log('text file');
+        // }
+
+
+
+        // there are couple of things to be checked.
+        // this.#doc.isUntitle
+        // vscode.window.activeTextEditor?.document.languageIdd
+    };
+
+
     protected Indent = () => {
 
-    };
+    };  
 
     protected Append = (add: string) => {
 
