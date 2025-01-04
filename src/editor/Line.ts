@@ -132,7 +132,7 @@ export class Line {
     protected perSelectionEdit = (callback): vscode.ProviderResult<typeof callback> => {
         return this.editor?.edit((edit) => {
             this.#edit = edit;
-            this.interateSelectionLines(callback);
+            this.interateSelectionOnly(callback);
         });
     };
 
