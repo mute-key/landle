@@ -8,7 +8,7 @@ enum CommandId {
     removeEmptyLinesFromSelection = "removeEmptyLinesFromSelection",
     removeMultipleWhitespace = "removeMultipleWhitespace",
     cleanUpWhitespace = "cleanUpWhitespace",
-    setNowDateTime = "setNowDateTime"
+    printNowDateTime = "printNowDateTime"
     
     // commentBlock = "commentBlock",
     // addToTitle = "addToTitle",
@@ -42,7 +42,7 @@ export const CommandList: {} = (() => {
         [CommandId.removeEmptyLinesFromSelection] : lineSelection.removeEmptyLinesFromSelection,
         [CommandId.removeMultipleWhitespace] : lineSelection.removeMultipleWhitespace,
         [CommandId.cleanUpWhitespace] : lineSelection.cleanUpWhitespace,
-        [CommandId.setNowDateTime] : lineSelection.setNowDateTime,
+        [CommandId.printNowDateTime] : lineSelection.printNowDateTime,
         
         // [CommandId.joinAllLines] : lineSelection.joinAllLines,
         // [CommandId.cleanWhiteSpaceLines] : LineSelection.cleanWhiteSpaceLines,

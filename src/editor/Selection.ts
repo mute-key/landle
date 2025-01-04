@@ -54,7 +54,7 @@ export class LineSelection extends Line {
         });
     };
 
-    public setNowDateTime = () => {
+    public printNowDateTime = () => {
         this.perSelectionEdit(this.setNowDateTimeOnLine);
     };
 
