@@ -4,11 +4,8 @@ export const pushMessage = (message: string) : vscode.ProviderResult<typeof mess
     return vscode.window.showInformationMessage(message);
 };
 
-export const getEditor = () => {
-    return vscode.window.activeTextEditor;
-};
 
-export const DateStamp = () => {
+export const getNowDateTimeStamp = () : string => {
     return new Date().toLocaleString();
 };
 
@@ -16,10 +13,10 @@ export const removeTrailingWhiteSpaceString = (line: string): string => line.rep
 
 export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
 
-export const splitStringOn: {
-    <T = string>(s: T, ...i: number[]): 
-    T[]; 
-    <T extends any[]>(s: T, ...i: number[]): T[]; 
-} = <T>(slicable: string | T[], ...indices: number[]) => [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
+export const findMultipleWhiteSpaceString = (line: string): boolean => line.search(/\s\s+/g) !== -1;
+
+export function splitStringOn<T>(slicable: string | T[], ...indices: number[]) : (string | T[])[] {
+    return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
+}
 
 

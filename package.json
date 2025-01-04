@@ -32,6 +32,10 @@
             {
                 "command": "deco.cleanUpWhitespace",
                  "title": "Hello World"
+            },
+            {
+                "command": "deco.setNowDateTime",
+                 "title": "Hello World"
             }
         ],
         "keybindings": [
@@ -54,6 +58,10 @@
             {
                 "command": "deco.cleanUpWhitespace",
                 "key": "ctrl+alt+c"
+            },
+            {
+                "command": "deco.setNowDateTime",
+                "key": "ctrl+alt+n"
             }
         ]
     },

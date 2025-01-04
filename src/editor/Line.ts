@@ -3,9 +3,12 @@ import * as vscode from "vscode";
 import { 
     removeTrailingWhiteSpaceString,
     removeMultipleWhiteSpaceString,
-    splitStringOn
+    findMultipleWhiteSpaceString,
+    splitStringOn,
+    getNowDateTimeStamp,
+    pushMessage
 } from "../common/util";
-import { pushMessage, DateStamp } from "../common/util";
+import { stringify } from "querystring";
 
 export class Line {
     #doc: vscode.TextDocument;
@@ -35,7 +38,7 @@ export class Line {
     private iterateLines = (range: vscode.Range, callback: (range : vscode.Range) => void): void => {
         let cursor = range.start.line;
         
-        while (cursor <= range.end.line) {
+        while (cursor < range.end.line) {
             if (this.#doc.validateRange(range)) {
                 callback(this.#doc.lineAt(cursor).range);
             } 
@@ -50,6 +53,12 @@ export class Line {
             } else {
                 this.iterateLines(range, callback);
             };
+        });
+    };
+
+    private interateSelectionOnly = (callback : (range : vscode.Range) => void): void => {
+        this.editor?.selections.forEach((range) => {
+            callback(range);
         });
     };
 
@@ -82,10 +91,6 @@ export class Line {
         this.deleteRange(this.lineRangeWithEOL(range));
     };
 
-    private setLine = (range: vscode.Range, line: string): void => {
-        this.#edit.replace(range, line);
-    };
-
     private ifLineIsEmpty = (textLine: vscode.TextLine): boolean => textLine.isEmptyOrWhitespace;
 
     private checkNextLine = (range: vscode.Range, callback: (range: vscode.Range) => void) => {
@@ -97,11 +102,34 @@ export class Line {
         }
     };
 
+    private Indent = () => {
+
+    };  
+
+    private Append = (add: string) => {
+
+    };
+
+    private prepend = (range : vscode.Range , insert : string) => {
+        this.#edit.insert(range.start, insert);
+    };
+
+    private setLine = (range?: vscode.Range, line?: string): void => {
+        this.#edit.replace(<vscode.Range>range, <string>line);
+    };
+
     // =============================================================================
     // > PROTECTED FUNCTIONS: 
     // =============================================================================
 
-    protected editorEdit = (callback): vscode.ProviderResult<typeof callback> => {
+    protected perLineEdit = (callback): vscode.ProviderResult<typeof callback> => {
+        return this.editor?.edit((edit) => {
+            this.#edit = edit;
+            this.interateSelectionLines(callback);
+        });
+    };
+
+    protected perSelectionEdit = (callback): vscode.ProviderResult<typeof callback> => {
         return this.editor?.edit((edit) => {
             this.#edit = edit;
             this.interateSelectionLines(callback);
@@ -123,9 +151,14 @@ export class Line {
     };
 
     protected removeMultipleWhitespaceFromLine = (range : vscode.Range) : void => {        
-        const findex = this.getTextLine(range).firstNonWhitespaceCharacterIndex;
-        let text = splitStringOn(this.getText(range), findex);
-        this.setLine(range,text[0] + removeMultipleWhiteSpaceString(text[1]));
+        const textLine : vscode.TextLine = this.getTextLine(range);
+        const findex : number = textLine.firstNonWhitespaceCharacterIndex;
+        if (findMultipleWhiteSpaceString(textLine.text)) {
+            let text : (string | string[])[]  = splitStringOn(this.getText(range), findex);
+            if (Array.isArray(text) && text.length > 1) {
+                this.setLine(range, <string>text[0] + removeMultipleWhiteSpaceString(<string>text[1]));
+            }
+        }
     };
 
     protected cleanUpWhitespaceFromLines = (range : vscode.Range) : void => {        
@@ -134,9 +167,9 @@ export class Line {
         // this.setLine(range,text[0] + removeMultipleWhiteSpaceString(text[1]));
     };
 
-
-
-    
+    protected setNowDateTimeOnLine = (range : vscode.Range) : void => {
+        this.prepend(range, getNowDateTimeStamp());
+    };
 
     /**
      * 
@@ -175,23 +208,15 @@ export class Line {
     };
 
 
-    protected Indent = () => {
-
-    };  
-
-    protected Append = (add: string) => {
-
-    };
-
-    protected prepend = (add: string) => {
-
-    };
+   
 
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
 
-    // this class prob do not need public functions maybe. 
+    
+
+
 
 }
 

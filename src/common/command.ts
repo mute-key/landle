@@ -8,6 +8,7 @@ enum CommandId {
     removeEmptyLinesFromSelection = "removeEmptyLinesFromSelection",
     removeMultipleWhitespace = "removeMultipleWhitespace",
     cleanUpWhitespace = "cleanUpWhitespace",
+    setNowDateTime = "setNowDateTime"
     
     // commentBlock = "commentBlock",
     // addToTitle = "addToTitle",
@@ -30,12 +31,19 @@ export interface  CommandStruct {
 // need two different command group, for line and selection
 export const CommandList: {} = (() => {
     let lineSelection = new LineSelection();
+
+    /**
+     * prob make it auto iterate the object and funciton bindings
+     */
+
     return { 
         [CommandId.removeTrailingWhitespaceFromSelection] : lineSelection.removeTrailingWhitespaceFromSelection,
         [CommandId.removeMulitpleEmptyLinesFromSelection] : lineSelection.removeMulitpleEmptyLinesFromSelection,
         [CommandId.removeEmptyLinesFromSelection] : lineSelection.removeEmptyLinesFromSelection,
         [CommandId.removeMultipleWhitespace] : lineSelection.removeMultipleWhitespace,
         [CommandId.cleanUpWhitespace] : lineSelection.cleanUpWhitespace,
+        [CommandId.setNowDateTime] : lineSelection.setNowDateTime,
+        
         // [CommandId.joinAllLines] : lineSelection.joinAllLines,
         // [CommandId.cleanWhiteSpaceLines] : LineSelection.cleanWhiteSpaceLines,
         // [CommandId.removeLine] : LineSelection.removeLine,

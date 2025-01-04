@@ -3,7 +3,10 @@ import * as vscode from "vscode";
 
 import { Line } from './Line';
 // import { Command } from "../common/command";
-import { pushMessage, DateStamp } from "../common/util";
+import { 
+    
+    pushMessage 
+} from "../common/util";
 
 /**
  * TODO:
@@ -25,29 +28,34 @@ export class LineSelection extends Line {
     // =============================================================================
 
     public removeTrailingWhitespaceFromSelection = () : void => {
-        this.editorEdit(this.removeTrailingWhiteSpaceFromLine);
+        this.perLineEdit(this.removeTrailingWhiteSpaceFromLine);
     };
 
     public removeMulitpleEmptyLinesFromSelection = () : void => {
-        this.editorEdit(this.removeMulitpleEmptyLines);
+        this.perLineEdit(this.removeMulitpleEmptyLines);
     };
 
     public removeEmptyLinesFromSelection = () : void => {
-        this.editorEdit(this.removeEmptyLines);
+        this.perLineEdit(this.removeEmptyLines);
     };
 
     public removeMultipleWhitespace = () :void => {
-        this.editorEdit(this.removeMultipleWhitespaceFromLine);
+        this.perLineEdit(this.removeMultipleWhitespaceFromLine);
         
     };
 
     public cleanUpWhitespace = () => {
-        this.editorEdit(async (range) => {
+        this.perLineEdit(async (range) => {
             await Promise.all([
                 this.removeTrailingWhiteSpaceFromLine(range),
-                this.removeMulitpleEmptyLines(range)
+                this.removeMulitpleEmptyLines(range),
+                this.removeMultipleWhitespaceFromLine(range)
             ]);
         });
+    };
+
+    public setNowDateTime = () => {
+        this.perSelectionEdit(this.setNowDateTimeOnLine);
     };
 
     // public joinMultipleLines = () => {
