@@ -24,19 +24,19 @@ removes continous lines either empty or whitespace only strings within the selec
 <br><br>
 
 
+#### > __deco.removeTrailingWhitespaceFromSelection__<br>
+shortcut key : `ctrl + alt + w`<br>
+
+removes trailing whitespaces from the line. 
+
+<br><br>
+
 #### > __deco.removeMultipleWhitespace__<br>
 shortcut key : `ctrl+ alt+ space`<br>
 
 removes whitespaces within the characters if the whitespace is longer than 1.<br>
 the starting index is after the indentation. this command will be executed with;<br>
 [+] removeTrailingWhitespaceFromSelection<br>
-
-<br><br>
-
-#### > __deco.removeTrailingWhitespaceFromSelection__<br>
-shortcut key : `ctrl + alt + w`<br>
-
-removes trailing whitespaces from the line. 
 
 <br><br>
 
