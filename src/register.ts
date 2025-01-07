@@ -3,33 +3,53 @@
  */
 
 import * as vscode from 'vscode';
-// import { Command } from './common/command';
+
+import { ActiveEditor } from './editor/ActiveEditor';
+
+
+enum CommandId {
+    removeTrailingWhitespaceFromSelection,
+    removeMulitpleEmptyLinesFromSelection,
+    removeEmptyLinesFromSelection,
+    removeMultipleWhitespace,
+    cleanUpWhitespace,
+    printNowDateTime,
+    test
+
+    // commentBlock = "commentBlock",
+    // addToTitle = "addToTitle",
+    // createSection = "createSection",
+    // cleanWhiteSpaceLines = "cleanWhiteSpaceLines",
+    // removeLine = "removeLine",
+    // addDateStamp = "addDateStamp",
+    // addTimeStamp = "addTimeStamp",
+};
+
+export interface CommandStruct {
+    command: string;
+    callback: (...args: any[]) => any
+    args?: any;
+}
 
 export const Register = (
     context: vscode.ExtensionContext,
-    commandList: {},
     handleLocal: boolean = true) => {
-        console.log(commandList);
-    // const disposable = [vscode.commands.registerCommand(commandList[0].command, commandList[0].callback, commandList[0].args)];
 
-    // for (entry: keyof TObj in commandList) {
-    //     commandList[entry: keyof TObj]; // no compiler error
-    // }
+    const disposable: vscode.Disposable[] = [];
+    const activeEditor = new ActiveEditor();
 
-    
-    // const args = ;
-    let disposable: vscode.Disposable[] = [];
+    disposable.push(...Object.keys(CommandId)
+        .filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key))
+        .map(key => {
+            // console.log('command ', activeEditor[key], 'has implementation');
+            if (key in activeEditor) {
+                return vscode.commands.registerTextEditorCommand("deco." + key, activeEditor[key]);
+            } else {
+                console.log('command ', key, 'has no implementation');
+            }
+        }) as vscode.Disposable[]
+    );
 
-    for (const key in commandList) {
-        console.log(key);
-        // const d = ;
-        disposable.push(vscode.commands.registerCommand("deco." + key, commandList[key]));
-        // Logic here
-    }
-
-    // let disposable = commandList.map(({ command, callback, args }) => {
-    //     return vscode.commands.registerCommand(command, callback, args);
-    // });
     context.subscriptions.push(...disposable);
 };
 

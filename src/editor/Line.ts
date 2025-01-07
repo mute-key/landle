@@ -10,19 +10,20 @@ import {
 } from "../common/util";
 import { stringify } from "querystring";
 
+export enum LineEditType {
+    APPEND = "replace",
+    PREPEND = 'insert',
+    REPLACE = 'replace',
+    CLEAR = 'replace',
+    DELETE = 'delete'
+};
+
 export class Line {
     #doc: vscode.TextDocument;
     #edit: vscode.TextEditorEdit;
 
-    protected readonly editor: vscode.TextEditor | undefined;
-
     constructor() {
-        this.editor = vscode.window.activeTextEditor;
-        if (!this.editor) {
-            pushMessage("No Active Editor");
-            return;
-        }
-        this.#doc = this.editor.document;
+
     }
 
     // =============================================================================
@@ -35,32 +36,32 @@ export class Line {
      * @param range 
      * @param callback 
      */
-    private iterateLines = (range: vscode.Range, callback: (range : vscode.Range) => void): void => {
-        let cursor = range.start.line;
+    // private iterateLines = (range: vscode.Range, callback: (range : vscode.Range) => void): void => {
+    //     let cursor = range.start.line;
         
-        while (cursor < range.end.line) {
-            if (this.#doc.validateRange(range)) {
-                callback(this.#doc.lineAt(cursor).range);
-            } 
-            cursor++;
-        }
-    };
+    //     while (cursor < range.end.line) {
+    //         if (this.#doc.validateRange(range)) {
+    //             callback(this.#doc.lineAt(cursor).range);
+    //         } 
+    //         cursor++;
+    //     }
+    // };
 
-    private interateSelectionLines = (callback : (range : vscode.Range) => void): void => {
-        this.editor?.selections.forEach((range) => {
-            if (range.isSingleLine) {
-                callback(range);
-            } else {
-                this.iterateLines(range, callback);
-            };
-        });
-    };
+    // private interateSelections = (callback : (range : vscode.Range) => void): void => {
+    //     this.editor?.selections.forEach((range) => {
+    //         if (range.isSingleLine) {
+    //             callback(range);
+    //         } else {
+    //             this.iterateLines(range, callback);
+    //         };
+    //     });
+    // };
 
-    private interateSelectionOnly = (callback : (range : vscode.Range) => void): void => {
-        this.editor?.selections.forEach((range) => {
-            callback(range);
-        });
-    };
+    // private interateSelectionOnly = (callback : (range : vscode.Range) => void): void => {
+    //     this.editor?.selections.forEach((range) => {
+    //         callback(range);
+    //     });
+    // };
 
     // need to revise if this is actually needed
     private lineRange = (range: vscode.Range): vscode.Range => {
@@ -102,6 +103,12 @@ export class Line {
         }
     };
 
+    public getLineNumbersFromRange = (range: vscode.Range): { startLine: number, endLine: number } => {
+        const startLine = range.start.line; // 시작 위치의 line number
+        const endLine = range.end.line;     // 끝 위치의 line number
+        return { startLine, endLine };
+    };
+
     private Indent = () => {
 
     };  
@@ -114,30 +121,69 @@ export class Line {
         this.#edit.insert(range.start, insert);
     };
 
+    private getLineFullRange = (range: vscode.Range): vscode.Range => {
+        const currentRange = this.getLineNumbersFromRange(<vscode.Range>range);
+        return this.#doc.lineAt(currentRange.startLine).range;
+    };
+
     private setLine = (range?: vscode.Range, line?: string): void => {
-        this.#edit.replace(<vscode.Range>range, <string>line);
+
+        console.log(line);
+        const currentRange = this.getLineNumbersFromRange(<vscode.Range>range);
+        const currentLineFullRange = this.#doc.lineAt(currentRange.startLine).range;
+        // currentRange.startLine.
+        this.#edit.replace(currentLineFullRange, <string>line);
+        // this method should replace entire string
+        // if (range?.isSingleLine) {
+
+        //     // this.#edit.delete()
+        // }
+        // range.start.line
+
+    };
+
+
+    // need range pass types. lets use bitmask.
+    // 
+    private rangeHandler = (range: vscode.Range) : vscode.Range => {
+        if (range.isEmpty) {
+            return this.getLineFullRange(range);
+        } else {
+
+        }
+
+        return range;
+        // if (range.is)
+        // return ; 
     };
 
     // =============================================================================
     // > PROTECTED FUNCTIONS: 
     // =============================================================================
 
-    protected perLineEdit = (callback): vscode.ProviderResult<typeof callback> => {
-        return this.editor?.edit((edit) => {
-            this.#edit = edit;
-            this.interateSelectionLines(callback);
-        });
-    };
+    // protected doEdit = (callback): vscode.ProviderResult<typeof callback> => {
+    //     return this.editor?.edit((editBuilder) => {
+    //         this.#edit = editBuilder;
+    //         this.interateSelections(callback);
+    //     });
+    // };
 
-    protected perSelectionEdit = (callback): vscode.ProviderResult<typeof callback> => {
-        return this.editor?.edit((edit) => {
-            this.#edit = edit;
-            this.interateSelectionOnly(callback);
-        });
-    };
+    // protected perSelectionEdit = (callback): vscode.ProviderResult<typeof callback> => {
+    //     return this.editor?.edit((edit) => {
+    //         this.#edit = edit;
+    //         this.interateSelections(callback);
+    //     });
+    // };
 
     protected removeTrailingWhiteSpaceFromLine = (range: vscode.Range): void => {
-        this.setLine(range, removeTrailingWhiteSpaceString(this.getText(range)));
+        const newRange = this.getLineFullRange(range);
+        const newLine = removeTrailingWhiteSpaceString(this.getText(this.getLineFullRange(range)));
+        this.setLine(newRange, newLine);
+
+        
+        // this.getText(range)
+        // console.log(newLine);
+
     };
     
     protected removeMulitpleEmptyLines = (range: vscode.Range): void => {

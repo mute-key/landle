@@ -68,7 +68,6 @@ print DateTime string on current position of the selection.
 need true condition for when no range is in selection for certain commands.
 
 need invoke function for promise callback stacks
-
 more shortcut keys 
 
 prob change command enum as key and property name for selection as auto bind

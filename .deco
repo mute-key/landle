@@ -1,0 +1,100 @@
+뭔가 하면 할수록 자신감도 없어지고 집중력도 떨어지는거 같다
+그냥 되라는 식이면 될리가 없잖은가
+
+
+과연 나를 뽑아줄 회사가 있을지 걱정도 된다
+나는 부족한데
+머리도 아프고 힘도 없다
+밥을 안먹어서 그런가 싶긴 하지만 그것과는 별개로 그냥 그렇다
+
+내가 뭘 해야할지도 모르겟고 혼란스럽기만 하다
+하고싶은건 많은데 나는 아직도 도움이 필요하다
+
+
+내가 넣고싶은 기능들
+
+포매터를 넣고싶다 근데 이건 쉬운게 아니긴 한데
+
+
+사실 그냥 백스페이스로 모든 빈 라인들 없애면 되긴 하는데
+그냥 모든 탭이나 공백을 지우는 기능이 필요하긴 하다
+레겍스가 필요함
+
+
+zero and one
+
+
+펑셔널로 적는것도 좋긴한데 이럴거면 타입스크립트를 쓰는 이유가 없지 않나?
+아무리 생각해도 클래스를 쓰고 싶은데 뇌를 1년가까이 쓰질 않았더니
+뇌가 돌아가질 않는다 조금씩 돌아오고 있긴한데 내가 원하는것만큼 빠른속도로
+돌아온다는 느낌이 아니다
+
+이미 있는 api 를 확장해서 클래스를 여는것도 나쁘지 않겟다
+
+뭔가        막힐때마다 조금씩 쉬자
+
+
+
+
+
+
+테마 만든거     나쁘지   않겟다
+
+
+
+
+
+
+https://stackoverflow.com/questions/39392853/is-there-a-type-for-class-in-typescript-and-does-any-include-it
+
+
+
+
+yes|cp -rpuv /home/sihyun/workbench/deco /mnt/c/Users/sihyu.DESKTOP-93G4M0K/.vscode/extensions/
+yes|cp -rpuv /home/sihyun/workbench/deco /home/sihyun/.vscode-server/extensions/
+
+code --install-extension /home/sihyun/.vscode-server/extensions/deco
+
+rsync -ax --exclude [relative path to directory to exclude] /path/from /path/to
+
+tar -cpP --exclude=.git --exclude=.cache -C "$source_dir" . | tar -xpP -C "$target_dir"
+
+
+https://code.visualstudio.com/api/references/commands
+
+
+
+
+
+maybe i want to have a single member funciton that branches out for each selection/line
+
+
+이 시발 작동하는게 없네 
+
+도데체 왜이런거냐 
+
+
+아 문제가 뭔지 알앗다. 변환된 레인지 때문에 그런거임 
+\
+
+
+
+콜백들을 연결해서 완료된 작업들을 맴버펑션에서 리턴해서 이어서 실행해야겟다 
+그거말곤 진짜 답이 안보인다 
+자꾸면 범위가 튕긴다고 지랄을 하네 
+
+
+
+const documentSnapshot = editor.document.getText();  // 현재 문서 내용 스냅샷
+
+const range = new vscode.Range(
+    new vscode.Position(0, 0),  // 시작 위치 (0번째 줄, 0번째 문자)
+    new vscode.Position(0, 5)   // 끝 위치 (0번째 줄, 5번째 문자)
+);
+
+
+하다보니까 느낀건데, 이거 api 자체가 한줄씩 수정하는걸 존나 힘들게 만들어놓은거 같다 
+그냥 한번에 구성한다음에 수정하고 때려박게 만들어놓은거 같은데 
+생각해보면 확실히 그게 더 빠를거 같긴하다 
+
+

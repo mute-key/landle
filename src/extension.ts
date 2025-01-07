@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 
 import { Register } from './register';
-import { CommandList } from './common/command';
+// import { CommandList } from './common/command';
 // import { ToTitle, ToBlock, createSection } from './editor/Line';
 // import { Selection } from './editor/Selection';
 
@@ -17,24 +17,10 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Hi, your extension "deco" is now active!');
 	// vscode.window.showInformationMessage("function route!");
 
-	// const commends: Command[] = [
-	// 	ToTitle,
-	// 	ToBlock,
-	// 	createSection
-	// ];
 
-	console.log(CommandList);
-
-	Register(context, CommandList);
+	Register(context);
 
 	// Register();
-
-	// Set the storage path to be used by history files
-	// Globals.extensionStoragePath = context.globalStorageUri.fsPath;
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
 
 }
 
