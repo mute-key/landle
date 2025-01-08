@@ -55,6 +55,7 @@ var LineUtil;
   LineUtil2.removeMultipleWhiteSpaceString = (line) => line.replace(/\s\s+/g, " ");
   LineUtil2.getMultipleWhiteSpaceString = (line) => line.match(/(?<=\S)\s+(?=\S)/g);
   LineUtil2.findMultipleWhiteSpaceString = (line) => line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
+  LineUtil2.isLineCommented = (line) => line.search(/^\s*\/\//g) !== -1;
   LineUtil2.pushMessage = (message) => {
     return vscode.window.showInformationMessage(message);
   };
@@ -81,11 +82,17 @@ var Line = class {
   // =============================================================================
   // > PRIVATE FUNCTIONS: 
   // =============================================================================
+  getText = (range) => {
+    return this.#doc.getText(range);
+  };
   getTextLineOrRange = (range, offset = 0) => {
     if (typeof range === "number") {
       return this.#doc.lineAt(range + offset);
     }
-    return this.#doc.lineAt(range.start.line + offset);
+    if (this.#doc.lineCount > range.start.line + offset) {
+      return this.#doc.lineAt(range.start.line + offset);
+    }
+    return this.#doc.lineAt(range.start.line);
   };
   lineFullRange = (range) => {
     if (typeof range === "number") {
@@ -94,15 +101,22 @@ var Line = class {
     return this.#doc.lineAt(range.start.line).range;
   };
   lineFullRangeWithEOL = (range) => {
-    return this.#doc.lineAt(range.start.line).rangeIncludingLineBreak;
+    return this.getTextLineOrRange(range).rangeIncludingLineBreak;
   };
-  /**
-   * LineNumbers and 
-   * 
-   * @param range 
-   * @param callback 
-   */
-  // Promise<string>[]
+  getLineNumbersFromRange = (range) => {
+    const startLine = range.start.line;
+    const endLine = range.end.line;
+    return { startLine, endLine };
+  };
+  newRangeZeroBased = (lineNuber, startPosition, endPosition) => {
+    return new vscode2.Range(
+      new vscode2.Position(lineNuber, startPosition),
+      new vscode2.Position(lineNuber, endPosition)
+    );
+  };
+  // =============================================================================
+  // > PUBLIC FUNCTIONS: 
+  // =============================================================================
   prepareLines = (editor, range, callback) => {
     const editList = [];
     if (range.isEmpty) {
@@ -123,24 +137,23 @@ var Line = class {
     }
     let currentLineNumber = range.start.line;
     while (currentLineNumber <= range.end.line) {
+      const currentRange = this.lineFullRange(currentLineNumber);
       if (!Array.isArray(callback)) {
         const newLineObject = callback.func(this.lineFullRange(currentLineNumber));
-        if (newLineObject !== void 0) {
+        if (newLineObject) {
           editList.push({
             ...newLineObject,
             type: callback.type
           });
         }
       } else {
-        let refreshRange = this.lineFullRange(currentLineNumber);
         callback.forEach((fnPerLine) => {
-          const line = fnPerLine.func(refreshRange);
-          if (line) {
+          const newLineObject = fnPerLine.func(this.lineFullRange(currentLineNumber));
+          if (newLineObject) {
             editList.push({
-              ...line,
+              ...newLineObject,
               type: fnPerLine.type
             });
-            refreshRange = this.lineFullRange(currentLineNumber);
           }
         });
       }
@@ -148,81 +161,9 @@ var Line = class {
     }
     return editList;
   };
-  deleteRange = (range) => {
-    return this.#edit.delete(range);
-  };
-  getText = (range) => {
-    return this.#doc.getText(range);
-  };
-  getTextLine = (range, offset = 0) => {
-    return this.#doc.lineAt(range.start.line + offset);
-  };
-  clearLine = (range) => {
-    this.deleteRange(this.lineFullRange(range));
-  };
-  removeLine = (range) => {
-    this.deleteRange(this.lineFullRangeWithEOL(range));
-  };
-  ifLineIsEmpty = (textLine) => textLine.isEmptyOrWhitespace;
-  checkNextLine = (range, callback) => {
-    const currentLine = this.getTextLine(range);
-    const nextLine = this.getTextLine(range, 1);
-    if (this.ifLineIsEmpty(currentLine) && this.ifLineIsEmpty(nextLine)) {
-      callback(this.getTextLine(range).range);
-    }
-  };
-  getLineNumbersFromRange = (range) => {
-    const startLine = range.start.line;
-    const endLine = range.end.line;
-    return { startLine, endLine };
-  };
-  Indent = () => {
-  };
-  Append = (add) => {
-  };
-  prepend = (range, insert) => {
-    this.#edit.insert(range.start, insert);
-  };
-  getLineFullRange = (range) => {
-    const currentRange = this.getLineNumbersFromRange(range);
-    return this.#doc.lineAt(currentRange.startLine).range;
-  };
-  setLine = (range, line) => {
-    console.log(line);
-    const currentRange = this.getLineNumbersFromRange(range);
-    const currentLineFullRange = this.#doc.lineAt(currentRange.startLine).range;
-    this.#edit.replace(currentLineFullRange, line);
-  };
-  // need range pass types. lets use bitmask.
-  // 
-  rangeHandler = (range) => {
-    if (range.isEmpty) {
-      return this.getLineFullRange(range);
-    } else {
-    }
-    return range;
-  };
   // =============================================================================
   // > PROTECTED FUNCTIONS: 
   // =============================================================================
-  // protected doEdit = (callback): vscode.ProviderResult<typeof callback> => {
-  //     return this.editor?.edit((editBuilder) => {
-  //         this.#edit = editBuilder;
-  //         this.interateSelections(callback);
-  //     });
-  // };
-  // protected perSelectionEdit = (callback): vscode.ProviderResult<typeof callback> => {
-  //     return this.editor?.edit((edit) => {
-  //         this.#edit = edit;
-  //         this.interateSelections(callback);
-  //     });
-  // };
-  newRangeZeroBased = (lineNuber, startPosition, endPosition) => {
-    return new vscode2.Range(
-      new vscode2.Position(lineNuber, startPosition),
-      new vscode2.Position(lineNuber, endPosition)
-    );
-  };
   removeTrailingWhiteSpaceFromLine = (range) => {
     const whitespacePos = LineUtil.findTrailingWhiteSpaceString(this.getText(range));
     if (whitespacePos >= 0) {
@@ -237,8 +178,7 @@ var Line = class {
     const lineText = this.getText(range);
     if (LineUtil.findMultipleWhiteSpaceString(lineText)) {
       const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
-      console.log("newLineText", newLineText);
-      const startPos = this.getTextLine(range).firstNonWhitespaceCharacterIndex;
+      const startPos = this.getTextLineOrRange(range).firstNonWhitespaceCharacterIndex;
       const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
       return {
         range: this.newRangeZeroBased(range.start.line, startPos, endPos),
@@ -248,38 +188,40 @@ var Line = class {
     return;
   };
   removeMulitpleEmptyLines = (range) => {
-    this.checkNextLine(range, this.removeLine);
+    const currentLine = this.getTextLineOrRange(range).isEmptyOrWhitespace;
+    const nextLine = this.getTextLineOrRange(range, 1).isEmptyOrWhitespace;
+    if (currentLine && nextLine) {
+      return {
+        range: this.lineFullRangeWithEOL(range)
+      };
+    }
+    return;
+  };
+  removeCommentedLine = (range) => {
+    const lineText = this.getText(range);
+    if (LineUtil.isLineCommented(lineText)) {
+      return {
+        range: this.lineFullRangeWithEOL(range)
+      };
+    }
+    return;
   };
   removeEmptyLines = (range) => {
-    if (this.ifLineIsEmpty(this.getTextLine(range))) {
-      this.removeLine(range);
+    const currentLine = this.getTextLineOrRange(range).isEmptyOrWhitespace;
+    if (currentLine) {
+      return {
+        range: this.lineFullRangeWithEOL(range)
+      };
     }
+    return;
   };
-  cleanUpWhitespaceFromLines = (range) => {
+  setNowDateTimeOnLine = (range) => {
+    return {
+      range,
+      string: LineUtil.getNowDateTimeStamp()
+    };
+    ;
   };
-  // protected setNowDateTimeOnLine = (range : vscode.Range) : void => {
-  //     this.prepend(range, getNowDateTimeStamp());
-  // };
-  /**
-   * 
-   * i will not implement something that formatter already can do
-   * 
-   * 
-   * - need to check if selection is multiple lines if then, do.
-   * - check the language of the current editor 
-   * - if selected range is commented, join them 
-   * - if selected rnage is not comment, ignore 
-   * - if selection is plan text, just join them 
-   * - rmeove all multiple line spaces when join  
-   * 
-   * @param range 
-   */
-  joinLines = (range) => {
-    const langId = vscode2.window.activeTextEditor?.document.languageId;
-  };
-  // =============================================================================
-  // > PUBLIC FUNCTIONS: 
-  // =============================================================================
 };
 
 // src/editor/ActiveEditor.ts
@@ -296,31 +238,26 @@ var ActiveEditor = class {
       return;
     }
   }
-  // protected currentSelection = (() : vscode.Selection[] => <vscode.Selection[]>vscode.window.activeTextEditor?.selections)();
-  validateChange = (newDocumentText) => this.#documentSnapshot === newDocumentText;
+  // =============================================================================
+  // > RPOTECED FUNCTIONS: 
+  // =============================================================================
   snapshotDocument = () => {
     this.#documentSnapshot = vscode3.window.activeTextEditor?.document.getText();
   };
-  // protected doEdit = (callback): vscode.ProviderResult<typeof callback> => {
-  // };
-  /**
-   * 
-   * @param callback 
-   */
+  // =============================================================================
+  // > PUBLIC FUNCTIONS: 
+  // =============================================================================
   prepareEdit = (callback, includeCursorLine) => {
-    let selections = this.#editor?.selections;
     const editSchedule = [];
+    let selections = this.#editor?.selections;
     if (selections?.length === 1) {
-      const nl = this.line.prepareLines(this.#editor, selections[0], callback);
-      editSchedule.push(...nl);
-      this.editInRange(editSchedule);
+      editSchedule.push(...this.line.prepareLines(this.#editor, selections[0], callback));
     } else {
       selections?.forEach((range) => {
         editSchedule.push(...this.line.prepareLines(this.#editor, range, callback));
       });
-      console.log(editSchedule);
-      this.editInRange(editSchedule);
     }
+    this.editInRange(editSchedule);
   };
   editInRange = async (lineCallback) => {
     try {
@@ -329,11 +266,12 @@ var ActiveEditor = class {
           if (edit !== void 0) {
             switch (edit.type) {
               case 1 /* APPEND */:
+                editBuilder.insert(edit.range.start, edit.string ?? "");
                 break;
               case 2 /* PREPEND */:
                 break;
               case 4 /* REPLACE */:
-                editBuilder.replace(edit.range, edit.string ?? "????");
+                editBuilder.replace(edit.range, edit.string ?? "");
                 break;
               case 8 /* CLEAR */:
                 break;
@@ -354,13 +292,6 @@ var ActiveEditor = class {
       console.log("Error applying edit:", err);
     }
   };
-  // public applyEdit = async () => {
-  //     return this.editor?.edit((editBuilder) => {
-  //         // editBuilder.
-  //         // this.#edit = editBuilder;
-  //         // this.interateSelections(callback);
-  //     });
-  // };
 };
 
 // src/command.ts
@@ -368,10 +299,10 @@ var CommandId = ((CommandId2) => {
   CommandId2[CommandId2["removeTrailingWhitespaceFromSelection"] = 1 /* DEFAULT */ + 4 /* SINGLE_LINE_ONLY_ALLOWED */ + 8 /* EMPTY_LINE_ALLOWED */ + 2 /* CURSOR_ONLY_ALLOWED */] = "removeTrailingWhitespaceFromSelection";
   CommandId2[CommandId2["removeMulitpleEmptyLinesFromSelection"] = void 0] = "removeMulitpleEmptyLinesFromSelection";
   CommandId2[CommandId2["removeEmptyLinesFromSelection"] = void 0] = "removeEmptyLinesFromSelection";
-  CommandId2[CommandId2["removeMultipleWhitespace"] = void 0] = "removeMultipleWhitespace";
-  CommandId2[CommandId2["cleanUpWhitespace"] = void 0] = "cleanUpWhitespace";
-  CommandId2[CommandId2["printNowDateTime"] = void 0] = "printNowDateTime";
-  CommandId2[CommandId2["test"] = void 0] = "test";
+  CommandId2[CommandId2["removeMultipleWhitespaceFromSelection"] = void 0] = "removeMultipleWhitespaceFromSelection";
+  CommandId2[CommandId2["removeCommentedTextFromSelection"] = void 0] = "removeCommentedTextFromSelection";
+  CommandId2[CommandId2["cleanUpWhitespaceFromSelection"] = void 0] = "cleanUpWhitespaceFromSelection";
+  CommandId2[CommandId2["printNowDateTimeOnSelection"] = void 0] = "printNowDateTimeOnSelection";
   return CommandId2;
 })(CommandId || {});
 var Command = class extends ActiveEditor {
@@ -379,105 +310,101 @@ var Command = class extends ActiveEditor {
     super();
   }
   // =============================================================================
+  // > PRIVATE VARIABLES: 
+  // =============================================================================
+  #removeTrailingWhiteSpaceFromLine = {
+    func: this.line.removeTrailingWhiteSpaceFromLine,
+    type: 32 /* DELETE */
+  };
+  #removeMultipleWhitespaceFromLine = {
+    func: this.line.removeMultipleWhitespaceFromLine,
+    type: 4 /* REPLACE */
+  };
+  #removeMulitpleEmptyLines = {
+    func: this.line.removeMulitpleEmptyLines,
+    type: 32 /* DELETE */
+  };
+  #removeCommentedTextFromLine = {
+    func: this.line.removeCommentedLine,
+    type: 32 /* DELETE */
+  };
+  #removeEmptyLinesFromLine = {
+    func: this.line.removeEmptyLines,
+    type: 32 /* DELETE */
+  };
+  #setNowDateTimeOnLineOnLine = {
+    func: this.line.setNowDateTimeOnLine,
+    type: 1 /* APPEND */
+  };
+  // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
   removeTrailingWhitespaceFromSelection = (editor, edit, args) => {
-    this.snapshotDocument();
     this.prepareEdit(
-      {
-        func: this.line.removeTrailingWhiteSpaceFromLine,
-        type: 32 /* DELETE */
-      },
+      [
+        this.#removeTrailingWhiteSpaceFromLine
+      ],
       false
     );
   };
   removeMulitpleEmptyLinesFromSelection = () => {
+    this.prepareEdit(
+      [
+        this.#removeMulitpleEmptyLines,
+        this.#removeTrailingWhiteSpaceFromLine
+      ],
+      false
+    );
   };
   removeEmptyLinesFromSelection = () => {
+    this.prepareEdit(
+      [
+        this.#removeEmptyLinesFromLine,
+        this.#removeTrailingWhiteSpaceFromLine
+      ],
+      false
+    );
   };
   removeMultipleWhitespace = () => {
-    this.snapshotDocument();
     this.prepareEdit(
       [
-        {
-          func: this.line.removeMultipleWhitespaceFromLine,
-          type: 4 /* REPLACE */
-        }
+        this.#removeMultipleWhitespaceFromLine,
+        this.#removeTrailingWhiteSpaceFromLine
       ],
       false
     );
   };
-  cleanUpWhitespace = () => {
-    this.snapshotDocument();
+  removeCommentedTextFromSelection = () => {
     this.prepareEdit(
       [
-        {
-          func: this.line.removeTrailingWhiteSpaceFromLine,
-          type: 32 /* DELETE */
-        },
-        {
-          func: this.line.removeMultipleWhitespaceFromLine,
-          type: 4 /* REPLACE */
-        }
+        this.#removeCommentedTextFromLine
       ],
       false
     );
   };
-  printNowDateTime = () => {
+  cleanUpWhitespaceFromSelection = () => {
+    this.prepareEdit(
+      [
+        this.#removeTrailingWhiteSpaceFromLine,
+        this.#removeMultipleWhitespaceFromLine,
+        this.#removeMulitpleEmptyLines
+      ],
+      false
+    );
+  };
+  printNowDateTimeOnSelection = () => {
+    this.prepareEdit(
+      [
+        this.#setNowDateTimeOnLineOnLine
+      ],
+      false
+    );
   };
   // public joinMultipleLines = () => {
   //     this.editorEdit(this.joinLines);
   // };
   // public joinCommnetLines = () => {
   //     this.editorEdit(this.joinLines);
-  // };
-  repaceTabWithSpace = () => {
-  };
-  // private removeTrailingEmptyLines() {
-  // }
-  // private interateSelection = (selection , callback) => {};
-  // public removeAllSelectedWhitespaceLines = () => {
-  //     this.editorEdit(this.removeLine);
-  // };
-  // public justfityAlign() {
-  // }
-  // public cleanWhiteSpaceLines = () => {
-  //     this.editor?.selections.forEach((range) => {
-  //         if (range.isSingleLine) {
-  //             // range
-  //             // if ()
-  //             // check if line is empty 
-  //             // this.removeLine(range);
-  //         } else {
-  //             // range.start
-  //             // this.removeMultipleLine(range);
-  //         }
-  //         // this.clearLine(range);
-  //     });
-  // };
-  // public cleanMultipleWhiteSpaceLines = () => {
-  //     this.editor?.selections.forEach((range) => {
-  //         if (range.isSingleLine) {
-  //             // this.removeLine(range);
-  //         } else {
-  //             // range.start
-  //             // this.removeMultipleLine(range);
-  //         }
-  //         // this.clearLine(range);
-  //     });
-  // };
-  // public removeAllSelectedLines = () => {
-  //     // ctrl + alt + k 
-  //     // console.log('removeAllSelectedLines');
-  //     // // this.editor?.selections.;
-  //     // this.editor?.selections.forEach((range) => {
-  //     //     if (range.isSingleLine) {
-  //     //         this.removeLine(range);
-  //     //     } else {
-  //     //         // range.start
-  //     //         // this.removeMultipleLine(range);
-  //     //     }
-  //     // });
   // };
 };
 

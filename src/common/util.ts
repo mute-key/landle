@@ -12,10 +12,11 @@ export namespace LineUtil {
 
     export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
 
-    // export const getMultipleWhiteSpaceString = (line: string): RegExpMatchArray | null => line.match(/\s\s+/g);
     export const getMultipleWhiteSpaceString = (line: string): RegExpMatchArray | null => line.match(/(?<=\S)\s+(?=\S)/g);
     
     export const findMultipleWhiteSpaceString = (line: string): boolean => line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
+
+    export const isLineCommented = (line: string): boolean => line.search(/^\s*\/\//g) !== -1;
 
     export const pushMessage = (message: string) : vscode.ProviderResult<typeof message> => {
         return vscode.window.showInformationMessage(message);

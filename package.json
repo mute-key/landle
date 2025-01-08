@@ -26,15 +26,19 @@
                 "title": "Hello World"
             },
             {
-                "command": "deco.removeMultipleWhitespace",
+                "command": "deco.removeMultipleWhitespaceFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.cleanUpWhitespace",
+                "command": "deco.cleanUpWhitespaceFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.setNowDateTime",
+                "command": "deco.removeCommentedTextFromSelection",
+                "title": "Hello World"
+            },
+            {
+                "command": "deco.printNowDateTimeOnSelection",
                 "title": "Hello World"
             }
         ],
@@ -52,15 +56,19 @@
                 "key": "ctrl+alt+e"
             },
             {
-                "command": "deco.removeMultipleWhitespace",
+                "command": "deco.removeMultipleWhitespaceFromSelection",
                 "key": "ctrl+alt+space"
             },
             {
-                "command": "deco.cleanUpWhitespace",
+                "command": "deco.removeCommentedTextFromSelection",
+                "key": "ctrl+alt+/"
+            },
+            {
+                "command": "deco.cleanUpWhitespaceFromSelection",
                 "key": "ctrl+alt+c"
             },
             {
-                "command": "deco.printNowDateTime",
+                "command": "deco.printNowDateTimeOnSelection",
                 "key": "ctrl+alt+n"
             }
         ]
