@@ -1,19 +1,19 @@
 import * as vscode from "vscode";
 
-import { 
-    LineEditType, 
-    LineEditCallback, 
-    LineEditInfo, 
-    Line, 
+import {
+    LineEditType,
+    LineEditDefintion,
+    LineEditInfo,
+    Line,
     IterateLineType
 } from "./Line";
 
-export class ActiveEditor{
-    
+export class ActiveEditor {
+
     #documentSnapshot: string | undefined;
     #editor: vscode.TextEditor | undefined;
 
-    protected line : Line;
+    protected line: Line;
 
     constructor() {
         this.line = new Line();
@@ -21,7 +21,6 @@ export class ActiveEditor{
         if (this.#editor) {
             this.#documentSnapshot = this.#editor.document.getText();
         } else {
-            // error
             return;
         }
     }
@@ -32,46 +31,41 @@ export class ActiveEditor{
     protected snapshotDocument = () => {
         this.#documentSnapshot = vscode.window.activeTextEditor?.document.getText();
     };
-    
+
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
-    
-    public prepareEdit = (callback: LineEditCallback | LineEditCallback[], includeCursorLine : boolean) : void => {
 
-        const editSchedule : IterateLineType[] = [];
-        let selections = this.#editor?.selections;
+    public prepareEdit = (callback: LineEditDefintion[], includeCursorLine: boolean): void => {
 
-        if (selections?.length === 1) {
-            // single selection area or cursor on line
-            editSchedule.push(...this.line.prepareLines(this.#editor, selections[0], callback));
-        } else {
-            // multiple selections
-            selections?.forEach((range) => {
-                editSchedule.push(...this.line.prepareLines(this.#editor, range, callback));
-            });
-        }
+        const editSchedule: IterateLineType[] = [];
+        const selections = this.#editor?.selections;
+
+        selections?.forEach((range : vscode.Range) => {
+            editSchedule.push(...this.line.prepareLines(range, callback));
+        });
+
         this.editInRange(editSchedule);
     };
 
-    public editInRange = async (lineCallback : any[]) => {
+    public editInRange = async (lineCallback: any[]) => {
         try {
-            const success = await this.#editor?.edit((editBuilder : vscode.TextEditorEdit) => {
+            const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
                 lineCallback.forEach((edit: LineEditInfo) => {
-                    if (edit !== undefined) {
+                    if (edit) {
                         switch (edit.type) {
                             case LineEditType.APPEND:
                                 editBuilder.insert(edit.range.start, edit.string ?? "");
-                                break;
-                            case LineEditType.PREPEND:
-                                break;
-                            case LineEditType.REPLACE:
-                                editBuilder.replace(edit.range, edit.string ?? "");
                                 break;
                             case LineEditType.CLEAR:
                                 break;
                             case LineEditType.DELETE:
                                 editBuilder.delete(edit.range);
+                                break;
+                            case LineEditType.REPLACE:
+                                editBuilder.replace(edit.range, edit.string ?? "");
+                                break;
+                            case LineEditType.PREPEND:
                                 break;
                             default:
                         }

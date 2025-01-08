@@ -2,9 +2,10 @@
 import * as vscode from "vscode";
 
 import { ActiveEditor } from "./editor/ActiveEditor";
+
 import { 
     LineEditType, 
-    LineEditCallback,
+    LineEditDefintion,
     LineEditTypeChecker as ledc, 
 } from "./editor/Line";
 
@@ -27,32 +28,32 @@ export class Command extends ActiveEditor {
     // > PRIVATE VARIABLES: 
     // =============================================================================
 
-    #removeTrailingWhiteSpaceFromLine = <LineEditCallback>{
+    #removeTrailingWhiteSpaceFromLine = <LineEditDefintion>{
         func: this.line.removeTrailingWhiteSpaceFromLine,
         type: LineEditType.DELETE,
     };
 
-    #removeMultipleWhitespaceFromLine = <LineEditCallback>{
+    #removeMultipleWhitespaceFromLine = <LineEditDefintion>{
         func: this.line.removeMultipleWhitespaceFromLine,
         type: LineEditType.REPLACE,
     };
 
-    #removeMulitpleEmptyLines = <LineEditCallback>{
+    #removeMulitpleEmptyLines = <LineEditDefintion>{
         func: this.line.removeMulitpleEmptyLines,
         type: LineEditType.DELETE,
     };
 
-    #removeCommentedTextFromLine = <LineEditCallback>{
+    #removeCommentedTextFromLine = <LineEditDefintion>{
         func: this.line.removeCommentedLine,
         type: LineEditType.DELETE,
     };
 
-    #removeEmptyLinesFromLine = <LineEditCallback>{
+    #removeEmptyLinesFromLine = <LineEditDefintion>{
         func: this.line.removeEmptyLines,
         type: LineEditType.DELETE,
     };
 
-    #setNowDateTimeOnLineOnLine = <LineEditCallback>{
+    #setNowDateTimeOnLineOnLine = <LineEditDefintion>{
         func: this.line.setNowDateTimeOnLine,
         type: LineEditType.APPEND,
     };

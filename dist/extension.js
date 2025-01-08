@@ -85,12 +85,12 @@ var Line = class {
   getText = (range) => {
     return this.#doc.getText(range);
   };
-  getTextLineOrRange = (range, offset = 0) => {
+  getTextLineFromRange = (range, lineDelta = 0) => {
     if (typeof range === "number") {
-      return this.#doc.lineAt(range + offset);
+      return this.#doc.lineAt(range + lineDelta);
     }
-    if (this.#doc.lineCount > range.start.line + offset) {
-      return this.#doc.lineAt(range.start.line + offset);
+    if (this.#doc.lineCount > range.start.line + lineDelta) {
+      return this.#doc.lineAt(range.start.line + lineDelta);
     }
     return this.#doc.lineAt(range.start.line);
   };
@@ -101,7 +101,7 @@ var Line = class {
     return this.#doc.lineAt(range.start.line).range;
   };
   lineFullRangeWithEOL = (range) => {
-    return this.getTextLineOrRange(range).rangeIncludingLineBreak;
+    return this.getTextLineFromRange(range).rangeIncludingLineBreak;
   };
   getLineNumbersFromRange = (range) => {
     const startLine = range.start.line;
@@ -117,49 +117,45 @@ var Line = class {
   // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
-  prepareLines = (editor, range, callback) => {
-    const editList = [];
-    if (range.isEmpty) {
-      if (!Array.isArray(callback)) {
-        return [{
-          ...callback.func(this.lineFullRange(range)),
-          type: callback.type
-        }];
-      }
+  editLineBindOnCondition = (range, callback, cond) => {
+    return cond ? {
+      ...callback.func(this.lineFullRange(range)),
+      type: callback.type
+    } : void 0;
+  };
+  newLineEditCallbackWrapper = (currntRange, fn, editList, cond = true) => {
+    const editInfo = fn.func(currntRange);
+    if (editInfo && cond) {
+      editList.push({
+        ...editInfo,
+        type: fn.type
+      });
     }
-    if (range.isSingleLine) {
-      if (!Array.isArray(callback)) {
-        return [{
-          ...callback.func(this.lineFullRange(range)),
-          type: callback.type
-        }];
-      }
-    }
-    let currentLineNumber = range.start.line;
-    while (currentLineNumber <= range.end.line) {
-      const currentRange = this.lineFullRange(currentLineNumber);
-      if (!Array.isArray(callback)) {
-        const newLineObject = callback.func(this.lineFullRange(currentLineNumber));
-        if (newLineObject) {
-          editList.push({
-            ...newLineObject,
-            type: callback.type
-          });
-        }
-      } else {
-        callback.forEach((fnPerLine) => {
-          const newLineObject = fnPerLine.func(this.lineFullRange(currentLineNumber));
-          if (newLineObject) {
-            editList.push({
-              ...newLineObject,
-              type: fnPerLine.type
-            });
-          }
-        });
-      }
-      currentLineNumber++;
+  };
+  lineRecursion = (range, callback, currentLineNumber, editList) => {
+    const currntRange = this.lineFullRange(currentLineNumber);
+    if (currentLineNumber < range.end.line) {
+      callback.forEach((fn) => this.newLineEditCallbackWrapper(currntRange, fn, editList));
+      this.lineRecursion(range, callback, currentLineNumber + 1, editList);
     }
     return editList;
+  };
+  prepareLines = (range, callback) => {
+    const lineEdit = [];
+    if (range.isEmpty) {
+      callback.forEach((fn) => this.newLineEditCallbackWrapper(range, fn, lineEdit, range.isEmpty));
+      return lineEdit;
+    }
+    if (range.isSingleLine) {
+      callback.forEach((fn) => this.newLineEditCallbackWrapper(range, fn, lineEdit, range.isSingleLine));
+      return lineEdit;
+    }
+    return this.lineRecursion(
+      range,
+      callback,
+      range.start.line,
+      lineEdit
+    );
   };
   // =============================================================================
   // > PROTECTED FUNCTIONS: 
@@ -178,7 +174,7 @@ var Line = class {
     const lineText = this.getText(range);
     if (LineUtil.findMultipleWhiteSpaceString(lineText)) {
       const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
-      const startPos = this.getTextLineOrRange(range).firstNonWhitespaceCharacterIndex;
+      const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
       const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
       return {
         range: this.newRangeZeroBased(range.start.line, startPos, endPos),
@@ -188,8 +184,8 @@ var Line = class {
     return;
   };
   removeMulitpleEmptyLines = (range) => {
-    const currentLine = this.getTextLineOrRange(range).isEmptyOrWhitespace;
-    const nextLine = this.getTextLineOrRange(range, 1).isEmptyOrWhitespace;
+    const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
+    const nextLine = this.getTextLineFromRange(range, 1).isEmptyOrWhitespace;
     if (currentLine && nextLine) {
       return {
         range: this.lineFullRangeWithEOL(range)
@@ -207,7 +203,7 @@ var Line = class {
     return;
   };
   removeEmptyLines = (range) => {
-    const currentLine = this.getTextLineOrRange(range).isEmptyOrWhitespace;
+    const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
     if (currentLine) {
       return {
         range: this.lineFullRangeWithEOL(range)
@@ -249,34 +245,30 @@ var ActiveEditor = class {
   // =============================================================================
   prepareEdit = (callback, includeCursorLine) => {
     const editSchedule = [];
-    let selections = this.#editor?.selections;
-    if (selections?.length === 1) {
-      editSchedule.push(...this.line.prepareLines(this.#editor, selections[0], callback));
-    } else {
-      selections?.forEach((range) => {
-        editSchedule.push(...this.line.prepareLines(this.#editor, range, callback));
-      });
-    }
+    const selections = this.#editor?.selections;
+    selections?.forEach((range) => {
+      editSchedule.push(...this.line.prepareLines(range, callback));
+    });
     this.editInRange(editSchedule);
   };
   editInRange = async (lineCallback) => {
     try {
       const success = await this.#editor?.edit((editBuilder) => {
         lineCallback.forEach((edit) => {
-          if (edit !== void 0) {
+          if (edit) {
             switch (edit.type) {
               case 1 /* APPEND */:
                 editBuilder.insert(edit.range.start, edit.string ?? "");
-                break;
-              case 2 /* PREPEND */:
-                break;
-              case 4 /* REPLACE */:
-                editBuilder.replace(edit.range, edit.string ?? "");
                 break;
               case 8 /* CLEAR */:
                 break;
               case 32 /* DELETE */:
                 editBuilder.delete(edit.range);
+                break;
+              case 4 /* REPLACE */:
+                editBuilder.replace(edit.range, edit.string ?? "");
+                break;
+              case 2 /* PREPEND */:
                 break;
               default:
             }
