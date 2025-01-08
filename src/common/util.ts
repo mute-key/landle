@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { LineEditType } from "../editor/Line";
 
 export namespace LineUtil {
     export const getNowDateTimeStamp = () : string => new Date().toLocaleString();
@@ -6,6 +7,8 @@ export namespace LineUtil {
     export const removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, "");
 
     export const findTrailingWhiteSpaceString = (line: string): number => line.search(/\s(?=\s*$)/g);
+
+    export const findReverseNonWhitespaceIndex = (line: string): number => line.search(/\S(?=\s*$)/g);
 
     export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
 

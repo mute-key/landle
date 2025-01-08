@@ -79,8 +79,7 @@ export class ActiveEditor {
                             case LineEditType.PREPEND:
                                 break;
                             case LineEditType.REPLACE:
-                                editBuilder.delete(this.line.lineFullRange(edit.range));
-                                editBuilder.insert(edit.range.start, edit.string ?? "????");
+                                editBuilder.replace(edit.range, edit.string ?? "????");
                                 break;
                             case LineEditType.CLEAR:
                                 break;

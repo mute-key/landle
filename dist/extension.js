@@ -51,6 +51,7 @@ var LineUtil;
   LineUtil2.getNowDateTimeStamp = () => (/* @__PURE__ */ new Date()).toLocaleString();
   LineUtil2.removeTrailingWhiteSpaceString = (line) => line.replace(/[ \t]+$/, "");
   LineUtil2.findTrailingWhiteSpaceString = (line) => line.search(/\s(?=\s*$)/g);
+  LineUtil2.findReverseNonWhitespaceIndex = (line) => line.search(/\S(?=\s*$)/g);
   LineUtil2.removeMultipleWhiteSpaceString = (line) => line.replace(/\s\s+/g, " ");
   LineUtil2.getMultipleWhiteSpaceString = (line) => line.match(/(?<=\S)\s+(?=\S)/g);
   LineUtil2.findMultipleWhiteSpaceString = (line) => line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
@@ -237,9 +238,11 @@ var Line = class {
     if (LineUtil.findMultipleWhiteSpaceString(lineText)) {
       const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
       console.log("newLineText", newLineText);
+      const startPos = this.getTextLine(range).firstNonWhitespaceCharacterIndex;
+      const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
       return {
-        range: this.newRangeZeroBased(range.start.line, 0, newLineText.length - 1),
-        string: newLineText.trim()
+        range: this.newRangeZeroBased(range.start.line, startPos, endPos),
+        string: newLineText
       };
     }
     return;
@@ -330,8 +333,7 @@ var ActiveEditor = class {
               case 2 /* PREPEND */:
                 break;
               case 4 /* REPLACE */:
-                editBuilder.delete(this.line.lineFullRange(edit.range));
-                editBuilder.insert(edit.range.start, edit.string ?? "????");
+                editBuilder.replace(edit.range, edit.string ?? "????");
                 break;
               case 8 /* CLEAR */:
                 break;
@@ -409,6 +411,10 @@ var Command = class extends ActiveEditor {
     this.snapshotDocument();
     this.prepareEdit(
       [
+        {
+          func: this.line.removeTrailingWhiteSpaceFromLine,
+          type: 32 /* DELETE */
+        },
         {
           func: this.line.removeMultipleWhitespaceFromLine,
           type: 4 /* REPLACE */

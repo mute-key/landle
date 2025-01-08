@@ -90,10 +90,10 @@ export class Command extends ActiveEditor{
     public cleanUpWhitespace = () => {
         this.snapshotDocument();
         this.prepareEdit([
-            // <LineEditCallback>{
-            //     func: this.line.removeTrailingWhiteSpaceFromLine,
-            //     type: LineEditType.DELETE,
-            // }, 
+            <LineEditCallback>{
+                func: this.line.removeTrailingWhiteSpaceFromLine,
+                type: LineEditType.DELETE,
+            }, 
             <LineEditCallback>{
                 func: this.line.removeMultipleWhitespaceFromLine,
                 type: LineEditType.REPLACE,
