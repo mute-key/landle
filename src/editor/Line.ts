@@ -130,7 +130,6 @@ export class Line {
     };
     
     public prepareLines = (range: vscode.Range, callback: LineEditDefintion[]): IterateLineType[] => {
-        // <IterateLineType[]>[]
         const lineEdit : IterateLineType[] = [];
 
         // on each selection, starting line is: isEmpty
