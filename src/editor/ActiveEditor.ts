@@ -2,23 +2,25 @@ import * as vscode from "vscode";
 
 
 
-import {
-    removeTrailingWhiteSpaceString,
-    removeMultipleWhiteSpaceString,
-    findMultipleWhiteSpaceString,
-    splitStringOn,
-    getNowDateTimeStamp,
-    pushMessage
-} from "../common/util";
-import { LineSelection } from "./LineSelection";
-import { LineEditType } from "./Line";
 
-export class ActiveEditor extends LineSelection {
+// import { LineSelection } from "./LineSelection";
+import { 
+    LineEditType, 
+    LineEditCallback, 
+    LineEditInfo, 
+    Line, 
+    IterateLineType
+} from "./Line";
+
+
+
+export class ActiveEditor {
     #documentSnapshot: string | undefined;
     #editor: vscode.TextEditor | undefined;
+    protected line : Line;
 
     constructor() {
-        super();
+        this.line = new Line();
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
             this.#documentSnapshot = this.#editor.document.getText();
@@ -32,7 +34,7 @@ export class ActiveEditor extends LineSelection {
 
     private validateChange = (newDocumentText) => this.#documentSnapshot === newDocumentText;
 
-    private snapshotDocument = () => {
+    protected snapshotDocument = () => {
         this.#documentSnapshot = vscode.window.activeTextEditor?.document.getText();
     };
 
@@ -40,49 +42,66 @@ export class ActiveEditor extends LineSelection {
 
     // };
 
-    public prepareEditRange = (range : vscode.Range, editType : LineEditType) => {
-        // switch ()
-        // EditType
-        // switch (editType) {
-        //     case LineEditType.APPEND:
-        //         // code block
-        //         break;
-        //     case LineEditType.PREPEND:
-        //         // code block
-        //         break;
-        //     case LineEditType.REPLACE:
-        //         break;
-        //     case LineEditType.CLEAR:
-        //         break;
-        //     case LineEditType.DELETE:
-        //         break;
-        //     default:
-        //     // code block
-        // }
+    
+    /**
+     * 
+     * @param callback 
+     */
+    public prepareEdit = (callback: LineEditCallback | LineEditCallback[], includeCursorLine : boolean) => {
+        
+        let selections = this.#editor?.selections;
+        const editSchedule : IterateLineType[] = [];
+
+        if (selections?.length === 1) {
+            // only 1 selection or cursor on line
+            const nl : IterateLineType[] = this.line.prepareLines(this.#editor, selections[0], callback);
+            editSchedule.push(...nl);
+            this.editInRange(editSchedule);
+        } else {
+            // multiple selection
+            selections?.forEach((range) => {
+                // const nl : IterateLineType[] = ;
+                editSchedule.push(...this.line.prepareLines(this.#editor, range, callback));
+            });
+            console.log(editSchedule)
+            this.editInRange(editSchedule);
+        }
     };
 
+    public editInRange = async (lineCallback : any[]) => {
+        try {
+            const success = await this.#editor?.edit((editBuilder : vscode.TextEditorEdit) => {
+                lineCallback.forEach((edit: LineEditInfo) => {
+                    if (edit !== undefined) {
+                        switch (edit.type) {
+                            case LineEditType.APPEND:
+                                break;
+                            case LineEditType.PREPEND:
+                                break;
+                            case LineEditType.REPLACE:
+                                editBuilder.delete(this.line.lineFullRange(edit.range));
+                                editBuilder.insert(edit.range.start, edit.string ?? "????");
+                                break;
+                            case LineEditType.CLEAR:
+                                break;
+                            case LineEditType.DELETE:
+                                editBuilder.delete(edit.range);
+                                break;
+                            default:
+                        }
+                    }
+                });
+            }).then();
 
-    public editInRange = async (editor: vscode.TextEditor, range: vscode.Range) => {
-        // editor.edit()를 사용하여 문서 편집
-        const edit = new vscode.WorkspaceEdit();
-        // edit
-    
-
-        // // 1. 첫 번째 편집 작업
-        // const firstEdit = new vscode.Range(range.start, range.start.translate(0, 5)); // 5개 문자 범위
-        // edit.replace(editor.document.uri, firstEdit, 'Hello');
-
-        // // 2. 두 번째 편집 작업 (위치가 바뀐 텍스트 이후로)
-        // const secondEdit = new vscode.Range(range.start.translate(0, 5), range.start.translate(0, 10)); // 5개 문자 범위
-        // edit.replace(editor.document.uri, secondEdit, 'World');
-
-        // // 3. 세 번째 편집 작업 (좀 더 뒤쪽 범위)
-        // const thirdEdit = new vscode.Range(range.start.translate(0, 10), range.start.translate(0, 15));
-        // edit.replace(editor.document.uri, thirdEdit, 'VSCode');
-
-        // 여러 작업을 한 번에 커밋
-        await vscode.workspace.applyEdit(edit); // 이때 모든 변경이 한 번에 반영
-        this.snapshotDocument();
+            if (success) {
+                console.log('Edit applied successfully!');
+                // this.snapshotDocument();
+            } else {
+                console.log('Failed to apply edit.');
+            }
+        } catch (err) {
+            console.log('Error applying edit:', err);
+        }
     };
 
     // public applyEdit = async () => {

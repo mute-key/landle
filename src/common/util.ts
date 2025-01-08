@@ -1,22 +1,25 @@
 import * as vscode from "vscode";
 
-export const pushMessage = (message: string) : vscode.ProviderResult<typeof message> => {
-    return vscode.window.showInformationMessage(message);
-};
+export namespace LineUtil {
+    export const getNowDateTimeStamp = () : string => new Date().toLocaleString();
 
+    export const removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, "");
 
-export const getNowDateTimeStamp = () : string => {
-    return new Date().toLocaleString();
-};
+    export const findTrailingWhiteSpaceString = (line: string): number => line.search(/\s(?=\s*$)/g);
 
-export const removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, "");
+    export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
 
-export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
+    // export const getMultipleWhiteSpaceString = (line: string): RegExpMatchArray | null => line.match(/\s\s+/g);
+    export const getMultipleWhiteSpaceString = (line: string): RegExpMatchArray | null => line.match(/(?<=\S)\s+(?=\S)/g);
+    
+    export const findMultipleWhiteSpaceString = (line: string): boolean => line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
 
-export const findMultipleWhiteSpaceString = (line: string): boolean => line.search(/\s\s+/g) !== -1;
+    export const pushMessage = (message: string) : vscode.ProviderResult<typeof message> => {
+        return vscode.window.showInformationMessage(message);
+    };
 
-export function splitStringOn<T>(slicable: string | T[], ...indices: number[]) : (string | T[])[] {
-    return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
+    export function splitStringOn<T>(slicable: string | T[], ...indices: number[]) : (string | T[])[] {
+        return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
+    }
+
 }
-
-

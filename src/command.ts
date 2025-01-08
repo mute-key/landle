@@ -1,12 +1,18 @@
 
 import * as vscode from "vscode";
 
-import { Line } from './Line';
-// import { Command } from "../common/command";
+// import { Line } from './Line';
+import { ActiveEditor } from "./editor/ActiveEditor";
 import { 
-    
-    pushMessage 
-} from "../common/util";
+    LineEditType, 
+    LineEditTypeChecker as ledc, 
+    LineEditCallback,
+    Line 
+} from "./editor/Line";
+
+// import { 
+//     pushMessage 
+// } from "./common/util";
 
 /**
  * TODO:
@@ -18,17 +24,47 @@ import {
  * 
  */
 
-export class LineSelection extends Line {
+export enum CommandId {
+    removeTrailingWhitespaceFromSelection = ledc.DEFAULT + ledc.SINGLE_LINE_ONLY_ALLOWED + ledc.EMPTY_LINE_ALLOWED + ledc.CURSOR_ONLY_ALLOWED,
+    removeMulitpleEmptyLinesFromSelection,
+    removeEmptyLinesFromSelection,
+    removeMultipleWhitespace,
+    cleanUpWhitespace,
+    printNowDateTime,
+    test
+
+    // commentBlock = "commentBlock",
+    // addToTitle = "addToTitle",
+    // createSection = "createSection",
+    // cleanWhiteSpaceLines = "cleanWhiteSpaceLines",
+    // removeLine = "removeLine",
+    // addDateStamp = "addDateStamp",
+    // addTimeStamp = "addTimeStamp",
+};
+
+export class Command extends ActiveEditor{
+
+    
+
     constructor() {
         super();
+        
     }
 
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
 
-    public removeTrailingWhitespaceFromSelection = () : void => {
-        console.log('command removeTrailingWhitespaceFromSelection');
+    public removeTrailingWhitespaceFromSelection = (editor, edit, args) : void => {
+        this.snapshotDocument();
+        this.prepareEdit(<LineEditCallback>{
+                func: this.line.removeTrailingWhiteSpaceFromLine,
+                type: LineEditType.DELETE,
+            },
+            false
+        );
+
+        // console.log('command removeTrailingWhitespaceFromSelection');
         // this.doEdit(this.removeTrailingWhiteSpaceFromLine);
     };
 
@@ -41,18 +77,29 @@ export class LineSelection extends Line {
     };
 
     public removeMultipleWhitespace = () :void => {
-        // this.doEdit(this.removeMultipleWhitespaceFromLine);
-        
+        this.snapshotDocument();
+        this.prepareEdit([
+            <LineEditCallback>{
+                func: this.line.removeMultipleWhitespaceFromLine,
+                type: LineEditType.REPLACE,
+            }],
+            false
+        );
     };
 
     public cleanUpWhitespace = () => {
-        // this.doEdit(async (range) => {
-        //     await Promise.all([
-        //         this.removeTrailingWhiteSpaceFromLine(range),
-        //         this.removeMulitpleEmptyLines(range),
-        //         this.removeMultipleWhitespaceFromLine(range)
-        //     ]);
-        // });
+        this.snapshotDocument();
+        this.prepareEdit([
+            // <LineEditCallback>{
+            //     func: this.line.removeTrailingWhiteSpaceFromLine,
+            //     type: LineEditType.DELETE,
+            // }, 
+            <LineEditCallback>{
+                func: this.line.removeMultipleWhitespaceFromLine,
+                type: LineEditType.REPLACE,
+            }],
+            false
+        );
     };
 
     public printNowDateTime = () => {

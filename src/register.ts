@@ -4,26 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import { ActiveEditor } from './editor/ActiveEditor';
-
-
-enum CommandId {
-    removeTrailingWhitespaceFromSelection,
-    removeMulitpleEmptyLinesFromSelection,
-    removeEmptyLinesFromSelection,
-    removeMultipleWhitespace,
-    cleanUpWhitespace,
-    printNowDateTime,
-    test
-
-    // commentBlock = "commentBlock",
-    // addToTitle = "addToTitle",
-    // createSection = "createSection",
-    // cleanWhiteSpaceLines = "cleanWhiteSpaceLines",
-    // removeLine = "removeLine",
-    // addDateStamp = "addDateStamp",
-    // addTimeStamp = "addTimeStamp",
-};
+import { Command, CommandId } from './command';
 
 export interface CommandStruct {
     command: string;
@@ -36,14 +17,16 @@ export const Register = (
     handleLocal: boolean = true) => {
 
     const disposable: vscode.Disposable[] = [];
-    const activeEditor = new ActiveEditor();
+    const command = new Command();
 
     disposable.push(...Object.keys(CommandId)
         .filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key))
         .map(key => {
-            // console.log('command ', activeEditor[key], 'has implementation');
-            if (key in activeEditor) {
-                return vscode.commands.registerTextEditorCommand("deco." + key, activeEditor[key]);
+            if (key in command) {
+                return vscode.commands.registerTextEditorCommand("deco." + key,(editor, edit) => {
+                    const args = { lineEditFlag: CommandId[key]};
+                    command[key](editor, edit, args); // 커맨드 실행 시 args 전달
+                });
             } else {
                 console.log('command ', key, 'has no implementation');
             }
