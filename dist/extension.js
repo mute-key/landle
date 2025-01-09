@@ -234,6 +234,23 @@ var ActiveEditor = class {
       return;
     }
   }
+  editSwitch = (edit, editBuilder) => {
+    if (edit) {
+      switch (edit.type) {
+        case 1 /* APPEND */:
+          return editBuilder.insert(edit.range.start, edit.string ?? "");
+        case 8 /* CLEAR */:
+          return;
+        case 32 /* DELETE */:
+          return editBuilder.delete(edit.range);
+        case 4 /* REPLACE */:
+          return editBuilder.replace(edit.range, edit.string ?? "");
+        case 2 /* PREPEND */:
+          return;
+        default:
+      }
+    }
+  };
   // =============================================================================
   // > RPOTECED FUNCTIONS: 
   // =============================================================================
@@ -254,26 +271,7 @@ var ActiveEditor = class {
   editInRange = async (lineCallback) => {
     try {
       const success = await this.#editor?.edit((editBuilder) => {
-        lineCallback.forEach((edit) => {
-          if (edit) {
-            switch (edit.type) {
-              case 1 /* APPEND */:
-                editBuilder.insert(edit.range.start, edit.string ?? "");
-                break;
-              case 8 /* CLEAR */:
-                break;
-              case 32 /* DELETE */:
-                editBuilder.delete(edit.range);
-                break;
-              case 4 /* REPLACE */:
-                editBuilder.replace(edit.range, edit.string ?? "");
-                break;
-              case 2 /* PREPEND */:
-                break;
-              default:
-            }
-          }
-        });
+        lineCallback.forEach((edit) => this.editSwitch(edit, editBuilder));
       }).then();
       if (success) {
         console.log("Edit applied successfully!");

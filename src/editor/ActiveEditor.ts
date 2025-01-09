@@ -24,6 +24,25 @@ export class ActiveEditor {
             return;
         }
     }
+
+    private editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
+        if (edit) {
+            switch (edit.type) {
+                case LineEditType.APPEND:
+                    return editBuilder.insert(edit.range.start, edit.string ?? "");
+                case LineEditType.CLEAR:
+                    return;
+                case LineEditType.DELETE:
+                    return editBuilder.delete(edit.range);
+                case LineEditType.REPLACE:
+                    return editBuilder.replace(edit.range, edit.string ?? "");
+                case LineEditType.PREPEND:
+                    return;
+                default:
+            }
+        }
+    };
+    
     // =============================================================================
     // > RPOTECED FUNCTIONS: 
     // =============================================================================
@@ -48,29 +67,10 @@ export class ActiveEditor {
         this.editInRange(editSchedule);
     };
 
-    public editInRange = async (lineCallback: any[]) => {
+    public editInRange = async (lineCallback: any[]) : Promise<void> => {
         try {
             const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
-                lineCallback.forEach((edit: LineEditInfo) => {
-                    if (edit) {
-                        switch (edit.type) {
-                            case LineEditType.APPEND:
-                                editBuilder.insert(edit.range.start, edit.string ?? "");
-                                break;
-                            case LineEditType.CLEAR:
-                                break;
-                            case LineEditType.DELETE:
-                                editBuilder.delete(edit.range);
-                                break;
-                            case LineEditType.REPLACE:
-                                editBuilder.replace(edit.range, edit.string ?? "");
-                                break;
-                            case LineEditType.PREPEND:
-                                break;
-                            default:
-                        }
-                    }
-                });
+                lineCallback.forEach((edit: LineEditInfo) => this.editSwitch(edit ,editBuilder));
             }).then();
 
             if (success) {
