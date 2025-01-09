@@ -8,7 +8,7 @@ import {
     IterateLineType
 } from "./Line";
 
-export class ActiveEditor {
+export class ActiveEditor extends Line {
 
     #documentSnapshot: string | undefined;
     #editor: vscode.TextEditor | undefined;
@@ -16,7 +16,8 @@ export class ActiveEditor {
     protected line: Line;
 
     constructor() {
-        this.line = new Line();
+        super();
+        // this.line = new ();
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
             this.#documentSnapshot = this.#editor.document.getText();
@@ -61,7 +62,7 @@ export class ActiveEditor {
         const selections = this.#editor?.selections;
 
         selections?.forEach((range : vscode.Range) => {
-            editSchedule.push(...this.line.prepareLines(range, callback));
+            editSchedule.push(...this.prepareLines(range, callback));
         });
 
         this.editInRange(editSchedule);

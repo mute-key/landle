@@ -25,7 +25,7 @@ export const Register = (
             if (key in command) {
                 return vscode.commands.registerTextEditorCommand("deco." + key,(editor, edit) => {
                     const args = { lineEditFlag: CommandId[key]};
-                    command[key](editor, edit, args); // 커맨드 실행 시 args 전달
+                    command[key](editor, edit, args); 
                 });
             } else {
                 console.log('command ', key, 'has no implementation');
