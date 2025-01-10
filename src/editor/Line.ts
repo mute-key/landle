@@ -24,7 +24,7 @@ export type LineEditInfo = {
 }
 
 export type LineEditDefintion = {
-    func: (range) => LineEditInfo,
+    func: (range : vscode.Range) => LineEditInfo,
     type: LineEditType,
     cond?: number
 }

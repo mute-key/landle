@@ -152,35 +152,25 @@ var vscode2 = __toESM(require("vscode"));
 // src/common/LineUtil.ts
 var vscode = __toESM(require("vscode"));
 var LineUtil = class {
+  // #rmTrailingWhiteSpaceString = /[ \t]+$/;
+  // #ifTrailingWhiteSpaceString = /\s(?=\s*$)/g;
+  // #ifNonWhitespaceIndex = /\S/g;
+  // #ifNonWhitespaceIndexReverse = /\S(?=\s*$)/g;
+  // #rmMultipleWhiteSpaceString = /\s\s+/g;
+  // #ifMultipleWhiteSpaceString = /(?<=\S)\s+(?=\S)/g;
+  // #isCommented = /^\s*\/\//g;
   constructor() {
   }
   static getNowDateTimeStamp = () => {
     return (/* @__PURE__ */ new Date()).toLocaleString();
   };
-  static removeTrailingWhiteSpaceString = (line) => {
-    return line.replace(/[ \t]+$/, "");
-  };
-  static findTrailingWhiteSpaceString = (line) => {
-    return line.search(/\s(?=\s*$)/g);
-  };
-  static findNonWhitespaceIndex = (line) => {
-    return line.search(/\S/g);
-  };
-  static findReverseNonWhitespaceIndex = (line) => {
-    return line.search(/\S(?=\s*$)/g);
-  };
-  static removeMultipleWhiteSpaceString = (line) => {
-    return line.replace(/\s\s+/g, " ");
-  };
-  static getMultipleWhiteSpaceString = (line) => {
-    return line.match(/(?<=\S)\s+(?=\S)/g);
-  };
-  static findMultipleWhiteSpaceString = (line) => {
-    return line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
-  };
-  static isLineCommented = (line) => {
-    return line.search(/^\s*\/\//g) !== -1;
-  };
+  static removeTrailingWhiteSpaceString = (line) => line.replace(/[ \t]+$/, " ");
+  static findTrailingWhiteSpaceString = (line) => line.search(/\s(?=\s*$)/g);
+  static findNonWhitespaceIndex = (line) => line.search(/\S/g);
+  static findReverseNonWhitespaceIndex = (line) => line.search(/\S(?=\s*$)/g);
+  static removeMultipleWhiteSpaceString = (line) => line.replace(/\s\s+/g, " ");
+  static findMultipleWhiteSpaceString = (line) => line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
+  static isLineCommented = (line) => line.search(/^\s*\/\//g) !== -1;
   static pushMessage = (message) => {
     return vscode.window.showInformationMessage(message);
   };
@@ -355,7 +345,7 @@ var ActiveEditor = class extends Line {
     }
   }
   editSwitch = (edit, editBuilder) => {
-    if (edit.type) {
+    if (edit) {
       switch (edit.type) {
         case 1 /* APPEND */:
           editBuilder.insert(edit.range.start, edit.string ?? "");

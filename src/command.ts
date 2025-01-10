@@ -62,7 +62,6 @@ export class Command {
             func: this.#ActiveEditor.setNowDateTimeOnLine,
             type: LineEditType.APPEND,
         };
-
     }
     
     // =============================================================================

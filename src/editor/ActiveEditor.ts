@@ -24,7 +24,7 @@ export class ActiveEditor extends Line{
     }
 
     private editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
-        if (edit.type) {
+        if (edit) {
             switch (edit.type) {
                 case LineEditType.APPEND:
                     editBuilder.insert(edit.range.start, edit.string ?? "");
