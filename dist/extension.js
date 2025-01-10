@@ -161,9 +161,6 @@ var LineUtil = class {
   // #isCommented = /^\s*\/\//g;
   constructor() {
   }
-  static getNowDateTimeStamp = () => {
-    return (/* @__PURE__ */ new Date()).toLocaleString();
-  };
   static removeTrailingWhiteSpaceString = (line) => line.replace(/[ \t]+$/, " ");
   static findTrailingWhiteSpaceString = (line) => line.search(/\s(?=\s*$)/g);
   static findNonWhitespaceIndex = (line) => line.search(/\S/g);
@@ -177,6 +174,51 @@ var LineUtil = class {
   static splitStringOn(slicable, ...indices) {
     return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
   }
+  static getNowDateTimeStamp = /* @__PURE__ */ (() => ({
+    custom: () => {
+      function formatDate(date) {
+        const options = {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        };
+        const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+        const formatter = new Intl.DateTimeFormat(locale, options);
+        const parts = formatter.formatToParts(date);
+        let year = "", month = "", day = "", hour = "", minute = "", ampm = "";
+        parts.forEach((part) => {
+          switch (part.type) {
+            case "year":
+              year = part.value;
+              break;
+            case "month":
+              month = part.value;
+              break;
+            case "day":
+              day = part.value;
+              break;
+            case "hour":
+              hour = part.value;
+              break;
+            case "minute":
+              minute = part.value;
+              break;
+            case "dayPeriod":
+              ampm = part.value.toUpperCase();
+              break;
+          }
+        });
+        return `${year}-${month}-${day} (${hour}:${minute} ${ampm})`;
+      }
+      const currentDate = /* @__PURE__ */ new Date();
+      return formatDate(currentDate);
+    },
+    locale: () => (/* @__PURE__ */ new Date()).toLocaleString(),
+    iso: () => (/* @__PURE__ */ new Date()).toISOString()
+  }))();
 };
 
 // src/editor/Line.ts
@@ -196,10 +238,10 @@ var Line = class {
   // =============================================================================
   // > PRIVATE FUNCTIONS: 
   // =============================================================================
-  getText = (range) => {
+  #getText = (range) => {
     return this.#doc.getText(range);
   };
-  getTextLineFromRange = (range, lineDelta = 0) => {
+  #getTextLineFromRange = (range, lineDelta = 0) => {
     if (typeof range === "number") {
       return this.#doc.lineAt(range + lineDelta);
     }
@@ -208,36 +250,27 @@ var Line = class {
     }
     return this.#doc.lineAt(range.start.line);
   };
-  lineFullRange = (range) => {
-    if (typeof range === "number") {
-      return this.#doc.lineAt(range).range;
-    }
-    return this.#doc.lineAt(range.start.line).range;
+  #lineFullRangeWithEOL = (range) => {
+    return this.#getTextLineFromRange(range).rangeIncludingLineBreak;
   };
-  lineFullRangeWithEOL = (range) => {
-    return this.getTextLineFromRange(range).rangeIncludingLineBreak;
-  };
-  getLineNumbersFromRange = (range) => {
+  #getLineNumbersFromRange = (range) => {
     const startLine = range.start.line;
     const endLine = range.end.line;
     return { startLine, endLine };
   };
-  newRangeZeroBased = (lineNuber, startPosition, endPosition) => {
+  #newRangeZeroBased = (lineNuber, startPosition, endPosition) => {
     return new vscode2.Range(
       new vscode2.Position(lineNuber, startPosition),
       new vscode2.Position(lineNuber, endPosition)
     );
   };
-  // =============================================================================
-  // > PUBLIC FUNCTIONS: 
-  // =============================================================================
-  editLineBindOnCondition = (range, callback, cond) => {
+  #editLineBindOnCondition = (range, callback, cond) => {
     return cond ? {
       ...callback.func(this.lineFullRange(range)),
       type: callback.type
     } : void 0;
   };
-  editedLineInfo = (currntRange, fn, _lineEdit_) => {
+  #editedLineInfo = (currntRange, fn, _lineEdit_) => {
     const editInfo = fn.func(currntRange);
     if (editInfo) {
       _lineEdit_.push({
@@ -246,78 +279,87 @@ var Line = class {
       });
     }
   };
-  lineRecursion = (range, callback, currentLineNumber, _lineEdit_) => {
+  #lineRecursion = (range, callback, currentLineNumber, _lineEdit_) => {
     if (currentLineNumber < range.end.line) {
       callback.forEach((fn) => {
-        this.editedLineInfo(this.lineFullRange(currentLineNumber), fn, _lineEdit_);
+        this.#editedLineInfo(this.lineFullRange(currentLineNumber), fn, _lineEdit_);
       });
-      this.lineRecursion(range, callback, currentLineNumber + 1, _lineEdit_);
+      this.#lineRecursion(range, callback, currentLineNumber + 1, _lineEdit_);
     }
     return _lineEdit_;
   };
+  // =============================================================================
+  // > PROTECTED FUNCTIONS: 
+  // =============================================================================
+  lineFullRange = (range) => {
+    if (typeof range === "number") {
+      return this.#doc.lineAt(range).range;
+    }
+    return this.#doc.lineAt(range.start.line).range;
+  };
+  // =============================================================================
+  // > PUBLIC FUNCTIONS: 
+  // =============================================================================
   prepareLines = (range, callback) => {
     const _lineEdit_ = [];
     if (range.isEmpty || range.isSingleLine) {
-      callback.forEach((fn) => this.editedLineInfo(this.lineFullRangeWithEOL(range), fn, _lineEdit_));
+      callback.forEach((fn) => this.#editedLineInfo(this.#lineFullRangeWithEOL(range), fn, _lineEdit_));
       return _lineEdit_;
     }
-    return this.lineRecursion(
+    return this.#lineRecursion(
       range,
       callback,
       range.start.line,
       _lineEdit_
     );
   };
-  // =============================================================================
-  // > PROTECTED FUNCTIONS: 
-  // =============================================================================
   removeTrailingWhiteSpace = (range) => {
-    const whitespacePos = LineUtil.findTrailingWhiteSpaceString(this.getText(range));
-    if (whitespacePos >= 0 && !this.getTextLineFromRange(range).isEmptyOrWhitespace) {
-      const textLineLength = this.getText(range).length;
+    const whitespacePos = LineUtil.findTrailingWhiteSpaceString(this.#getText(range));
+    if (whitespacePos >= 0 && !this.#getTextLineFromRange(range).isEmptyOrWhitespace) {
+      const textLineLength = this.#getText(range).length;
       return {
-        range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
+        range: this.#newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
       };
     }
     return;
   };
   removeMultipleWhitespace = (range) => {
-    const lineText = this.getText(range);
+    const lineText = this.#getText(range);
     if (LineUtil.findMultipleWhiteSpaceString(lineText)) {
       const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
-      const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
+      const startPos = this.#getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
       const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
       return {
-        range: this.newRangeZeroBased(range.start.line, startPos, endPos),
+        range: this.#newRangeZeroBased(range.start.line, startPos, endPos),
         string: newLineText.padEnd(endPos, " ").trim()
       };
     }
     return;
   };
   removeMulitpleEmptyLine = (range) => {
-    const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
-    const nextLine = this.getTextLineFromRange(range, 1).isEmptyOrWhitespace;
+    const currentLine = this.#getTextLineFromRange(range).isEmptyOrWhitespace;
+    const nextLine = this.#getTextLineFromRange(range, 1).isEmptyOrWhitespace;
     if (currentLine && nextLine) {
       return {
-        range: this.lineFullRangeWithEOL(range)
+        range: this.#lineFullRangeWithEOL(range)
       };
     }
     return;
   };
   removeCommentedLine = (range) => {
-    const lineText = this.getText(range);
+    const lineText = this.#getText(range);
     if (LineUtil.isLineCommented(lineText)) {
       return {
-        range: this.lineFullRangeWithEOL(range)
+        range: this.#lineFullRangeWithEOL(range)
       };
     }
     return;
   };
   removeEmptyLines = (range) => {
-    const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
+    const currentLine = this.#getTextLineFromRange(range).isEmptyOrWhitespace;
     if (currentLine) {
       return {
-        range: this.lineFullRangeWithEOL(range)
+        range: this.#lineFullRangeWithEOL(range)
       };
     }
     return;
@@ -325,7 +367,7 @@ var Line = class {
   setNowDateTimeOnLine = (range) => {
     return {
       range,
-      string: LineUtil.getNowDateTimeStamp()
+      string: LineUtil.getNowDateTimeStamp.custom()
     };
     ;
   };
@@ -337,14 +379,16 @@ var ActiveEditor = class extends Line {
   #editor;
   constructor() {
     super();
+  }
+  #getActiveEditor = () => {
     this.#editor = vscode3.window.activeTextEditor;
     if (this.#editor) {
       this.#documentSnapshot = this.#editor.document.getText();
     } else {
       return;
     }
-  }
-  editSwitch = (edit, editBuilder) => {
+  };
+  #editSwitch = (edit, editBuilder) => {
     if (edit) {
       switch (edit.type) {
         case 1 /* APPEND */:
@@ -379,6 +423,7 @@ var ActiveEditor = class extends Line {
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
   prepareEdit = (callback, includeCursorLine) => {
+    this.#getActiveEditor();
     const editSchedule = [];
     const selections = this.#editor?.selections;
     selections?.forEach((range) => {
@@ -389,7 +434,7 @@ var ActiveEditor = class extends Line {
   editInRange = async (lineCallback) => {
     try {
       const success = await this.#editor?.edit((editBuilder) => {
-        lineCallback.forEach((edit) => this.editSwitch(edit, editBuilder));
+        lineCallback.forEach((edit) => this.#editSwitch(edit, editBuilder));
       }).then();
       if (success) {
         console.log("Edit applied successfully!");

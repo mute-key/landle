@@ -8,22 +8,25 @@ import {
     IterateLineType
 } from "./Line";
 
-export class ActiveEditor extends Line{
+export class ActiveEditor extends Line {
 
     #documentSnapshot: string | undefined;
     #editor: vscode.TextEditor | undefined;
 
     constructor() {
-        super();
+        super();        
+    }
+
+    #getActiveEditor = () => {
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
             this.#documentSnapshot = this.#editor.document.getText();
         } else {
             return;
         }
-    }
+    };
 
-    private editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
+    #editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
         if (edit) {
             switch (edit.type) {
                 case LineEditType.APPEND:
@@ -62,7 +65,7 @@ export class ActiveEditor extends Line{
     // =============================================================================
 
     public prepareEdit = (callback: LineEditDefintion[], includeCursorLine: boolean): void => {
-
+        this.#getActiveEditor();
         const editSchedule: IterateLineType[] = [];
         const selections = this.#editor?.selections;
 
@@ -76,7 +79,7 @@ export class ActiveEditor extends Line{
     public editInRange = async (lineCallback: any[]) : Promise<void> => {
         try {
             const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
-                lineCallback.forEach((edit: LineEditInfo) => this.editSwitch(edit ,editBuilder));
+                lineCallback.forEach((edit: LineEditInfo) => this.#editSwitch(edit ,editBuilder));
             }).then();
 
             if (success) {
