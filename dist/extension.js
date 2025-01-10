@@ -38,32 +38,156 @@ module.exports = __toCommonJS(extension_exports);
 // src/register.ts
 var vscode4 = __toESM(require("vscode"));
 
+// package.json
+var package_default = {
+  name: "lindle",
+  displayName: "lindle",
+  description: "lindle",
+  version: "0.0.1",
+  engines: {
+    vscode: "^1.96.0"
+  },
+  categories: [
+    "Other"
+  ],
+  activationEvents: [],
+  main: "./dist/extension.js",
+  contributes: {
+    commands: [
+      {
+        command: "lindle.removeTrailingWhitespaceFromSelection",
+        title: "Hello World"
+      },
+      {
+        command: "lindle.removeMulitpleEmptyLinesFromSelection",
+        title: "Hello World"
+      },
+      {
+        command: "lindle.removeEmptyLinesFromSelection",
+        title: "Hello World"
+      },
+      {
+        command: "lindle.removeMultipleWhitespaceFromSelection",
+        title: "Hello World"
+      },
+      {
+        command: "lindle.cleanUpWhitespaceFromSelection",
+        title: "Hello World"
+      },
+      {
+        command: "lindle.removeCommentedTextFromSelection",
+        title: "Hello World"
+      },
+      {
+        command: "lindle.printNowDateTimeOnSelection",
+        title: "Hello World"
+      }
+    ],
+    keybindings: [
+      {
+        command: "lindle.removeTrailingWhitespaceFromSelection",
+        key: "ctrl+alt+w"
+      },
+      {
+        command: "lindle.removeMulitpleEmptyLinesFromSelection",
+        key: "ctrl+alt+m"
+      },
+      {
+        command: "lindle.removeEmptyLinesFromSelection",
+        key: "ctrl+alt+e"
+      },
+      {
+        command: "lindle.removeMultipleWhitespaceFromSelection",
+        key: "ctrl+alt+space"
+      },
+      {
+        command: "lindle.removeCommentedTextFromSelection",
+        key: "ctrl+alt+/"
+      },
+      {
+        command: "lindle.cleanUpWhitespaceFromSelection",
+        key: "ctrl+alt+c"
+      },
+      {
+        command: "lindle.printNowDateTimeOnSelection",
+        key: "ctrl+alt+n"
+      }
+    ]
+  },
+  scripts: {
+    "vscode:prepublish": "pnpm run package",
+    compile: "pnpm run check-types && pnpm run lint && node esbuild.js",
+    watch: "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    package: "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    pretest: "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "check-types": "tsc --noEmit",
+    lint: "eslint src",
+    test: "vscode-test"
+  },
+  devDependencies: {
+    "@types/vscode": "^1.96.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    eslint: "^9.16.0",
+    esbuild: "^0.24.0",
+    "npm-run-all": "^4.1.5",
+    typescript: "^5.7.2",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+};
+
 // src/editor/ActiveEditor.ts
 var vscode3 = __toESM(require("vscode"));
 
 // src/editor/Line.ts
 var vscode2 = __toESM(require("vscode"));
 
-// src/common/util.ts
+// src/common/LineUtil.ts
 var vscode = __toESM(require("vscode"));
-var LineUtil;
-((LineUtil2) => {
-  LineUtil2.getNowDateTimeStamp = () => (/* @__PURE__ */ new Date()).toLocaleString();
-  LineUtil2.removeTrailingWhiteSpaceString = (line) => line.replace(/[ \t]+$/, "");
-  LineUtil2.findTrailingWhiteSpaceString = (line) => line.search(/\s(?=\s*$)/g);
-  LineUtil2.findReverseNonWhitespaceIndex = (line) => line.search(/\S(?=\s*$)/g);
-  LineUtil2.removeMultipleWhiteSpaceString = (line) => line.replace(/\s\s+/g, " ");
-  LineUtil2.getMultipleWhiteSpaceString = (line) => line.match(/(?<=\S)\s+(?=\S)/g);
-  LineUtil2.findMultipleWhiteSpaceString = (line) => line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
-  LineUtil2.isLineCommented = (line) => line.search(/^\s*\/\//g) !== -1;
-  LineUtil2.pushMessage = (message) => {
+var LineUtil = class {
+  constructor() {
+  }
+  static getNowDateTimeStamp = () => {
+    return (/* @__PURE__ */ new Date()).toLocaleString();
+  };
+  static removeTrailingWhiteSpaceString = (line) => {
+    return line.replace(/[ \t]+$/, "");
+  };
+  static findTrailingWhiteSpaceString = (line) => {
+    return line.search(/\s(?=\s*$)/g);
+  };
+  static findNonWhitespaceIndex = (line) => {
+    return line.search(/\S/g);
+  };
+  static findReverseNonWhitespaceIndex = (line) => {
+    return line.search(/\S(?=\s*$)/g);
+  };
+  static removeMultipleWhiteSpaceString = (line) => {
+    return line.replace(/\s\s+/g, " ");
+  };
+  static getMultipleWhiteSpaceString = (line) => {
+    return line.match(/(?<=\S)\s+(?=\S)/g);
+  };
+  static findMultipleWhiteSpaceString = (line) => {
+    return line.search(/(?<=\S)\s+(?=\S)/g) !== -1;
+  };
+  static isLineCommented = (line) => {
+    return line.search(/^\s*\/\//g) !== -1;
+  };
+  static pushMessage = (message) => {
     return vscode.window.showInformationMessage(message);
   };
-  function splitStringOn(slicable, ...indices) {
+  static splitStringOn(slicable, ...indices) {
     return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
   }
-  LineUtil2.splitStringOn = splitStringOn;
-})(LineUtil || (LineUtil = {}));
+};
 
 // src/editor/Line.ts
 var Line = class {
@@ -123,46 +247,43 @@ var Line = class {
       type: callback.type
     } : void 0;
   };
-  newLineEditCallbackWrapper = (currntRange, fn, editList, cond = true) => {
+  editedLineInfo = (currntRange, fn, _lineEdit_) => {
     const editInfo = fn.func(currntRange);
-    if (editInfo && cond) {
-      editList.push({
+    if (editInfo) {
+      _lineEdit_.push({
         ...editInfo,
         type: fn.type
       });
     }
   };
-  lineRecursion = (range, callback, currentLineNumber, editList) => {
-    const currntRange = this.lineFullRange(currentLineNumber);
+  lineRecursion = (range, callback, currentLineNumber, _lineEdit_) => {
     if (currentLineNumber < range.end.line) {
-      callback.forEach((fn) => this.newLineEditCallbackWrapper(currntRange, fn, editList));
-      this.lineRecursion(range, callback, currentLineNumber + 1, editList);
+      callback.forEach((fn) => {
+        this.editedLineInfo(this.lineFullRange(currentLineNumber), fn, _lineEdit_);
+      });
+      this.lineRecursion(range, callback, currentLineNumber + 1, _lineEdit_);
     }
-    return editList;
+    return _lineEdit_;
   };
   prepareLines = (range, callback) => {
-    const lineEdit = [];
-    if (range.isEmpty) {
-      callback.forEach((fn) => this.newLineEditCallbackWrapper(range, fn, lineEdit, range.isEmpty));
-      return lineEdit;
-    }
-    if (range.isSingleLine) {
-      callback.forEach((fn) => this.newLineEditCallbackWrapper(range, fn, lineEdit, range.isSingleLine));
-      return lineEdit;
+    const _lineEdit_ = [];
+    if (range.isEmpty || range.isSingleLine) {
+      callback.forEach((fn) => this.editedLineInfo(this.lineFullRangeWithEOL(range), fn, _lineEdit_));
+      return _lineEdit_;
     }
     return this.lineRecursion(
       range,
       callback,
       range.start.line,
-      lineEdit
+      _lineEdit_
     );
   };
   // =============================================================================
   // > PROTECTED FUNCTIONS: 
   // =============================================================================
-  removeTrailingWhiteSpaceFromLine = (range) => {
+  removeTrailingWhiteSpace = (range) => {
     const whitespacePos = LineUtil.findTrailingWhiteSpaceString(this.getText(range));
-    if (whitespacePos >= 0) {
+    if (whitespacePos >= 0 && !this.getTextLineFromRange(range).isEmptyOrWhitespace) {
       const textLineLength = this.getText(range).length;
       return {
         range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
@@ -170,7 +291,7 @@ var Line = class {
     }
     return;
   };
-  removeMultipleWhitespaceFromLine = (range) => {
+  removeMultipleWhitespace = (range) => {
     const lineText = this.getText(range);
     if (LineUtil.findMultipleWhiteSpaceString(lineText)) {
       const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
@@ -178,12 +299,12 @@ var Line = class {
       const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
       return {
         range: this.newRangeZeroBased(range.start.line, startPos, endPos),
-        string: newLineText
+        string: newLineText.padEnd(endPos, " ").trim()
       };
     }
     return;
   };
-  removeMulitpleEmptyLines = (range) => {
+  removeMulitpleEmptyLine = (range) => {
     const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
     const nextLine = this.getTextLineFromRange(range, 1).isEmptyOrWhitespace;
     if (currentLine && nextLine) {
@@ -221,12 +342,11 @@ var Line = class {
 };
 
 // src/editor/ActiveEditor.ts
-var ActiveEditor = class {
+var ActiveEditor = class extends Line {
   #documentSnapshot;
   #editor;
-  line;
   constructor() {
-    this.line = new Line();
+    super();
     this.#editor = vscode3.window.activeTextEditor;
     if (this.#editor) {
       this.#documentSnapshot = this.#editor.document.getText();
@@ -235,21 +355,26 @@ var ActiveEditor = class {
     }
   }
   editSwitch = (edit, editBuilder) => {
-    if (edit) {
+    if (edit.type) {
       switch (edit.type) {
         case 1 /* APPEND */:
-          return editBuilder.insert(edit.range.start, edit.string ?? "");
+          editBuilder.insert(edit.range.start, edit.string ?? "");
+          break;
         case 8 /* CLEAR */:
-          return;
+          editBuilder.delete(this.lineFullRange(edit.range));
+          break;
         case 32 /* DELETE */:
-          return editBuilder.delete(edit.range);
+          editBuilder.delete(edit.range);
+          break;
         case 4 /* REPLACE */:
-          return editBuilder.replace(edit.range, edit.string ?? "");
+          editBuilder.replace(edit.range, edit.string ?? "");
+          break;
         case 2 /* PREPEND */:
-          return;
+          break;
         default:
       }
     }
+    ;
   };
   // =============================================================================
   // > RPOTECED FUNCTIONS: 
@@ -257,6 +382,9 @@ var ActiveEditor = class {
   snapshotDocument = () => {
     this.#documentSnapshot = vscode3.window.activeTextEditor?.document.getText();
   };
+  // protected addEmptyLine = () => {
+  //     if (this.#editor?.document.lineCount)
+  // };
   // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
@@ -264,7 +392,7 @@ var ActiveEditor = class {
     const editSchedule = [];
     const selections = this.#editor?.selections;
     selections?.forEach((range) => {
-      editSchedule.push(...this.line.prepareLines(range, callback));
+      editSchedule.push(...this.prepareLines(range, callback));
     });
     this.editInRange(editSchedule);
   };
@@ -286,51 +414,56 @@ var ActiveEditor = class {
 
 // src/command.ts
 var CommandId = ((CommandId2) => {
-  CommandId2[CommandId2["removeTrailingWhitespaceFromSelection"] = 1 /* DEFAULT */ + 4 /* SINGLE_LINE_ONLY_ALLOWED */ + 8 /* EMPTY_LINE_ALLOWED */ + 2 /* CURSOR_ONLY_ALLOWED */] = "removeTrailingWhitespaceFromSelection";
+  CommandId2[CommandId2["removeTrailingWhitespaceFromSelection"] = 1 /* NO_RANGE_OVERLAPPING */ + 4 /* PRIORITY */] = "removeTrailingWhitespaceFromSelection";
   CommandId2[CommandId2["removeMulitpleEmptyLinesFromSelection"] = void 0] = "removeMulitpleEmptyLinesFromSelection";
   CommandId2[CommandId2["removeEmptyLinesFromSelection"] = void 0] = "removeEmptyLinesFromSelection";
-  CommandId2[CommandId2["removeMultipleWhitespaceFromSelection"] = void 0] = "removeMultipleWhitespaceFromSelection";
+  CommandId2[CommandId2["removeMultipleWhitespaceFromSelection"] = 1 /* NO_RANGE_OVERLAPPING */ + 2 /* IGNORE_ON_COLLISION */] = "removeMultipleWhitespaceFromSelection";
   CommandId2[CommandId2["removeCommentedTextFromSelection"] = void 0] = "removeCommentedTextFromSelection";
   CommandId2[CommandId2["cleanUpWhitespaceFromSelection"] = void 0] = "cleanUpWhitespaceFromSelection";
   CommandId2[CommandId2["printNowDateTimeOnSelection"] = void 0] = "printNowDateTimeOnSelection";
   return CommandId2;
 })(CommandId || {});
-var Command = class extends ActiveEditor {
+var Command = class {
+  // this.#ActiveEditor = new ActiveEditor();
+  #ActiveEditor;
+  #removeTrailingWhiteSpaceFromLine;
+  #removeMultipleWhitespaceFromLine;
+  #removeMulitpleEmptyLines;
+  #removeCommentedTextFromLines;
+  #removeEmptyLinesFromLine;
+  #setNowDateTimeOnLineOnLine;
   constructor() {
-    super();
+    this.#ActiveEditor = new ActiveEditor();
+    this.#removeTrailingWhiteSpaceFromLine = {
+      func: this.#ActiveEditor.removeTrailingWhiteSpace,
+      type: 32 /* DELETE */
+    };
+    this.#removeMultipleWhitespaceFromLine = {
+      func: this.#ActiveEditor.removeMultipleWhitespace,
+      type: 4 /* REPLACE */
+    };
+    this.#removeMulitpleEmptyLines = {
+      func: this.#ActiveEditor.removeMulitpleEmptyLine,
+      type: 32 /* DELETE */
+    };
+    this.#removeCommentedTextFromLines = {
+      func: this.#ActiveEditor.removeCommentedLine,
+      type: 32 /* DELETE */
+    };
+    this.#removeEmptyLinesFromLine = {
+      func: this.#ActiveEditor.removeEmptyLines,
+      type: 32 /* DELETE */
+    };
+    this.#setNowDateTimeOnLineOnLine = {
+      func: this.#ActiveEditor.setNowDateTimeOnLine,
+      type: 1 /* APPEND */
+    };
   }
-  // =============================================================================
-  // > PRIVATE VARIABLES: 
-  // =============================================================================
-  #removeTrailingWhiteSpaceFromLine = {
-    func: this.line.removeTrailingWhiteSpaceFromLine,
-    type: 32 /* DELETE */
-  };
-  #removeMultipleWhitespaceFromLine = {
-    func: this.line.removeMultipleWhitespaceFromLine,
-    type: 4 /* REPLACE */
-  };
-  #removeMulitpleEmptyLines = {
-    func: this.line.removeMulitpleEmptyLines,
-    type: 32 /* DELETE */
-  };
-  #removeCommentedTextFromLine = {
-    func: this.line.removeCommentedLine,
-    type: 32 /* DELETE */
-  };
-  #removeEmptyLinesFromLine = {
-    func: this.line.removeEmptyLines,
-    type: 32 /* DELETE */
-  };
-  #setNowDateTimeOnLineOnLine = {
-    func: this.line.setNowDateTimeOnLine,
-    type: 1 /* APPEND */
-  };
   // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
   removeTrailingWhitespaceFromSelection = (editor, edit, args) => {
-    this.prepareEdit(
+    this.#ActiveEditor.prepareEdit(
       [
         this.#removeTrailingWhiteSpaceFromLine
       ],
@@ -338,16 +471,24 @@ var Command = class extends ActiveEditor {
     );
   };
   removeMulitpleEmptyLinesFromSelection = () => {
-    this.prepareEdit(
+    this.#ActiveEditor.prepareEdit(
       [
-        this.#removeMulitpleEmptyLines,
+        this.#removeMulitpleEmptyLines
+      ],
+      false
+    );
+  };
+  removeMultipleWhitespaceFromSelection = () => {
+    this.#ActiveEditor.prepareEdit(
+      [
+        this.#removeMultipleWhitespaceFromLine,
         this.#removeTrailingWhiteSpaceFromLine
       ],
       false
     );
   };
   removeEmptyLinesFromSelection = () => {
-    this.prepareEdit(
+    this.#ActiveEditor.prepareEdit(
       [
         this.#removeEmptyLinesFromLine,
         this.#removeTrailingWhiteSpaceFromLine
@@ -355,35 +496,26 @@ var Command = class extends ActiveEditor {
       false
     );
   };
-  removeMultipleWhitespace = () => {
-    this.prepareEdit(
-      [
-        this.#removeMultipleWhitespaceFromLine,
-        this.#removeTrailingWhiteSpaceFromLine
-      ],
-      false
-    );
-  };
   removeCommentedTextFromSelection = () => {
-    this.prepareEdit(
+    this.#ActiveEditor.prepareEdit(
       [
-        this.#removeCommentedTextFromLine
+        this.#removeCommentedTextFromLines
       ],
       false
     );
   };
   cleanUpWhitespaceFromSelection = () => {
-    this.prepareEdit(
+    this.#ActiveEditor.prepareEdit(
       [
-        this.#removeTrailingWhiteSpaceFromLine,
         this.#removeMultipleWhitespaceFromLine,
+        this.#removeTrailingWhiteSpaceFromLine,
         this.#removeMulitpleEmptyLines
       ],
       false
     );
   };
   printNowDateTimeOnSelection = () => {
-    this.prepareEdit(
+    this.#ActiveEditor.prepareEdit(
       [
         this.#setNowDateTimeOnLineOnLine
       ],
@@ -400,12 +532,13 @@ var Command = class extends ActiveEditor {
 
 // src/register.ts
 var Register = (context, handleLocal = true) => {
+  console.log("packageInfo.name", package_default.name);
   const disposable = [];
   const command = new Command();
   disposable.push(
     ...Object.keys(CommandId).filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key)).map((key) => {
       if (key in command) {
-        return vscode4.commands.registerTextEditorCommand("deco." + key, (editor, edit) => {
+        return vscode4.commands.registerTextEditorCommand("lindle." + key, (editor, edit) => {
           const args = { lineEditFlag: CommandId[key] };
           command[key](editor, edit, args);
         });

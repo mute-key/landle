@@ -8,16 +8,13 @@ import {
     IterateLineType
 } from "./Line";
 
-export class ActiveEditor extends Line {
+export class ActiveEditor extends Line{
 
     #documentSnapshot: string | undefined;
     #editor: vscode.TextEditor | undefined;
 
-    protected line: Line;
-
     constructor() {
         super();
-        // this.line = new ();
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
             this.#documentSnapshot = this.#editor.document.getText();
@@ -27,21 +24,25 @@ export class ActiveEditor extends Line {
     }
 
     private editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
-        if (edit) {
+        if (edit.type) {
             switch (edit.type) {
                 case LineEditType.APPEND:
-                    return editBuilder.insert(edit.range.start, edit.string ?? "");
+                    editBuilder.insert(edit.range.start, edit.string ?? "");
+                    break;
                 case LineEditType.CLEAR:
-                    return;
+                    editBuilder.delete(this.lineFullRange(edit.range));
+                    break;
                 case LineEditType.DELETE:
-                    return editBuilder.delete(edit.range);
+                    editBuilder.delete(edit.range);
+                    break;
                 case LineEditType.REPLACE:
-                    return editBuilder.replace(edit.range, edit.string ?? "");
+                    editBuilder.replace(edit.range, edit.string ?? "");
+                    break;
                 case LineEditType.PREPEND:
-                    return;
+                    break;
                 default:
             }
-        }
+        };
     };
     
     // =============================================================================
@@ -51,6 +52,10 @@ export class ActiveEditor extends Line {
     protected snapshotDocument = () => {
         this.#documentSnapshot = vscode.window.activeTextEditor?.document.getText();
     };
+
+    // protected addEmptyLine = () => {
+    //     if (this.#editor?.document.lineCount)
+    // };
 
     // =============================================================================
     // > PUBLIC FUNCTIONS: 

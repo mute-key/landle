@@ -6,110 +6,117 @@ import { ActiveEditor } from "./editor/ActiveEditor";
 import { 
     LineEditType, 
     LineEditDefintion,
-    LineEditTypeChecker as ledc, 
+    LineEditCollisionGroup as lecg,
 } from "./editor/Line";
 
 export enum CommandId {
-    removeTrailingWhitespaceFromSelection = ledc.DEFAULT + ledc.SINGLE_LINE_ONLY_ALLOWED + ledc.EMPTY_LINE_ALLOWED + ledc.CURSOR_ONLY_ALLOWED,
+    removeTrailingWhitespaceFromSelection = lecg.NO_RANGE_OVERLAPPING + lecg.PRIORITY,
     removeMulitpleEmptyLinesFromSelection,
     removeEmptyLinesFromSelection,
-    removeMultipleWhitespaceFromSelection,
+    removeMultipleWhitespaceFromSelection = lecg.NO_RANGE_OVERLAPPING + lecg.IGNORE_ON_COLLISION,
     removeCommentedTextFromSelection,
     cleanUpWhitespaceFromSelection,
     printNowDateTimeOnSelection,
 };
 
-export class Command extends ActiveEditor {
+export class Command {
+    // this.#ActiveEditor = new ActiveEditor();
+    
+    #ActiveEditor : ActiveEditor;
+    #removeTrailingWhiteSpaceFromLine;
+    #removeMultipleWhitespaceFromLine;
+    #removeMulitpleEmptyLines;
+    #removeCommentedTextFromLines;
+    #removeEmptyLinesFromLine;
+    #setNowDateTimeOnLineOnLine;
+
     constructor() {
-        super();
+        this.#ActiveEditor = new ActiveEditor();
+
+        this.#removeTrailingWhiteSpaceFromLine = <LineEditDefintion>{
+            func: this.#ActiveEditor.removeTrailingWhiteSpace,
+            type: LineEditType.DELETE,
+        };
+    
+        this.#removeMultipleWhitespaceFromLine = <LineEditDefintion>{
+            func: this.#ActiveEditor.removeMultipleWhitespace,
+            type: LineEditType.REPLACE,
+        };
+    
+        this.#removeMulitpleEmptyLines = <LineEditDefintion>{
+            func: this.#ActiveEditor.removeMulitpleEmptyLine,
+            type: LineEditType.DELETE,
+        };
+    
+        this.#removeCommentedTextFromLines = <LineEditDefintion>{
+            func: this.#ActiveEditor.removeCommentedLine,
+            type: LineEditType.DELETE,
+        };
+    
+        this.#removeEmptyLinesFromLine = <LineEditDefintion>{
+            func: this.#ActiveEditor.removeEmptyLines,
+            type: LineEditType.DELETE,
+        };
+    
+        this.#setNowDateTimeOnLineOnLine = <LineEditDefintion>{
+            func: this.#ActiveEditor.setNowDateTimeOnLine,
+            type: LineEditType.APPEND,
+        };
+
     }
     
-    // =============================================================================
-    // > PRIVATE VARIABLES: 
-    // =============================================================================
-
-    #removeTrailingWhiteSpaceFromLine = <LineEditDefintion>{
-        func: this.line.removeTrailingWhiteSpaceFromLine,
-        type: LineEditType.DELETE,
-    };
-
-    #removeMultipleWhitespaceFromLine = <LineEditDefintion>{
-        func: this.line.removeMultipleWhitespaceFromLine,
-        type: LineEditType.REPLACE,
-    };
-
-    #removeMulitpleEmptyLines = <LineEditDefintion>{
-        func: this.line.removeMulitpleEmptyLines,
-        type: LineEditType.DELETE,
-    };
-
-    #removeCommentedTextFromLine = <LineEditDefintion>{
-        func: this.line.removeCommentedLine,
-        type: LineEditType.DELETE,
-    };
-
-    #removeEmptyLinesFromLine = <LineEditDefintion>{
-        func: this.line.removeEmptyLines,
-        type: LineEditType.DELETE,
-    };
-
-    #setNowDateTimeOnLineOnLine = <LineEditDefintion>{
-        func: this.line.setNowDateTimeOnLine,
-        type: LineEditType.APPEND,
-    };
-
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
 
     public removeTrailingWhitespaceFromSelection = (editor, edit, args) : void => {
-        this.prepareEdit([
+        this.#ActiveEditor.prepareEdit([
             this.#removeTrailingWhiteSpaceFromLine
         ],
         false);
     };
-
+            
     public removeMulitpleEmptyLinesFromSelection = () : void => {
-        this.prepareEdit([
+        this.#ActiveEditor.prepareEdit([
             this.#removeMulitpleEmptyLines,
+        ],
+        false);
+    };
+
+    public removeMultipleWhitespaceFromSelection = () : void =>  {
+        this.#ActiveEditor.prepareEdit([
+            this.#removeMultipleWhitespaceFromLine,
             this.#removeTrailingWhiteSpaceFromLine
         ],
         false);
     };
 
     public removeEmptyLinesFromSelection = () : void => {
-        this.prepareEdit([
+        this.#ActiveEditor.prepareEdit([
             this.#removeEmptyLinesFromLine,
             this.#removeTrailingWhiteSpaceFromLine
         ],
         false);
     };
 
-    public removeMultipleWhitespace = () :void => {
-        this.prepareEdit([
-            this.#removeMultipleWhitespaceFromLine,
-            this.#removeTrailingWhiteSpaceFromLine
-        ],
-        false);
-    };
     public removeCommentedTextFromSelection = () :void => {
-        this.prepareEdit([
-            this.#removeCommentedTextFromLine
+        this.#ActiveEditor.prepareEdit([
+            this.#removeCommentedTextFromLines
         ],
         false);
     };
 
     public cleanUpWhitespaceFromSelection = () :void => {
-        this.prepareEdit([
-            this.#removeTrailingWhiteSpaceFromLine, 
+        this.#ActiveEditor.prepareEdit([
             this.#removeMultipleWhitespaceFromLine,
+            this.#removeTrailingWhiteSpaceFromLine, 
             this.#removeMulitpleEmptyLines
         ],
         false);
     };
 
     public printNowDateTimeOnSelection = () :void => {
-        this.prepareEdit([
+        this.#ActiveEditor.prepareEdit([
             this.#setNowDateTimeOnLineOnLine
         ],
         false);

@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
-import { LineEditType } from "../editor/Line";
 
 export class LineUtil {
 
     private constructor() {
-        // this class 
+        // this is static class 
     }
 
     public static getNowDateTimeStamp = () : string => {
@@ -17,6 +16,10 @@ export class LineUtil {
 
     public static findTrailingWhiteSpaceString = (line: string): number => {
         return line.search(/\s(?=\s*$)/g);
+    };
+
+    public static findNonWhitespaceIndex = (line: string): number => {
+        return line.search(/\S/g);
     };
 
     public static findReverseNonWhitespaceIndex = (line: string): number => {

@@ -1,7 +1,7 @@
 {
-    "name": "deco",
-    "displayName": "decoration",
-    "description": "deco",
+    "name": "lindle",
+    "displayName": "lindle",
+    "description": "lindle",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.96.0"
@@ -14,61 +14,61 @@
     "contributes": {
         "commands": [
             {
-                "command": "deco.removeTrailingWhitespaceFromSelection",
+                "command": "lindle.removeTrailingWhitespaceFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.removeMulitpleEmptyLinesFromSelection",
+                "command": "lindle.removeMulitpleEmptyLinesFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.removeEmptyLinesFromSelection",
+                "command": "lindle.removeEmptyLinesFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.removeMultipleWhitespaceFromSelection",
+                "command": "lindle.removeMultipleWhitespaceFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.cleanUpWhitespaceFromSelection",
+                "command": "lindle.cleanUpWhitespaceFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.removeCommentedTextFromSelection",
+                "command": "lindle.removeCommentedTextFromSelection",
                 "title": "Hello World"
             },
             {
-                "command": "deco.printNowDateTimeOnSelection",
+                "command": "lindle.printNowDateTimeOnSelection",
                 "title": "Hello World"
             }
         ],
         "keybindings": [
             {
-                "command": "deco.removeTrailingWhitespaceFromSelection",
+                "command": "lindle.removeTrailingWhitespaceFromSelection",
                 "key": "ctrl+alt+w"
             },
             {
-                "command": "deco.removeMulitpleEmptyLinesFromSelection",
+                "command": "lindle.removeMulitpleEmptyLinesFromSelection",
                 "key": "ctrl+alt+m"
             },
             {
-                "command": "deco.removeEmptyLinesFromSelection",
+                "command": "lindle.removeEmptyLinesFromSelection",
                 "key": "ctrl+alt+e"
             },
             {
-                "command": "deco.removeMultipleWhitespaceFromSelection",
+                "command": "lindle.removeMultipleWhitespaceFromSelection",
                 "key": "ctrl+alt+space"
             },
             {
-                "command": "deco.removeCommentedTextFromSelection",
+                "command": "lindle.removeCommentedTextFromSelection",
                 "key": "ctrl+alt+/"
             },
             {
-                "command": "deco.cleanUpWhitespaceFromSelection",
+                "command": "lindle.cleanUpWhitespaceFromSelection",
                 "key": "ctrl+alt+c"
             },
             {
-                "command": "deco.printNowDateTimeOnSelection",
+                "command": "lindle.printNowDateTimeOnSelection",
                 "key": "ctrl+alt+n"
             }
         ]

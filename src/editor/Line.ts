@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
 
-import { LineUtil } from "../common/util";
+import { LineUtil } from "../common/LineUtil";
 
-export enum LineEditTypeChecker {
-    DEFAULT = 0b0001,
-    CURSOR_ONLY_ALLOWED = 0b0010,
-    SINGLE_LINE_ONLY_ALLOWED = 0b0100,
-    EMPTY_LINE_ALLOWED = 0b1000,
+export enum LineEditCollisionGroup {
+    DEFAULT = 0b0000,
+    NO_RANGE_OVERLAPPING = 0b0001,
+    IGNORE_ON_COLLISION = 0b0010,
+    PRIORITY = 0b0100,
 }
 
 export enum LineEditType {
@@ -24,7 +24,7 @@ export type LineEditInfo = {
 }
 
 export type LineEditDefintion = {
-    func: (any) => LineEditInfo,
+    func: (range) => LineEditInfo,
     type: LineEditType,
     cond?: number
 }
@@ -68,7 +68,7 @@ export class Line {
         return this.#doc.lineAt(range.start.line);               
     };
 
-    private lineFullRange = (range: vscode.Range | number): vscode.Range => {
+    protected lineFullRange = (range: vscode.Range | number): vscode.Range => {
         if (typeof range === 'number') {
             return this.#doc.lineAt(range).range;
         }
@@ -104,9 +104,8 @@ export class Line {
         } : undefined;
     };
 
-    
-    private editedLineInfo = (currntRange : vscode.Range, fn: LineEditDefintion, _lineEdit_ : IterateLineType[]) : void => {
-        const editInfo : LineEditInfo = fn.func(currntRange);
+    private editedLineInfo = (currntRange: vscode.Range, fn: LineEditDefintion, _lineEdit_: IterateLineType[]): void => {
+        const editInfo: LineEditInfo = fn.func(currntRange);
         if (editInfo) {
             _lineEdit_.push(<LineEditInfo>{
                 ...editInfo,
@@ -114,40 +113,40 @@ export class Line {
             });
         }
     };
-
-    private lineRecursion = (range : vscode.Range, callback: LineEditDefintion[], currentLineNumber : number, _lineEdit_: IterateLineType[]) : IterateLineType[] => {
-        const currntRange : vscode.Range = this.lineFullRange(currentLineNumber);
+    
+    private lineRecursion = (range: vscode.Range, callback: LineEditDefintion[], currentLineNumber: number, _lineEdit_: IterateLineType[]): IterateLineType[] => {
         if (currentLineNumber < range.end.line) {
-            callback.forEach(fn => this.editedLineInfo(currntRange, fn, _lineEdit_));
+            callback.forEach((fn : LineEditDefintion) => {
+                <void>this.editedLineInfo(this.lineFullRange(currentLineNumber), fn, _lineEdit_);
+            });
             this.lineRecursion(range, callback, currentLineNumber + 1, _lineEdit_);
-        }
+        } 
         return _lineEdit_;
     };
     
     public prepareLines = (range: vscode.Range, callback: LineEditDefintion[]): IterateLineType[] => {
-        const _lineEdit_ : IterateLineType[] = [];
-
+        const _lineEdit_: IterateLineType[] = [];
+        
         // on each selection, starting line is: isEmpty or if selection is singleLine 
         if (range.isEmpty || range.isSingleLine) {
-            callback.forEach(fn => this.editedLineInfo(range, fn, _lineEdit_));
+            callback.forEach(fn => <void>this.editedLineInfo(this.lineFullRangeWithEOL(range), fn, _lineEdit_));
             return _lineEdit_;
         }
 
         return this.lineRecursion(
-            range, 
-            callback, 
-            range.start.line, 
+            range,
+            callback,
+            range.start.line,
             _lineEdit_);
     };
-
 
     // =============================================================================
     // > PROTECTED FUNCTIONS: 
     // =============================================================================
 
-    public removeTrailingWhiteSpaceFromLine = (range: vscode.Range): LineEditInfo | undefined => {
+    public removeTrailingWhiteSpace = (range: vscode.Range): LineEditInfo | undefined => {
         const whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(this.getText(range));
-        if (whitespacePos >= 0) {
+        if (whitespacePos >= 0 && !this.getTextLineFromRange(range).isEmptyOrWhitespace) {
             const textLineLength = (this.getText(range).length);
             return {
                 range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
@@ -156,7 +155,7 @@ export class Line {
         return;
     };
 
-    public removeMultipleWhitespaceFromLine = (range: vscode.Range): LineEditInfo | undefined => {
+    public removeMultipleWhitespace = (range: vscode.Range): LineEditInfo | undefined => {
         const lineText = this.getText(range);
         if (LineUtil.findMultipleWhiteSpaceString(lineText)) {
             const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
@@ -164,13 +163,13 @@ export class Line {
             const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
             return {
                 range: this.newRangeZeroBased(range.start.line, startPos, endPos),
-                string: newLineText
+                string: newLineText.padEnd(endPos, " ").trim()
             };
         }
         return;
     };
 
-    public removeMulitpleEmptyLines = (range: vscode.Range): LineEditInfo | undefined => {
+    public removeMulitpleEmptyLine = (range: vscode.Range): LineEditInfo | undefined => {
         const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
         const nextLine = this.getTextLineFromRange(range, 1).isEmptyOrWhitespace;
 
