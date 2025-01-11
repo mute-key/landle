@@ -1,3 +1,7 @@
+/**
+ * this class handles the editor itself and selections. 
+ */
+
 import * as vscode from "vscode";
 
 import {
@@ -9,8 +13,9 @@ import {
 } from "./Line";
 
 export class ActiveEditor extends Line {
-
-    #documentSnapshot: string | undefined;
+    
+    // unused. for future reference.
+    #documentSnapshot: string | undefined; 
     #editor: vscode.TextEditor | undefined;
 
     constructor() {
@@ -26,6 +31,15 @@ export class ActiveEditor extends Line {
         }
     };
 
+    /**
+     * this function will perform edit with it's given range with string. 
+     * 
+     * @param edit :LineEditType will have the;
+     * - range
+     * - type 
+     * - string
+     * @param editBuilder as it's type. 
+     */
     #editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
         if (edit) {
             switch (edit.type) {
@@ -64,6 +78,23 @@ export class ActiveEditor extends Line {
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
 
+    /**
+     * it picks up current editor then, will iterate for each selection range in the 
+     * curernt open editor, and stack the callback function references. 
+     * each selection could be either; empty or singleline or multiple lines but 
+     * they will be handled in the Line class. 
+     * 
+     * it could have not started to ieterate if the selection is not a multiple line,
+     * however then it more conditions need to be checked in this class function. 
+     * beside, if choose not to iterate, means, will not use array, the arugment and
+     * it's type will not be an array or either explicitly use array with a single entry.
+     * that will end up line handling to either recieve array or an single callback 
+     * object which is inconsistance. plus, it is better to handle at one execution point 
+     * and that would be not here. 
+     * 
+     * @param callback line edit function and there could be more than one edit required.
+     * @param includeCursorLine unused. for future reference. 
+     */
     public prepareEdit = (callback: LineEditDefintion[], includeCursorLine: boolean): void => {
         this.#getActiveEditor();
         const editSchedule: IterateLineType[] = [];
@@ -76,6 +107,11 @@ export class ActiveEditor extends Line {
         this.editInRange(editSchedule);
     };
 
+    /**
+     * performes aysnc edit and aplit it all at once they are complete. 
+     * 
+     * @param lineCallback collecion of edits for the document how and where to edit. 
+     */
     public editInRange = async (lineCallback: any[]) : Promise<void> => {
         try {
             const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
