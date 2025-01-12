@@ -174,7 +174,7 @@ export class Line {
      * @param _lineEdit_ 
      * @returns LineEditInfo | undefined
      */
-    #editedLineInfo = (currntRange: vscode.Range, fn: LineEditDefintion): LineEditInfo | undefined=> {
+    #editedLineInfo = (currntRange: vscode.Range, fn: LineEditDefintion): LineEditInfo | undefined => {
         const editInfo: LineEditInfo = fn.func(currntRange);
         if (editInfo) {
             return <LineEditInfo>{
