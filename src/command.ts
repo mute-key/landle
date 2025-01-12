@@ -78,7 +78,6 @@ export class Command implements CommandInterface {
         this.#removeMulitpleEmptyLines = <LineEditDefintion>{
             func: this.#ActiveEditor.removeMulitpleEmptyLine,
             type: LineEditType.DELETE,
-            lock: true
         };
     
         this.#removeCommentedTextFromLines = <LineEditDefintion>{
@@ -89,7 +88,6 @@ export class Command implements CommandInterface {
         this.#removeEmptyLinesFromLine = <LineEditDefintion>{
             func: this.#ActiveEditor.removeEmptyLines,
             type: LineEditType.DELETE,
-            lock: true
         };
     
         this.#setNowDateTimeOnLineOnLine = <LineEditDefintion>{

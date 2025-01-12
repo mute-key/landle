@@ -314,6 +314,10 @@ var Line = class {
    * this private function is a wrap and shape the return object for each callback for a line. 
    * the function will take current range with callback and execute to get the information 
    * how to edit the line, which described in object with type of LineEditInfo. 
+   * this is where the default blocking value will be set to block additional edit on line;
+   * default for blocking the edit is true, and it is false if it is not defined in callback object. 
+   * this means that only a function with block:true will be executed and every other callbacks 
+   * will be drop for the further.
    * 
    * @param currntRange 
    * @param fn 
@@ -325,23 +329,20 @@ var Line = class {
     if (editInfo) {
       return {
         ...editInfo,
-        type: fn.type
+        type: fn.type,
+        block: editInfo.block ? true : false
       };
     }
   };
   /**
    * this is the mian loop to iterate the callbacks that are defined from command class.
-   * there is a object key named lock. when the property lock is true, it will drop all the 
+   * there is a object key named block. when the property block is true, it will drop all the 
    * added edit, and assign itself and stops further iteration to prevent no more changes to be
    * applied to that line. when the for loop is finished, it will be stacked into _line_edit_ refernce 
    * and goes into next iteration. 
    * 
-   * only a function with lock:true will be executed and every other callbacks will be drop for the further.
-   * 
    * this iteration could well have been done in array api but the problem was the type and hacky type casting. 
    * so thats why it is for loop. 
-   * 
-   * 
    * 
    * @param range 
    * 
@@ -353,10 +354,10 @@ var Line = class {
     for (const fn of callback) {
       const result = this.#editedLineInfo(range, fn);
       if (result) {
-        if (fn.lock === true) {
+        if (result.block === true) {
           currentLineEdit = [result];
           break;
-        } else {
+        } else if (result.block === false) {
           currentLineEdit.push(result);
         }
       }
@@ -489,7 +490,8 @@ var Line = class {
     const nextLine = this.#getTextLineFromRange(range, 1).isEmptyOrWhitespace;
     if (currentLine && nextLine) {
       return {
-        range: this.#lineFullRangeWithLF(range)
+        range: this.#lineFullRangeWithLF(range),
+        block: true
       };
     }
     return;
@@ -519,7 +521,8 @@ var Line = class {
     const currentLine = this.#getTextLineFromRange(range).isEmptyOrWhitespace;
     if (currentLine) {
       return {
-        range: this.#lineFullRangeWithLF(range)
+        range: this.#lineFullRangeWithLF(range),
+        block: true
       };
     }
     return;
@@ -679,8 +682,7 @@ var Command = class {
     };
     this.#removeMulitpleEmptyLines = {
       func: this.#ActiveEditor.removeMulitpleEmptyLine,
-      type: 32 /* DELETE */,
-      lock: true
+      type: 32 /* DELETE */
     };
     this.#removeCommentedTextFromLines = {
       func: this.#ActiveEditor.removeCommentedLine,
@@ -688,8 +690,7 @@ var Command = class {
     };
     this.#removeEmptyLinesFromLine = {
       func: this.#ActiveEditor.removeEmptyLines,
-      type: 32 /* DELETE */,
-      lock: true
+      type: 32 /* DELETE */
     };
     this.#setNowDateTimeOnLineOnLine = {
       func: this.#ActiveEditor.setNowDateTimeOnLine,

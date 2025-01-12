@@ -22,8 +22,6 @@ export class ActiveEditor extends Line {
         super();        
     }
 
-    
-
     #getActiveEditor = () => {
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
