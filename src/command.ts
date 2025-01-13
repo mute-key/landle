@@ -75,46 +75,46 @@ export class Command implements CommandInterface {
         // however then those functions are not portable. 
 
         this.#removeTrailingWhiteSpaceFromLine = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.removeTrailingWhiteSpace,
+            func: this.#ActiveEditor.lineHandler.removeTrailingWhiteSpace,
             type: LT.LineEditType.DELETE,
         };
     
         this.#removeMultipleWhitespaceFromLine = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.removeMultipleWhitespace,
+            func: this.#ActiveEditor.lineHandler.removeMultipleWhitespace,
             type: LT.LineEditType.REPLACE,
         };
     
         this.#removeMulitpleEmptyLines = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.removeMulitpleEmptyLine,
+            func: this.#ActiveEditor.lineHandler.removeMulitpleEmptyLine,
             type: LT.LineEditType.DELETE,
             block: true
         };
     
         this.#removeCommentedTextFromLines = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.removeCommentedLine,
+            func: this.#ActiveEditor.lineHandler.removeCommentedLine,
             type: LT.LineEditType.DELETE,
         };
     
         this.#removeEmptyLines = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.removeEmptyLine,
+            func: this.#ActiveEditor.lineHandler.removeEmptyLine,
             type: LT.LineEditType.DELETE,
             block: true
         };
 
         this.#removeDuplicateLines = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.removeDuplicateLine,
+            func: this.#ActiveEditor.lineHandler.removeDuplicateLine,
             type: LT.LineEditType.DELETE,
             block: true
         };
 
         this.#cleanUpBlockCommentLines = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.cleanUpBlockCommentLine,
+            func: this.#ActiveEditor.lineHandler.cleanUpBlockCommentLine,
             type: LT.LineEditType.DELETE,
             block: true
         };
             
         this.#setNowDateTimeOnLineOnLine = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.setNowDateTimeOnLine,
+            func: this.#ActiveEditor.lineHandler.setNowDateTimeOnLine,
             type: LT.LineEditType.APPEND,
         };
 

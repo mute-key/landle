@@ -9,19 +9,28 @@ import {
     Line
 } from "./Line";
 
-export class ActiveEditor extends Line {
+import {
+    LineHandler
+} from "./LineHandler";
+
+
+export class ActiveEditor {
     
     // unused. for future reference.
     #documentSnapshot: string | undefined; 
     #editor: vscode.TextEditor | undefined;
+    #lineHandler;
+    #line: typeof Line;
 
     constructor() {
-        super();        
+        this.#setActiveEditor();
+        this.#lineHandler = new LineHandler();
     }
 
-    #getActiveEditor = () => {
+    #setActiveEditor = () => {
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
+            this.#lineHandler = new LineHandler();
             this.#documentSnapshot = this.#editor.document.getText();
         } else {
             return;
@@ -44,7 +53,7 @@ export class ActiveEditor extends Line {
                     editBuilder.insert(edit.range.start, edit.string ?? "");
                     break;
                 case LineType.LineEditType.CLEAR:
-                    editBuilder.delete(this.lineFullRange(edit.range));
+                    editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
                     break;
                 case LineType.LineEditType.DELETE:
                     editBuilder.delete(edit.range);
@@ -68,7 +77,7 @@ export class ActiveEditor extends Line {
     };
 
     private resetCursor = () : void => {
-
+        
         // vscode.Selection
     };
 
@@ -79,6 +88,13 @@ export class ActiveEditor extends Line {
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
+
+    /**
+     * 
+     */
+    public lineHandler = (() : InstanceType<typeof LineHandler>  => {
+        return this.#lineHandler;
+    })();
 
     /**
      * it picks up current editor then, will iterate for each selection range in the 
@@ -99,12 +115,12 @@ export class ActiveEditor extends Line {
      * 
      */
     public prepareEdit = (callback: LineType.LineEditDefintion[], includeCursorLine: boolean): void => {
-        this.#getActiveEditor();
+        this.#setActiveEditor();
         const editSchedule: LineType.LineEditInfo[] = [];
         const selections = this.#editor?.selections;
 
         selections?.forEach((range : vscode.Range) => {
-            editSchedule.push(...this.prepareLines(range, callback));
+            editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
         });
 
         this.editInRange(editSchedule);
