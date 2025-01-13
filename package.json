@@ -17,31 +17,39 @@
         "commands": [
             {
                 "command": "lindle.removeTrailingWhitespaceFromSelection",
-                "title": "Hello World"
+                "title": "Remove Trailing Whitespace From Selection"
             },
             {
                 "command": "lindle.removeMulitpleEmptyLinesFromSelection",
-                "title": "Hello World"
+                "title": "Remove Mulitple Empty Lines From Selection"
             },
             {
                 "command": "lindle.removeEmptyLinesFromSelection",
-                "title": "Hello World"
+                "title": "Remove Empty Lines From Selection"
             },
             {
                 "command": "lindle.removeMultipleWhitespaceFromSelection",
-                "title": "Hello World"
-            },
-            {
-                "command": "lindle.cleanUpWhitespaceFromSelection",
-                "title": "Hello World"
+                "title": "Remove Multiple Whitespace From Selection"
             },
             {
                 "command": "lindle.removeCommentedTextFromSelection",
-                "title": "Hello World"
+                "title": "Remove Commented Text From Selection"
+            },
+            {
+                "command": "lindle.removeDuplicateLineFromSelection",
+                "title": "Remove Duplicate Line From Selection"
+            },
+            {
+                "command": "lindle.cleanUpBlockCommentFromSelection",
+                "title": "clean-up Block Comment From Selection"
+            },
+            {
+                "command": "lindle.cleanUpWhitespaceFromSelection",
+                "title": "Clean-up Whitespace From Selection"
             },
             {
                 "command": "lindle.printNowDateTimeOnSelection",
-                "title": "Hello World"
+                "title": "Print Now DateTime On Selection"
             }
         ],
         "keybindings": [
@@ -64,6 +72,14 @@
             {
                 "command": "lindle.removeCommentedTextFromSelection",
                 "key": "ctrl+alt+/"
+            },
+            {
+                "command": "lindle.removeDuplicateLineFromSelection",
+                "key": "ctrl+alt+d"
+            },
+            {
+                "command": "lindle.cleanUpBlockCommentFromSelection",
+                "key": "ctrl+alt+b"
             },
             {
                 "command": "lindle.cleanUpWhitespaceFromSelection",

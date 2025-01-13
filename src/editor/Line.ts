@@ -7,64 +7,62 @@ import * as vscode from "vscode";
 
 import { LineUtil } from "../common/LineUtil";
 
-/**
- * this is to check if more than one edit is trying to perform the edit 
- * on overlapping range which will throw runtime error. but this is not. 
- */
-export enum LineEditCollisionGroup {
-    DEFAULT = 0b0000,
-    NO_RANGE_OVERLAPPING = 0b0001,
-    IGNORE_ON_COLLISION = 0b0010,
-    PRIORITY = 0b0100,
+export namespace LineType {
+
+    /**
+     * this is to check if more than one edit is trying to perform the edit 
+     * on overlapping range which will throw runtime error. but this is not. 
+     */
+    export enum LineEditCollisionGroup {
+        DEFAULT = 0b0000,
+        NO_RANGE_OVERLAPPING = 0b0001,
+        IGNORE_ON_COLLISION = 0b0010,
+        PRIORITY = 0b0100,
+    }
+
+    /**
+     * bitmask to check multiple edit.type.
+     * if, it comes down to editor need to perform multiple edits with single callback, 
+     * this will be very useful and ActiveEditor.#editSwitch need be rewriten other than
+     * switch. 
+     * 
+     */
+    export enum LineEditType {
+        APPEND = 0b00000001,
+        PREPEND = 0b00000010,
+        REPLACE = 0b00000100,
+        CLEAR = 0b00001000,
+        DELETE = 0b00100000
+    };
+
+
+    /**
+     * detail about line edit, to be performed. 
+     */
+    export type LineEditInfo = {
+        range: vscode.Range,
+        string?: string,
+        type?: LineEditType,
+        block?: boolean,
+        lineSkip?: number[];
+    }
+
+    /**
+     * detail about line edit, to check on each line. 
+     */
+
+    export type LineEditDefintion = {
+        func: (range : vscode.Range) => LineEditInfo,
+        type: LineEditType,
+        block? : boolean
+    }
 }
-
-/**
- * bitmask to check multiple edit.type.
- * if, it comes down to editor need to perform multiple edits with single callback, 
- * this will be very useful and ActiveEditor.#editSwitch need be rewriten other than
- * switch. 
- * 
- */
-export enum LineEditType {
-    APPEND = 0b00000001,
-    PREPEND = 0b00000010,
-    REPLACE = 0b00000100,
-    CLEAR = 0b00001000,
-    DELETE = 0b00100000
-};
-
-
-/**
- * detail about line edit, to be performed. 
- */
-export type LineEditInfo = {
-    range: vscode.Range,
-    string?: string,
-    type?: LineEditType,
-    block? : boolean
-}
-
-/**
- * detail about line edit, to check on each line. 
- */
-
-export type LineEditDefintion = {
-    func: (range : vscode.Range) => LineEditInfo,
-    type: LineEditType,
-    cond?: number
-}
-
-export type IterateLineType = LineEditInfo | LineEditInfo[] | void;
-
-export type LineEditCallbackReturnType = LineEditInfo | undefined;
-
 
 /**
  * class handles the lines and range in editor
  */
 export class Line {
     #doc: vscode.TextDocument;
-    #edit: vscode.TextEditorEdit;
     #editor: vscode.TextEditor | undefined;
 
     constructor() {
@@ -82,12 +80,19 @@ export class Line {
     // =============================================================================
 
     /**
+     * get EOL of current document set
+     * 
+     * @returns 
+     */
+    #getEndofLine = () => this.#editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+
+    /**
      * get text as string from range
      * 
      * @param range target range
      * @returns text as string
      */
-    #getText = (range: vscode.Range): string => {
+    getText = (range: vscode.Range): string => {
         return this.#doc.getText(range);
     };
 
@@ -102,6 +107,10 @@ export class Line {
             return this.#doc.lineAt(range + lineDelta);
         }
 
+        if (range.start.line + lineDelta < 0) {
+            return this.#doc.lineAt(range.start.line);    
+        }
+
         if (this.#doc.lineCount > range.start.line + lineDelta) {
             return this.#doc.lineAt(range.start.line + lineDelta);
         } 
@@ -109,14 +118,13 @@ export class Line {
         return this.#doc.lineAt(range.start.line);               
     };
 
-
     /**
-     * get the range of entire line including LF.
+     * get the range of entire line including EOL.
      * 
      * @param range target range
      * @returns 
      */
-    #lineFullRangeWithLF = (range: vscode.Range): vscode.Range => {
+    #lineFullRangeWithEOL = (range: vscode.Range): vscode.Range => {
         return this.#getTextLineFromRange(range).rangeIncludingLineBreak;
     };
 
@@ -140,7 +148,7 @@ export class Line {
      * @param endPosition end position of range
      * @returns 
      */
-    #newRangeZeroBased = (lineNuber : number, startPosition : number, endPosition : number) : vscode.Range => {
+    newRangeZeroBased = (lineNuber : number, startPosition : number, endPosition : number) : vscode.Range => {
         return new vscode.Range(
             new vscode.Position(lineNuber, startPosition),
             new vscode.Position(lineNuber, endPosition)
@@ -153,8 +161,8 @@ export class Line {
      * @param range unused
      * @returns unused
      */
-    #editLineBindOnCondition = (range : vscode.Range, callback : LineEditDefintion, cond: boolean) : LineEditInfo | undefined => {
-        return cond ? <LineEditInfo>{
+    #editLineBindOnCondition = (range : vscode.Range, callback : LineType.LineEditDefintion, cond: boolean) : LineType.LineEditInfo | undefined => {
+        return cond ? <LineType.LineEditInfo>{
             ...callback.func(this.lineFullRange(range)),
             type: callback.type
         } : undefined;
@@ -172,20 +180,29 @@ export class Line {
      * @param currntRange 
      * @param fn 
      * @param _lineEdit_ 
-     * @returns LineEditInfo | undefined
+     * @returns LineType.LineEditInfo | undefined
      */
-    #editedLineInfo = (currntRange: vscode.Range, fn: LineEditDefintion): LineEditInfo | undefined => {
-        const editInfo: LineEditInfo = fn.func(currntRange);
+    #editedLineInfo = (currntRange: vscode.Range, fn: LineType.LineEditDefintion): LineType.LineEditInfo | undefined => {
+        const editInfo: LineType.LineEditInfo = fn.func(currntRange);
         if (editInfo) {
-            return <LineEditInfo>{
-                ...editInfo,
-                type: fn.type,
-                block: editInfo.block ? true : false
-            };
+            if (editInfo.type) {
+                return <LineType.LineEditInfo>{
+                    range: editInfo.range,
+                    string: editInfo?.string,
+                    type: editInfo.type ? editInfo.type : fn.type,
+                    block: fn.block ? true : false,
+                    lineSkip: editInfo.lineSkip
+                };    
+            } else {
+                return <LineType.LineEditInfo>{
+                    ...editInfo,
+                    type: fn.type,
+                    block: fn.block ? true : false
+                };
+            }
         }
     };
     
-
     /**
      * this is the mian loop to iterate the callbacks that are defined from command class.
      * there is a object key named block. when the property block is true, it will drop all the 
@@ -193,23 +210,24 @@ export class Line {
      * applied to that line. when the for loop is finished, it will be stacked into _line_edit_ refernce 
      * and goes into next iteration. 
      * 
-     * this iteration could well have been done in array api but the problem was the type and hacky type casting. 
+     * this iteration could well have been done in array.reduce but it does unnecessary exection in the iteartion.
      * so thats why it is for loop. 
      * 
      * @param range 
      * 
      * @param callback 
      * @returns 
+     * 
      */
-    #callbackIteration = (range: vscode.Range, callback : LineEditDefintion[]) : LineEditInfo[] => {
-        let currentLineEdit : LineEditInfo[] = [];
+    #callbackIteration = (range: vscode.Range, callback : LineType.LineEditDefintion[]) : LineType.LineEditInfo[] => {
+        let currentLineEdit : LineType.LineEditInfo[] = [];
         for (const fn of callback) {
-            const result : LineEditInfo | undefined = this.#editedLineInfo(range, fn);
+            const result : LineType.LineEditInfo | undefined = this.#editedLineInfo(range, fn);
             if (result) {
-                if (result.block === true) {
-                    currentLineEdit = [result];
+                if (fn.block === true) {
+                    currentLineEdit = [result] as LineType.LineEditInfo[];
                     break;
-                } else if (result.block === false) {
+                } else {
                     currentLineEdit.push(result);
                 }
             }
@@ -218,7 +236,7 @@ export class Line {
     };
 
     /**
-     * this private funciton will iterate each line in recursion and stack the line edit object 
+     * this funciton will iterate each line in recursion and stack the line edit object 
      * recursion will continue unitl the current line number is less than less than line number of
      * the each selection. the range at this point of execution will represent a single range and 
      * not entire document. callback will be a list of callbacks to check/apply to each line. 
@@ -239,14 +257,25 @@ export class Line {
      * @param _lineEdit_ 
      * @returns IterateLineType[]
      */
-    #lineRecursion = (range: vscode.Range, callback: LineEditDefintion[], currentLineNumber: number, _lineEdit_: LineEditInfo[]): IterateLineType[] => {
-        if (currentLineNumber < range.end.line || range.isEmpty || range.isSingleLine) {
-            let currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber),callback);
+    #lineIteration = (range: vscode.Range, callback: LineType.LineEditDefintion[], currentLineNumber: number, _lineEdit_: LineType.LineEditInfo[], lineSkip?: Set<number>): LineType.LineEditInfo[] => {
+        lineSkip = lineSkip ?? new Set();
+    
+        while (currentLineNumber <= range.end.line) {
+            if (lineSkip.has(currentLineNumber)) {
+                currentLineNumber++;
+                continue;
+            }
+    
+            const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
             if (currentLineEdit.length > 0) {
+                if (currentLineEdit[0].lineSkip) {
+                    currentLineEdit[0].lineSkip.forEach(line => lineSkip.add(line));
+                }
                 _lineEdit_.push(...currentLineEdit);
-            }            
-            this.#lineRecursion(range, callback, currentLineNumber + 1, _lineEdit_);
-        } 
+            }
+            currentLineNumber++;
+        }
+    
         return _lineEdit_;
     };
 
@@ -282,34 +311,35 @@ export class Line {
      * @param callback 
      * @returns 
      */
-    public prepareLines = (range: vscode.Range, callback: LineEditDefintion[]): IterateLineType[] => {
+    public prepareLines = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         const targetLine = range.start.line;
+        
         // on each selection, starting line is: isEmpty or if selection is singleLine 
-
         if (range.isEmpty || range.isSingleLine) {
             return this.#callbackIteration(this.lineFullRange(targetLine), callback);
         }
 
-        return this.#lineRecursion(
+        return this.#lineIteration(
             range,
             callback,
             targetLine,
-            <LineEditInfo[]>[]);
+            <LineType.LineEditInfo[]>[]);
     };
 
     /**
      * remove trailing whitespace lines from range if there is non-whitespace-character present. 
      * 
      * @param range target range
-     * @returns object descripting where/how to edit the line or undefined if no conditon met.
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
      */
 
-    public removeTrailingWhiteSpace = (range: vscode.Range): LineEditInfo | undefined => {
-        const whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(this.#getText(range));
+    public removeTrailingWhiteSpace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
+        const textString = this.getText(range);
+        const whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(textString);
         if (whitespacePos >= 0) {
-            const textLineLength = (this.#getText(range).length);
+            const textLineLength = (textString.length);
             return {
-                range: this.#newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
+                range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
             };
         } 
         return;
@@ -325,18 +355,17 @@ export class Line {
      *  
      * 
      * @param range target range
-     * @returns object descripting where/how to edit the line or undefined if no conditon met.
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
      */
-    public removeMultipleWhitespace = (range: vscode.Range): LineEditInfo | undefined => {
-        const lineText = this.#getText(range);
-
+    public removeMultipleWhitespace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
+        const lineText = this.getText(range);
         if (LineUtil.findMultipleWhiteSpaceString(lineText) && !this.#getTextLineFromRange(range).isEmptyOrWhitespace) {
             const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
             // also need to check if the line has indent
             const startPos = this.#getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
             const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
             return {
-                range: this.#newRangeZeroBased(range.start.line, startPos, endPos),
+                range: this.newRangeZeroBased(range.start.line, startPos, endPos),
                 string: newLineText.padEnd(endPos, " ").trim()
             };
         }
@@ -348,15 +377,14 @@ export class Line {
      * if both current and next is emtpy, remove current line. 
      * 
      * @param range target range
-     * @returns object descripting where/how to edit the line or undefined if no conditon met.
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
      */
-    public removeMulitpleEmptyLine = (range: vscode.Range): LineEditInfo | undefined => {
+    public removeMulitpleEmptyLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const currentLine = this.#getTextLineFromRange(range).isEmptyOrWhitespace;
         const nextLine = this.#getTextLineFromRange(range, 1).isEmptyOrWhitespace;
         if (currentLine && nextLine) {
             return {
-                range: this.#lineFullRangeWithLF(range),
-                block: true
+                range: this.#lineFullRangeWithEOL(range)
             };
         }
         return;
@@ -366,13 +394,13 @@ export class Line {
      * remove line if the line is commented
      * 
      * @param range target range
-     * @returns object descripting where/how to edit the line or undefined if no conditon met.
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
      */
-    public removeCommentedLine = (range: vscode.Range) : LineEditInfo | undefined => {
-        const lineText = this.#getText(range);
+    public removeCommentedLine = (range: vscode.Range) : LineType.LineEditInfo | undefined => {
+        const lineText = this.getText(range);
         if (LineUtil.isLineCommented(lineText)) {
             return {
-                range: this.#lineFullRangeWithLF(range)
+                range: this.#lineFullRangeWithEOL(range)
             };
         }
         return;
@@ -382,18 +410,86 @@ export class Line {
      * remove line if the line is empty without characters.
      * 
      * @param range target range
-     * @returns object descripting where/how to edit the line or undefined if no conditon met.
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
+     * 
      */
 
-    public removeEmptyLines = (range: vscode.Range) : LineEditInfo | undefined => {
+    public removeEmptyLine = (range: vscode.Range) : LineType.LineEditInfo | undefined => {
         const currentLine = this.#getTextLineFromRange(range).isEmptyOrWhitespace;
         if (currentLine) {
             return {
-                range: this.#lineFullRangeWithLF(range),
-                block: true
+                range: this.#lineFullRangeWithEOL(range)
             };
         }
         return; 
+    };
+
+    
+    /**
+     * check if the current cursor or selected range is empty line and next. 
+     * if both current and next is emtpy, remove current line. 
+     * 
+     * @param range target range
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
+     * 
+     */
+    public removeDuplicateLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
+        const currentLine = this.#getTextLineFromRange(range);
+        const nextLine = this.#getTextLineFromRange(range, 1);
+        if (currentLine.text === nextLine.text) {
+            return {
+                range: this.#lineFullRangeWithEOL(range)
+            };
+        }
+        return;
+    };
+
+    public cleanUpBlockCommentLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        const EOL = this.#getEndofLine();
+        const currentLine : vscode.TextLine = this.#getTextLineFromRange(range);
+        const before2Line : vscode.TextLine = this.#getTextLineFromRange(range, -2);
+        const beforeLine : vscode.TextLine = this.#getTextLineFromRange(range, -1);
+        const blockCommentStart : boolean  = LineUtil.isBlockCommentStartingLine(beforeLine.text);
+        const nextLine : vscode.TextLine  = this.#getTextLineFromRange(range, 1);
+        const nextLineIsBlockCommend  : boolean  = LineUtil.isEmptyBlockComment(nextLine.text);
+        const NextLineblockCommentEnd : boolean = LineUtil.isBlockCommentEndingLine(nextLine.text);
+        const LineIsBlockCommend : boolean = LineUtil.isEmptyBlockComment(currentLine.text);
+
+        if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
+            let ln = range.start.line;
+            let rg ;            
+            let tl;
+            const lineSkip : number[] = [];
+            while(ln) {
+                tl = this.#getTextLineFromRange(ln);
+                if (LineUtil.isEmptyBlockComment(tl.text)) {
+                    rg = tl.range;
+                    lineSkip.push(ln);
+                } else {
+                    break;
+                }
+                ln++;
+            }
+            return {
+                range: new vscode.Range(
+                    new vscode.Position(range.start.line, 0),
+                    new vscode.Position(rg.start.line + 1, 0)
+                ),
+                lineSkip: lineSkip
+            };
+        } 
+        else if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
+            return {
+                range: this.newRangeZeroBased(range.start.line, currentLine.text.length, currentLine.text.length),
+                string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " ",
+                type: LineType.LineEditType.APPEND
+            };
+        } else if ((LineIsBlockCommend && nextLineIsBlockCommend)) {
+            return {
+                range: this.#lineFullRangeWithEOL(range)
+            };
+        }
+        return;
     };
 
     /**
@@ -403,9 +499,9 @@ export class Line {
      * - custom
      * 
      * @param range target range, whichi will be the very starting of line.
-     * @returns object descripting where/how to edit the line or undefined if no conditon met.
+     * @returns object descripting where/how to edit the line or undefined if no condition is met.
      */
-    public setNowDateTimeOnLine = (range : vscode.Range) : LineEditInfo | undefined => {
+    public setNowDateTimeOnLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         return {
             range: range,
             string: LineUtil.getNowDateTimeStamp.custom()

@@ -5,11 +5,8 @@
 import * as vscode from "vscode";
 
 import {
-    LineEditType,
-    LineEditDefintion,
-    LineEditInfo,
-    Line,
-    IterateLineType
+    LineType,
+    Line
 } from "./Line";
 
 export class ActiveEditor extends Line {
@@ -34,28 +31,28 @@ export class ActiveEditor extends Line {
     /**
      * this function will perform edit with it's given range with string. 
      * 
-     * @param edit :LineEditType will have the;
+     * @param edit :LineType.LineEditType will have the;
      * - range
      * - type 
      * - string
      * @param editBuilder as it's type. 
      */
-    #editSwitch = (edit: LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
+    #editSwitch = (edit: LineType.LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
         if (edit) {
             switch (edit.type) {
-                case LineEditType.APPEND:
+                case LineType.LineEditType.APPEND:
                     editBuilder.insert(edit.range.start, edit.string ?? "");
                     break;
-                case LineEditType.CLEAR:
+                case LineType.LineEditType.CLEAR:
                     editBuilder.delete(this.lineFullRange(edit.range));
                     break;
-                case LineEditType.DELETE:
+                case LineType.LineEditType.DELETE:
                     editBuilder.delete(edit.range);
                     break;
-                case LineEditType.REPLACE:
+                case LineType.LineEditType.REPLACE:
                     editBuilder.replace(edit.range, edit.string ?? "");
                     break;
-                case LineEditType.PREPEND:
+                case LineType.LineEditType.PREPEND:
                     break;
                 default:
             }
@@ -66,8 +63,13 @@ export class ActiveEditor extends Line {
     // > RPOTECED FUNCTIONS: 
     // =============================================================================
 
-    protected snapshotDocument = () => {
+    protected snapshotDocument = () : void => {
         this.#documentSnapshot = vscode.window.activeTextEditor?.document.getText();
+    };
+
+    private resetCursor = () : void => {
+
+        // vscode.Selection
     };
 
     // protected addEmptyLine = () => {
@@ -94,10 +96,11 @@ export class ActiveEditor extends Line {
      * 
      * @param callback line edit function and there could be more than one edit required.
      * @param includeCursorLine unused. for future reference. 
+     * 
      */
-    public prepareEdit = (callback: LineEditDefintion[], includeCursorLine: boolean): void => {
+    public prepareEdit = (callback: LineType.LineEditDefintion[], includeCursorLine: boolean): void => {
         this.#getActiveEditor();
-        const editSchedule: IterateLineType[] = [];
+        const editSchedule: LineType.LineEditInfo[] = [];
         const selections = this.#editor?.selections;
 
         selections?.forEach((range : vscode.Range) => {
@@ -112,11 +115,14 @@ export class ActiveEditor extends Line {
      * 
      * @param lineCallback collecion of edits for the document how and where to edit. 
      */
-    public editInRange = async (lineCallback: any[]) : Promise<void> => {
+    public editInRange = async (lineCallback: LineType.LineEditInfo[]) : Promise<void> => {
         try {
             const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
-                lineCallback.forEach((edit: LineEditInfo) => this.#editSwitch(edit ,editBuilder));
-            }).then();
+                lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit ,editBuilder));
+            }).then(res => {
+                console.log(res);
+                this.resetCursor();
+            });
 
             if (success) {
                 console.log('Edit applied successfully!');

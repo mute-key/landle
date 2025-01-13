@@ -5,14 +5,13 @@
  * even more to specific use-case.
  */
 
-
+import * as vscode from "vscode";
 import { ActiveEditor } from "./editor/ActiveEditor";
+import { LineType as LT } from "./editor/Line";
+import { LineUtil } from "./common/LineUtil";
 
-import { 
-    LineEditType, 
-    LineEditDefintion,
-    LineEditCollisionGroup as lecg,
-} from "./editor/Line";
+
+
 
 /**
  * thsese command ids should match the commands names in package.json. 
@@ -21,11 +20,13 @@ import {
  * which i will lead to runtime error when that happes. 
  */
 export enum EditorCommandId {
-    removeTrailingWhitespaceFromSelection = lecg.NO_RANGE_OVERLAPPING + lecg.PRIORITY,
+    removeTrailingWhitespaceFromSelection = LT.LineEditCollisionGroup.NO_RANGE_OVERLAPPING + LT.LineEditCollisionGroup.PRIORITY,
     removeMulitpleEmptyLinesFromSelection,
     removeEmptyLinesFromSelection,
-    removeMultipleWhitespaceFromSelection = lecg.NO_RANGE_OVERLAPPING + lecg.IGNORE_ON_COLLISION,
+    removeMultipleWhitespaceFromSelection = LT.LineEditCollisionGroup.NO_RANGE_OVERLAPPING + LT.LineEditCollisionGroup.IGNORE_ON_COLLISION,
     removeCommentedTextFromSelection,
+    removeDuplicateLineFromSelection,
+    cleanUpBlockCommentFromSelection,
     cleanUpWhitespaceFromSelection,
     printNowDateTimeOnSelection,
 };
@@ -55,45 +56,69 @@ type CommandInterface = {
 export class Command implements CommandInterface {
 
     #ActiveEditor : ActiveEditor;
+    // these private variables defines the line function bindings.
     #removeTrailingWhiteSpaceFromLine;
     #removeMultipleWhitespaceFromLine;
     #removeMulitpleEmptyLines;
     #removeCommentedTextFromLines;
-    #removeEmptyLinesFromLine;
+    #removeEmptyLines;
+    #removeDuplicateLines;
+    #cleanUpBlockCommentLines;
     #setNowDateTimeOnLineOnLine;
 
     constructor() {
         this.#ActiveEditor = new ActiveEditor();
 
-        this.#removeTrailingWhiteSpaceFromLine = <LineEditDefintion>{
+        // these private variables defines the line function bindings and details.
+        // the aim was to make the line edit functions as generic as possible 
+        // so it is reusable. these callback binding could be implemented here 
+        // however then those functions are not portable. 
+
+        this.#removeTrailingWhiteSpaceFromLine = <LT.LineEditDefintion>{
             func: this.#ActiveEditor.removeTrailingWhiteSpace,
-            type: LineEditType.DELETE,
+            type: LT.LineEditType.DELETE,
         };
     
-        this.#removeMultipleWhitespaceFromLine = <LineEditDefintion>{
+        this.#removeMultipleWhitespaceFromLine = <LT.LineEditDefintion>{
             func: this.#ActiveEditor.removeMultipleWhitespace,
-            type: LineEditType.REPLACE,
+            type: LT.LineEditType.REPLACE,
         };
     
-        this.#removeMulitpleEmptyLines = <LineEditDefintion>{
+        this.#removeMulitpleEmptyLines = <LT.LineEditDefintion>{
             func: this.#ActiveEditor.removeMulitpleEmptyLine,
-            type: LineEditType.DELETE,
+            type: LT.LineEditType.DELETE,
+            block: true
         };
     
-        this.#removeCommentedTextFromLines = <LineEditDefintion>{
+        this.#removeCommentedTextFromLines = <LT.LineEditDefintion>{
             func: this.#ActiveEditor.removeCommentedLine,
-            type: LineEditType.DELETE,
+            type: LT.LineEditType.DELETE,
         };
     
-        this.#removeEmptyLinesFromLine = <LineEditDefintion>{
-            func: this.#ActiveEditor.removeEmptyLines,
-            type: LineEditType.DELETE,
+        this.#removeEmptyLines = <LT.LineEditDefintion>{
+            func: this.#ActiveEditor.removeEmptyLine,
+            type: LT.LineEditType.DELETE,
+            block: true
         };
-    
-        this.#setNowDateTimeOnLineOnLine = <LineEditDefintion>{
+
+        this.#removeDuplicateLines = <LT.LineEditDefintion>{
+            func: this.#ActiveEditor.removeDuplicateLine,
+            type: LT.LineEditType.DELETE,
+            block: true
+        };
+
+        this.#cleanUpBlockCommentLines = <LT.LineEditDefintion>{
+            func: this.#ActiveEditor.cleanUpBlockCommentLine,
+            type: LT.LineEditType.DELETE,
+            block: true
+        };
+            
+        this.#setNowDateTimeOnLineOnLine = <LT.LineEditDefintion>{
             func: this.#ActiveEditor.setNowDateTimeOnLine,
-            type: LineEditType.APPEND,
+            type: LT.LineEditType.APPEND,
         };
+
+        
     }
     
     // =============================================================================
@@ -157,7 +182,7 @@ export class Command implements CommandInterface {
      */
     public removeEmptyLinesFromSelection = () : void => {
         this.#ActiveEditor.prepareEdit([
-            this.#removeEmptyLinesFromLine,
+            this.#removeEmptyLines,
             this.#removeTrailingWhiteSpaceFromLine
         ],
         false);
@@ -174,16 +199,32 @@ export class Command implements CommandInterface {
         false);
     };
 
+    public removeDuplicateLineFromSelection = () : void => {
+        this.#ActiveEditor.prepareEdit([
+            this.#removeDuplicateLines
+        ],
+        false);
+    };
+
+    public cleanUpBlockCommentFromSelection = () => {
+        this.#ActiveEditor.prepareEdit([
+            this.#cleanUpBlockCommentLines,
+        ],
+        false);
+    };
+
     /**
      * this command will do combined edit which are; 
      * - removeMultipleWhitespaceFromLine
      * - removeTrailingWhiteSpaceFromLine
      * - removeMulitpleEmptyLines
+     * - cleanUpBlockCommentLines
      */
     public cleanUpWhitespaceFromSelection = () :void => {
         this.#ActiveEditor.prepareEdit([
             this.#removeMultipleWhitespaceFromLine,
             this.#removeTrailingWhiteSpaceFromLine,
+            this.#cleanUpBlockCommentLines,
             this.#removeMulitpleEmptyLines
         ],
         false);
