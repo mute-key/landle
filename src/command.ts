@@ -63,7 +63,10 @@ export class Command implements CommandInterface {
     #removeCommentedTextFromLines;
     #removeEmptyLines;
     #removeDuplicateLines;
-    #cleanUpBlockCommentLines;
+    #removeEmptyBlockCommentLineOnStart;
+    #removeMultipleEmptyBlockCommentLine;
+    #insertEmptyBlockCommentLineOnEnd;
+    // #cleanUpBlockCommentLines;
     #setNowDateTimeOnLineOnLine;
 
     constructor() {
@@ -73,7 +76,8 @@ export class Command implements CommandInterface {
         // the aim was to make the line edit functions as generic as possible 
         // so it is reusable. these callback binding could be implemented here 
         // however then those functions are not portable. 
-
+        // const lineHandler = this.#ActiveEditor.lineHandler;
+        
         this.#removeTrailingWhiteSpaceFromLine = <LT.LineEditDefintion>{
             func: this.#ActiveEditor.lineHandler.removeTrailingWhiteSpace,
             type: LT.LineEditType.DELETE,
@@ -107,8 +111,20 @@ export class Command implements CommandInterface {
             block: true
         };
 
-        this.#cleanUpBlockCommentLines = <LT.LineEditDefintion>{
-            func: this.#ActiveEditor.lineHandler.cleanUpBlockCommentLine,
+        this.#removeEmptyBlockCommentLineOnStart = <LT.LineEditDefintion>{
+            func: this.#ActiveEditor.lineHandler.removeEmptyBlockCommentLineOnStart,
+            type: LT.LineEditType.DELETE,
+            block: true
+        };
+
+        this.#removeMultipleEmptyBlockCommentLine = <LT.LineEditDefintion>{
+            func: this.#ActiveEditor.lineHandler.removeMultipleEmptyBlockCommentLine,
+            type: LT.LineEditType.DELETE,
+            block: true
+        };
+
+        this.#insertEmptyBlockCommentLineOnEnd = <LT.LineEditDefintion>{
+            func: this.#ActiveEditor.lineHandler.insertEmptyBlockCommentLineOnEnd,
             type: LT.LineEditType.DELETE,
             block: true
         };
@@ -117,10 +133,8 @@ export class Command implements CommandInterface {
             func: this.#ActiveEditor.lineHandler.setNowDateTimeOnLine,
             type: LT.LineEditType.APPEND,
         };
-
-        
     }
-    
+
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
@@ -206,9 +220,14 @@ export class Command implements CommandInterface {
         false);
     };
 
+
+    
     public cleanUpBlockCommentFromSelection = () => {
         this.#ActiveEditor.prepareEdit([
-            this.#cleanUpBlockCommentLines,
+            this.#removeEmptyBlockCommentLineOnStart,
+            this.#removeMultipleEmptyBlockCommentLine,
+            this.#insertEmptyBlockCommentLineOnEnd,
+            // this.#cleanUpBlockCommentLines,
         ],
         false);
     };
@@ -221,10 +240,13 @@ export class Command implements CommandInterface {
      * - cleanUpBlockCommentLines
      */
     public cleanUpWhitespaceFromSelection = () :void => {
+        console.log("????");
         this.#ActiveEditor.prepareEdit([
             this.#removeMultipleWhitespaceFromLine,
             this.#removeTrailingWhiteSpaceFromLine,
-            this.#cleanUpBlockCommentLines,
+            this.#removeEmptyBlockCommentLineOnStart,
+            this.#removeMultipleEmptyBlockCommentLine,
+            this.#insertEmptyBlockCommentLineOnEnd,
             this.#removeMulitpleEmptyLines
         ],
         false);

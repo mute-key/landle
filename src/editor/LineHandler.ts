@@ -14,15 +14,14 @@ export interface Edithandler {
     removeCommentedLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
     removeEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
     removeDuplicateLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-    cleanUpBlockCommentLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    // cleanUpBlockCommentLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
     setNowDateTimeOnLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
 }
 
 export class LineHandler extends Line implements Edithandler {
-    constructor(range? : vscode.Range) {
+    constructor() {
         super();
     }
-
     /**
      * remove trailing whitespace lines from range if there is non-whitespace-character present. 
      * 
@@ -141,15 +140,11 @@ export class LineHandler extends Line implements Edithandler {
         return;
     };
 
-    public cleanUpBlockCommentLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
-        const EOL = this.getEndofLine();
+    public removeEmptyBlockCommentLineOnStart = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
         const beforeLine : vscode.TextLine = this.getTextLineFromRange(range, -1);
         const blockCommentStart : boolean  = LineUtil.isBlockCommentStartingLine(beforeLine.text);
         const nextLine : vscode.TextLine  = this.getTextLineFromRange(range, 1);
-        const nextLineIsBlockCommend  : boolean  = LineUtil.isEmptyBlockComment(nextLine.text);
-        const NextLineblockCommentEnd : boolean = LineUtil.isBlockCommentEndingLine(nextLine.text);
-        const LineIsBlockCommend : boolean = LineUtil.isEmptyBlockComment(currentLine.text);
 
         if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
             let ln : number = range.start.line;
@@ -176,17 +171,37 @@ export class LineHandler extends Line implements Edithandler {
                 };
             }
         } 
-        else if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
+        return;
+    };
+
+    
+    public removeMultipleEmptyBlockCommentLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
+        const nextLine : vscode.TextLine  = this.getTextLineFromRange(range, 1);
+        const nextLineIsBlockCommend  : boolean  = LineUtil.isEmptyBlockComment(nextLine.text);
+        const LineIsBlockCommend : boolean = LineUtil.isEmptyBlockComment(currentLine.text);
+
+        if ((LineIsBlockCommend && nextLineIsBlockCommend)) {
+            return {
+                range: this.lineFullRangeWithEOL(range)
+            };
+        }
+        return;
+    };
+
+    public insertEmptyBlockCommentLineOnEnd = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        const EOL = this.getEndofLine();
+        const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
+        const nextLine : vscode.TextLine  = this.getTextLineFromRange(range, 1);
+        const NextLineblockCommentEnd : boolean = LineUtil.isBlockCommentEndingLine(nextLine.text);
+
+        if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
             return {
                 range: this.newRangeZeroBased(range.start.line, currentLine.text.length, currentLine.text.length),
                 string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " ",
                 type: LineType.LineEditType.APPEND
             };
-        } else if ((LineIsBlockCommend && nextLineIsBlockCommend)) {
-            return {
-                range: this.lineFullRangeWithEOL(range)
-            };
-        }
+        } 
         return;
     };
 

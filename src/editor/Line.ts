@@ -166,12 +166,12 @@ export abstract class Line {
     };
 
     /**
-     * this funciton will iterate each line in recursion and stack the line edit object 
-     * recursion will continue unitl the current line number is less than less than line number of
+     * this funciton will iterate each line and stack the line edit object.
+     * iteration will continue unitl the current line number is less than less than line number of
      * the each selection. the range at this point of execution will represent a single range and 
      * not entire document. callback will be a list of callbacks to check/apply to each line. 
      * _lineEdit_ variable are being used as a references so no direct assignement becuase 
-     * the variable is what this function will return upon the end of the recursion. 
+     * the variable is what this function will return upon the end of the iteration. 
      * 
      * there is a for loop that will iterate each every callback. the problem with js array api is 
      * it lacks handling the undefined value being returned in single api functions rather, 

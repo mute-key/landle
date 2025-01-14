@@ -21,8 +21,9 @@ export class ActiveEditor {
     #editor: vscode.TextEditor | undefined;
     #lineHandler : InstanceType<typeof LineHandler>;
 
+
     constructor() {
-        this.#setActiveEditor();
+        this.#setActiveEditor();        
         this.#lineHandler = new LineHandler();
     }
 
@@ -33,7 +34,6 @@ export class ActiveEditor {
     #setActiveEditor = () => {
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
-            this.#lineHandler = new LineHandler();
             this.#documentSnapshot = this.#editor.document.getText();
         } else {
             return;
@@ -94,7 +94,10 @@ export class ActiveEditor {
      * returns object literal of class linHandler with it's method.
      * @return private instance of lineHandler
      */
-    public lineHandler = (() : InstanceType<typeof LineHandler>  => {
+    public lineHandler = (() : InstanceType<typeof LineHandler> => {
+        if (this.#lineHandler === undefined) {
+            this.#lineHandler = new LineHandler();
+        }
         return this.#lineHandler;
     })();
 
