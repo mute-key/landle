@@ -1,11 +1,4 @@
-/**
- * this class can be broken down it seems. 
- * 
- */
-
 import * as vscode from "vscode";
-
-
 
 export namespace LineType {
 
@@ -46,6 +39,7 @@ export namespace LineType {
         block?: boolean,
         lineSkip?: number[];
     }
+    
 
     /**
      * detail about line edit, to check on each line. 
@@ -80,55 +74,6 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * get EOL of current document set
-     * 
-     * @returns 
-     */
-    protected getEndofLine = () => this.#editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
-
-    /**
-     * get text as string from range
-     * 
-     * @param range target range
-     * @returns text as string
-     */
-    protected getText = (range: vscode.Range): string => {
-        return this.#doc.getText(range);
-    };
-
-    /**
-     * get TextLine object from range or from line number. 
-     * 
-     * @param range target range
-     * @returns TextLine object of range or line.
-     */
-    protected getTextLineFromRange = (range: vscode.Range | number, lineDelta = 0): vscode.TextLine => {
-        if (typeof range === 'number') {
-            return this.#doc.lineAt(range + lineDelta);
-        }
-
-        if (range.start.line + lineDelta < 0) {
-            return this.#doc.lineAt(range.start.line);    
-        }
-
-        if (this.#doc.lineCount > range.start.line + lineDelta) {
-            return this.#doc.lineAt(range.start.line + lineDelta);
-        } 
-
-        return this.#doc.lineAt(range.start.line);               
-    };
-
-    /**
-     * get the range of entire line including EOL.
-     * 
-     * @param range target range
-     * @returns 
-     */
-    protected lineFullRangeWithEOL = (range: vscode.Range): vscode.Range => {
-        return this.getTextLineFromRange(range).rangeIncludingLineBreak;
-    };
-
-    /**
      * unused. for future reference. 
      * 
      * @param range unused
@@ -138,21 +83,6 @@ export abstract class Line {
         const startLine = range.start.line; 
         const endLine = range.end.line;     
         return { startLine, endLine };
-    };
-
-    /**
-     * create new range with line number, starting position and end position
-     * 
-     * @param lineNuber line number of new range object
-     * @param startPosition starting position of range
-     * @param endPosition end position of range
-     * @returns 
-     */
-    protected newRangeZeroBased = (lineNuber : number, startPosition : number, endPosition : number) : vscode.Range => {
-        return new vscode.Range(
-            new vscode.Position(lineNuber, startPosition),
-            new vscode.Position(lineNuber, endPosition)
-        );
     };
 
     /**
@@ -284,21 +214,88 @@ export abstract class Line {
     // =============================================================================
 
     /**
+     * get EOL of current document set
+     * 
+     * @returns 
+     */
+    protected getEndofLine = () => this.#editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+
+    /**
+     * get text as string from range
+     * 
+     * @param range target range
+     * @returns text as string
+     */
+    protected getText = (range: vscode.Range): string => {
+        return this.#doc.getText(range);
+    };
+
+    /**
+     * get TextLine object from range or from line number. 
+     * 
+     * @param range target range
+     * @returns TextLine object of range or line.
+     */
+    protected getTextLineFromRange = (range: vscode.Range | number, lineDelta = 0): vscode.TextLine => {
+        if (typeof range === 'number') {
+            return this.#doc.lineAt(range + lineDelta);
+        }
+
+        if (range.start.line + lineDelta < 0) {
+            return this.#doc.lineAt(range.start.line);    
+        }
+
+        if (this.#doc.lineCount > range.start.line + lineDelta) {
+            return this.#doc.lineAt(range.start.line + lineDelta);
+        } 
+
+        return this.#doc.lineAt(range.start.line);               
+    };
+
+    /**
+     * get the range of entire line including EOL.
+     * 
+     * @param range target range
+     * @returns 
+     */
+    protected lineFullRangeWithEOL = (range: vscode.Range): vscode.Range => {
+        return this.getTextLineFromRange(range).rangeIncludingLineBreak;
+    };
+
+
+    /**
+     * create new range with line number, starting position and end position
+     * 
+     * @param lineNuber line number of new range object
+     * @param startPosition starting position of range
+     * @param endPosition end position of range
+     * @returns 
+     */
+    protected newRangeZeroBased = (lineNuber : number, startPosition : number, endPosition : number) : vscode.Range => {
+        return new vscode.Range(
+            new vscode.Position(lineNuber, startPosition),
+            new vscode.Position(lineNuber, endPosition)
+        );
+    };
+
+    
+    // =============================================================================
+    // > PUBLIC FUNCTIONS: 
+    // =============================================================================
+
+    /**
      * get the range of line with any characters including whitespaces. 
      * 
      * @param range vscode.Range | number. 
      * @returns first line of the range or whole line of the the line number.
      */
-    protected lineFullRange = (range: vscode.Range | number): vscode.Range => {
+
+    public lineFullRange = (range: vscode.Range | number): vscode.Range => {
         if (typeof range === 'number') {
             return this.#doc.lineAt(<number>range).range;
         }
         return this.#doc.lineAt(range.start.line).range;
     };
-    
-    // =============================================================================
-    // > PUBLIC FUNCTIONS: 
-    // =============================================================================
 
     /**
      * take range as a single selection that could be a single line, empty (cursor only) 

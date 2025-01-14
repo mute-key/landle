@@ -19,14 +19,17 @@ export class ActiveEditor {
     // unused. for future reference.
     #documentSnapshot: string | undefined; 
     #editor: vscode.TextEditor | undefined;
-    #lineHandler;
-    #line: typeof Line;
+    #lineHandler : InstanceType<typeof LineHandler>;
 
     constructor() {
         this.#setActiveEditor();
         this.#lineHandler = new LineHandler();
     }
 
+    /**
+     * get current active text editor
+     * @returns 
+     */
     #setActiveEditor = () => {
         this.#editor = vscode.window.activeTextEditor;
         if (this.#editor) {
@@ -77,8 +80,6 @@ export class ActiveEditor {
     };
 
     private resetCursor = () : void => {
-        
-        // vscode.Selection
     };
 
     // protected addEmptyLine = () => {
@@ -90,7 +91,8 @@ export class ActiveEditor {
     // =============================================================================
 
     /**
-     * 
+     * returns object literal of class linHandler with it's method.
+     * @return private instance of lineHandler
      */
     public lineHandler = (() : InstanceType<typeof LineHandler>  => {
         return this.#lineHandler;
