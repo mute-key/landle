@@ -31,7 +31,7 @@ export class ActiveEditor {
      * get current active text editor
      * @returns 
      */
-    #setActiveEditor = () => {
+    #setActiveEditor = () : void => {
         this.#editor = vscode.window.activeTextEditor;
         if (!this.#editor) {
             return;
@@ -46,14 +46,16 @@ export class ActiveEditor {
         }
     };
 
-    #documentSnapshot = (editorText : string | undefined = undefined) : boolean | undefined => {
+    #documentSnapshot = (editorText: string | undefined): boolean => {
         if (this.#editor) {
             if (editorText === undefined) {
                 this.#editorText = this.#editor.document.getText();
+                return true; 
             } else {
                 return editorText === this.#editorText;
             }
         }
+        return false; 
     };
 
     /**
@@ -139,7 +141,6 @@ export class ActiveEditor {
      */
     public editInRange = async (lineCallback: LineType.LineEditInfo[]) : Promise<void> => {
         try {
-            
             if (!this.#documentSnapshot(vscode.window.activeTextEditor?.document.getText())) {
                 const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
                     lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit ,editBuilder));

@@ -775,14 +775,16 @@ var ActiveEditor = class {
       ;
     }
   };
-  #documentSnapshot = (editorText = void 0) => {
+  #documentSnapshot = (editorText) => {
     if (this.#editor) {
       if (editorText === void 0) {
         this.#editorText = this.#editor.document.getText();
+        return true;
       } else {
         return editorText === this.#editorText;
       }
     }
+    return false;
   };
   /**
    * this function will perform edit with it's given range with string. 

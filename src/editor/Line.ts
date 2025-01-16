@@ -1,8 +1,6 @@
 import * as vscode from "vscode";
 
 export namespace LineType {
-
-
     /**
      * bitmask to check multiple edit.type.
      * if, it comes down to editor need to perform multiple edits with single callback, 
