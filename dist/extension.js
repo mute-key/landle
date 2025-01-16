@@ -168,13 +168,6 @@ var vscode4 = __toESM(require("vscode"));
 var vscode = __toESM(require("vscode"));
 var LineType;
 ((LineType2) => {
-  let LineEditCollisionGroup;
-  ((LineEditCollisionGroup2) => {
-    LineEditCollisionGroup2[LineEditCollisionGroup2["DEFAULT"] = 0] = "DEFAULT";
-    LineEditCollisionGroup2[LineEditCollisionGroup2["NO_RANGE_OVERLAPPING"] = 1] = "NO_RANGE_OVERLAPPING";
-    LineEditCollisionGroup2[LineEditCollisionGroup2["IGNORE_ON_COLLISION"] = 2] = "IGNORE_ON_COLLISION";
-    LineEditCollisionGroup2[LineEditCollisionGroup2["PRIORITY"] = 4] = "PRIORITY";
-  })(LineEditCollisionGroup = LineType2.LineEditCollisionGroup || (LineType2.LineEditCollisionGroup = {}));
   let LineEditType;
   ((LineEditType2) => {
     LineEditType2[LineEditType2["APPEND"] = 1] = "APPEND";
@@ -184,17 +177,25 @@ var LineType;
     LineEditType2[LineEditType2["DELETE"] = 32] = "DELETE";
   })(LineEditType = LineType2.LineEditType || (LineType2.LineEditType = {}));
   ;
+  let LineEditBlockPriority;
+  ((LineEditBlockPriority2) => {
+    LineEditBlockPriority2[LineEditBlockPriority2["UNSET"] = 0] = "UNSET";
+    LineEditBlockPriority2[LineEditBlockPriority2["LOW"] = 1] = "LOW";
+    LineEditBlockPriority2[LineEditBlockPriority2["MID"] = 2] = "MID";
+    LineEditBlockPriority2[LineEditBlockPriority2["HIGH"] = 3] = "HIGH";
+    LineEditBlockPriority2[LineEditBlockPriority2["VERYHIGH"] = 4] = "VERYHIGH";
+  })(LineEditBlockPriority = LineType2.LineEditBlockPriority || (LineType2.LineEditBlockPriority = {}));
 })(LineType || (LineType = {}));
 var Line = class {
-  #doc;
-  #editor;
+  doc;
+  editor;
   constructor() {
-    this.#editor = vscode.window.activeTextEditor;
-    if (!this.#editor) {
+    this.editor = vscode.window.activeTextEditor;
+    if (!this.editor) {
       console.error("No Active Editor");
       return;
     } else {
-      this.#doc = this.#editor.document;
+      this.doc = this.editor.document;
     }
   }
   // =============================================================================
@@ -240,19 +241,20 @@ var Line = class {
   #editedLineInfo = (currntRange, fn) => {
     const editInfo = fn.func(currntRange);
     if (editInfo) {
-      if (editInfo.type) {
+      if (fn.block || editInfo.block) {
         return {
           range: editInfo.range,
           string: editInfo?.string,
           type: editInfo.type ? editInfo.type : fn.type,
-          block: fn.block ? true : false,
-          lineSkip: editInfo.lineSkip
+          block: {
+            priority: editInfo.block?.priority ? editInfo.block?.priority : fn.block?.priority,
+            lineSkip: editInfo.block?.lineSkip
+          }
         };
       } else {
         return {
           ...editInfo,
-          type: fn.type,
-          block: fn.block ? true : false
+          type: editInfo.type ? editInfo.type : fn.type
         };
       }
     }
@@ -268,20 +270,24 @@ var Line = class {
    * so thats why it is for loop. 
    * 
    * @param range 
-   * 
    * @param callback 
    * @returns 
    * 
    */
   #callbackIteration = (range, callback) => {
     let currentLineEdit = [];
+    let priority = 0 /* UNSET */;
+    let blockFlag = false;
     for (const fn of callback) {
       const result = this.#editedLineInfo(range, fn);
       if (result) {
-        if (fn.block === true) {
-          currentLineEdit = [result];
-          break;
-        } else {
+        if (result.block) {
+          if (result.block.priority > priority) {
+            currentLineEdit = [result];
+            priority = result.block.priority;
+            blockFlag = true;
+          }
+        } else if (!blockFlag) {
           currentLineEdit.push(result);
         }
       }
@@ -319,8 +325,11 @@ var Line = class {
       }
       const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
       if (currentLineEdit.length > 0) {
-        if (currentLineEdit[0].lineSkip) {
-          currentLineEdit[0].lineSkip.forEach((line) => lineSkip.add(line));
+        if (currentLineEdit[0].block) {
+          console.log(currentLineEdit[0].block);
+          if (currentLineEdit[0].block.lineSkip) {
+            currentLineEdit[0].block.lineSkip.forEach((line) => lineSkip.add(line));
+          }
         }
         _lineEdit_.push(...currentLineEdit);
       }
@@ -336,7 +345,7 @@ var Line = class {
    * 
    * @returns 
    */
-  getEndofLine = () => this.#editor?.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
+  getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
   /**
    * get text as string from range
    * 
@@ -344,7 +353,7 @@ var Line = class {
    * @returns text as string
    */
   getText = (range) => {
-    return this.#doc.getText(range);
+    return this.doc.getText(range);
   };
   /**
    * get TextLine object from range or from line number. 
@@ -354,15 +363,15 @@ var Line = class {
    */
   getTextLineFromRange = (range, lineDelta = 0) => {
     if (typeof range === "number") {
-      return this.#doc.lineAt(range + lineDelta);
+      return this.doc.lineAt(range + lineDelta);
     }
     if (range.start.line + lineDelta < 0) {
-      return this.#doc.lineAt(range.start.line);
+      return this.doc.lineAt(range.start.line);
     }
-    if (this.#doc.lineCount > range.start.line + lineDelta) {
-      return this.#doc.lineAt(range.start.line + lineDelta);
+    if (this.doc.lineCount > range.start.line + lineDelta) {
+      return this.doc.lineAt(range.start.line + lineDelta);
     }
-    return this.#doc.lineAt(range.start.line);
+    return this.doc.lineAt(range.start.line);
   };
   /**
    * get the range of entire line including EOL.
@@ -387,6 +396,10 @@ var Line = class {
       new vscode.Position(lineNuber, endPosition)
     );
   };
+  checkNextline = (range, callback) => {
+    const textLine = this.getTextLineFromRange(range, 1);
+    return callback(textLine.text);
+  };
   // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
@@ -398,9 +411,9 @@ var Line = class {
    */
   lineFullRange = (range) => {
     if (typeof range === "number") {
-      return this.#doc.lineAt(range).range;
+      return this.doc.lineAt(range).range;
     }
-    return this.#doc.lineAt(range.start.line).range;
+    return this.doc.lineAt(range.start.line).range;
   };
   /**
    * take range as a single selection that could be a single line, empty (cursor only) 
@@ -443,7 +456,7 @@ var LineUtil = class {
   constructor() {
   }
   static removeTrailingWhiteSpaceString = (line) => line.replace(/[ \t]+$/, " ");
-  static findTrailingWhiteSpaceString = (line) => line.search(/\s(?=\s*$)/g);
+  static findTrailingWhiteSpaceString = (line) => line.search(/\s(?=\s*$)/);
   static findNonWhitespaceIndex = (line) => line.search(/\S/g);
   static findReverseNonWhitespaceIndex = (line) => line.search(/\S(?=\s*$)/g);
   static removeMultipleWhiteSpaceString = (line) => line.replace(/\s\s+/g, " ");
@@ -512,6 +525,36 @@ var LineHandler = class extends Line {
   constructor() {
     super();
   }
+  removeDocumentStartingEmptyLine = (range) => {
+    let lineNumber = range.start.line;
+    if (lineNumber === 0) {
+      let newTextLine;
+      let newRange;
+      const lineSkip = [];
+      while (lineNumber < this.doc.lineCount) {
+        newTextLine = this.getTextLineFromRange(lineNumber);
+        if (newTextLine.isEmptyOrWhitespace) {
+          newRange = newTextLine.range;
+          lineSkip.push(lineNumber);
+          lineNumber++;
+        } else {
+          break;
+        }
+      }
+      console.log(lineSkip);
+      return {
+        range: new vscode3.Range(
+          new vscode3.Position(0, 0),
+          new vscode3.Position(lineNumber, 0)
+        ),
+        block: {
+          lineSkip,
+          priority: LineType.LineEditBlockPriority.HIGH
+        }
+      };
+    }
+    return;
+  };
   /**
    * remove trailing whitespace lines from range if there is non-whitespace-character present. 
    * 
@@ -520,8 +563,11 @@ var LineHandler = class extends Line {
    */
   removeTrailingWhiteSpace = (range) => {
     const textString = this.getText(range);
-    const whitespacePos = LineUtil.findTrailingWhiteSpaceString(textString);
-    if (whitespacePos >= 0) {
+    let whitespacePos = LineUtil.findTrailingWhiteSpaceString(textString);
+    if (!LineUtil.isEmptyBlockComment(textString)) {
+      whitespacePos += 1;
+    }
+    if (whitespacePos > 0) {
       const textLineLength = textString.length;
       return {
         range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
@@ -626,27 +672,30 @@ var LineHandler = class extends Line {
     const blockCommentStart = LineUtil.isBlockCommentStartingLine(beforeLine.text);
     const nextLine = this.getTextLineFromRange(range, 1);
     if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
-      let ln = range.start.line;
-      let rg = void 0;
-      let tl;
+      let lineNumber = range.start.line;
+      let newRange = void 0;
+      let newTextLine;
       const lineSkip = [];
-      while (ln) {
-        tl = this.getTextLineFromRange(ln);
-        if (LineUtil.isEmptyBlockComment(tl.text)) {
-          rg = tl.range;
-          lineSkip.push(ln);
+      while (lineNumber) {
+        newTextLine = this.getTextLineFromRange(lineNumber);
+        if (LineUtil.isEmptyBlockComment(newTextLine.text)) {
+          newRange = newTextLine.range;
+          lineSkip.push(lineNumber);
         } else {
           break;
         }
-        ln++;
+        lineNumber++;
       }
-      if (rg) {
+      if (newRange) {
         return {
           range: new vscode3.Range(
             new vscode3.Position(range.start.line, 0),
-            new vscode3.Position(rg.start.line + 1, 0)
+            new vscode3.Position(newRange.start.line + 1, 0)
           ),
-          lineSkip
+          block: {
+            priority: LineType.LineEditBlockPriority.MID,
+            lineSkip
+          }
         };
       }
     }
@@ -657,7 +706,9 @@ var LineHandler = class extends Line {
     const nextLine = this.getTextLineFromRange(range, 1);
     const nextLineIsBlockCommend = LineUtil.isEmptyBlockComment(nextLine.text);
     const LineIsBlockCommend = LineUtil.isEmptyBlockComment(currentLine.text);
-    if (LineIsBlockCommend && nextLineIsBlockCommend) {
+    const beforeLine = this.getTextLineFromRange(range, -1);
+    const blockCommentStart = LineUtil.isBlockCommentStartingLine(beforeLine.text);
+    if (LineIsBlockCommend && nextLineIsBlockCommend && !blockCommentStart) {
       return {
         range: this.lineFullRangeWithEOL(range)
       };
@@ -672,8 +723,7 @@ var LineHandler = class extends Line {
     if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
       return {
         range: this.newRangeZeroBased(range.start.line, currentLine.text.length, currentLine.text.length),
-        string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " ",
-        type: LineType.LineEditType.APPEND
+        string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " "
       };
     }
     return;
@@ -699,11 +749,12 @@ var LineHandler = class extends Line {
 // src/editor/ActiveEditor.ts
 var ActiveEditor = class {
   // unused. for future reference.
-  #documentSnapshot;
+  #editorText;
   #editor;
   #lineHandler;
   constructor() {
     this.#setActiveEditor();
+    this.#documentSnapshot();
     this.#lineHandler = new LineHandler();
   }
   /**
@@ -712,10 +763,25 @@ var ActiveEditor = class {
    */
   #setActiveEditor = () => {
     this.#editor = vscode4.window.activeTextEditor;
-    if (this.#editor) {
-      this.#documentSnapshot = this.#editor.document.getText();
-    } else {
+    if (!this.#editor) {
       return;
+    }
+  };
+  #resetCursor = () => {
+    const editor = vscode4.window.activeTextEditor;
+    if (editor) {
+      const range = editor.selections[0];
+      editor.selection = new vscode4.Selection(new vscode4.Position(range.start.line, 0), new vscode4.Position(range.start.line, 0));
+      ;
+    }
+  };
+  #documentSnapshot = (editorText = void 0) => {
+    if (this.#editor) {
+      if (editorText === void 0) {
+        this.#editorText = this.#editor.document.getText();
+      } else {
+        return editorText === this.#editorText;
+      }
     }
   };
   /**
@@ -749,17 +815,6 @@ var ActiveEditor = class {
     }
     ;
   };
-  // =============================================================================
-  // > RPOTECED FUNCTIONS: 
-  // =============================================================================
-  snapshotDocument = () => {
-    this.#documentSnapshot = vscode4.window.activeTextEditor?.document.getText();
-  };
-  resetCursor = () => {
-  };
-  // protected addEmptyLine = () => {
-  //     if (this.#editor?.document.lineCount)
-  // };
   // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
@@ -807,16 +862,19 @@ var ActiveEditor = class {
    */
   editInRange = async (lineCallback) => {
     try {
-      const success = await this.#editor?.edit((editBuilder) => {
-        lineCallback.forEach((edit) => this.#editSwitch(edit, editBuilder));
-      }).then((res) => {
-        console.log(res);
-        this.resetCursor();
-      });
-      if (success) {
-        console.log("Edit applied successfully!");
+      if (!this.#documentSnapshot(vscode4.window.activeTextEditor?.document.getText())) {
+        const success = await this.#editor?.edit((editBuilder) => {
+          lineCallback.forEach((edit) => this.#editSwitch(edit, editBuilder));
+        });
+        if (success) {
+          this.#resetCursor();
+          this.#documentSnapshot();
+          console.log("Edit applied successfully!");
+        } else {
+          console.log("Failed to apply edit.");
+        }
       } else {
-        console.log("Failed to apply edit.");
+        console.log("Duplicate edit entry");
       }
     } catch (err) {
       console.log("Error applying edit:", err);
@@ -825,20 +883,20 @@ var ActiveEditor = class {
 };
 
 // src/command.ts
-var EditorCommandId = ((EditorCommandId2) => {
-  EditorCommandId2[EditorCommandId2["removeTrailingWhitespaceFromSelection"] = LineType.LineEditCollisionGroup.NO_RANGE_OVERLAPPING + LineType.LineEditCollisionGroup.PRIORITY] = "removeTrailingWhitespaceFromSelection";
-  EditorCommandId2[EditorCommandId2["removeMulitpleEmptyLinesFromSelection"] = void 0] = "removeMulitpleEmptyLinesFromSelection";
-  EditorCommandId2[EditorCommandId2["removeEmptyLinesFromSelection"] = void 0] = "removeEmptyLinesFromSelection";
-  EditorCommandId2[EditorCommandId2["removeMultipleWhitespaceFromSelection"] = LineType.LineEditCollisionGroup.NO_RANGE_OVERLAPPING + LineType.LineEditCollisionGroup.IGNORE_ON_COLLISION] = "removeMultipleWhitespaceFromSelection";
-  EditorCommandId2[EditorCommandId2["removeCommentedTextFromSelection"] = void 0] = "removeCommentedTextFromSelection";
-  EditorCommandId2[EditorCommandId2["removeDuplicateLineFromSelection"] = void 0] = "removeDuplicateLineFromSelection";
-  EditorCommandId2[EditorCommandId2["cleanUpBlockCommentFromSelection"] = void 0] = "cleanUpBlockCommentFromSelection";
-  EditorCommandId2[EditorCommandId2["cleanUpWhitespaceFromSelection"] = void 0] = "cleanUpWhitespaceFromSelection";
-  EditorCommandId2[EditorCommandId2["printNowDateTimeOnSelection"] = void 0] = "printNowDateTimeOnSelection";
+var EditorCommandId = /* @__PURE__ */ ((EditorCommandId2) => {
+  EditorCommandId2[EditorCommandId2["removeTrailingWhitespaceFromSelection"] = 0] = "removeTrailingWhitespaceFromSelection";
+  EditorCommandId2[EditorCommandId2["removeMulitpleEmptyLinesFromSelection"] = 1] = "removeMulitpleEmptyLinesFromSelection";
+  EditorCommandId2[EditorCommandId2["removeEmptyLinesFromSelection"] = 2] = "removeEmptyLinesFromSelection";
+  EditorCommandId2[EditorCommandId2["removeMultipleWhitespaceFromSelection"] = 3] = "removeMultipleWhitespaceFromSelection";
+  EditorCommandId2[EditorCommandId2["removeCommentedTextFromSelection"] = 4] = "removeCommentedTextFromSelection";
+  EditorCommandId2[EditorCommandId2["removeDuplicateLineFromSelection"] = 5] = "removeDuplicateLineFromSelection";
+  EditorCommandId2[EditorCommandId2["cleanUpBlockCommentFromSelection"] = 6] = "cleanUpBlockCommentFromSelection";
+  EditorCommandId2[EditorCommandId2["cleanUpWhitespaceFromSelection"] = 7] = "cleanUpWhitespaceFromSelection";
+  EditorCommandId2[EditorCommandId2["printNowDateTimeOnSelection"] = 8] = "printNowDateTimeOnSelection";
   return EditorCommandId2;
 })(EditorCommandId || {});
 var Command = class {
-  #ActiveEditor;
+  #activeEditor;
   // these private variables defines the line function bindings.
   #removeTrailingWhiteSpaceFromLine;
   #removeMultipleWhitespaceFromLine;
@@ -849,54 +907,73 @@ var Command = class {
   #removeEmptyBlockCommentLineOnStart;
   #removeMultipleEmptyBlockCommentLine;
   #insertEmptyBlockCommentLineOnEnd;
-  // #cleanUpBlockCommentLines;
+  #removeDocumentStartingEmptyLines;
   #setNowDateTimeOnLineOnLine;
   constructor() {
-    this.#ActiveEditor = new ActiveEditor();
+    this.#activeEditor = new ActiveEditor();
+    this.#removeDocumentStartingEmptyLines = {
+      func: this.#activeEditor.lineHandler.removeDocumentStartingEmptyLine,
+      type: LineType.LineEditType.DELETE,
+      block: {
+        priority: LineType.LineEditBlockPriority.HIGH
+      }
+    };
     this.#removeTrailingWhiteSpaceFromLine = {
-      func: this.#ActiveEditor.lineHandler.removeTrailingWhiteSpace,
+      func: this.#activeEditor.lineHandler.removeTrailingWhiteSpace,
       type: LineType.LineEditType.DELETE
     };
     this.#removeMultipleWhitespaceFromLine = {
-      func: this.#ActiveEditor.lineHandler.removeMultipleWhitespace,
+      func: this.#activeEditor.lineHandler.removeMultipleWhitespace,
       type: LineType.LineEditType.REPLACE
     };
     this.#removeMulitpleEmptyLines = {
-      func: this.#ActiveEditor.lineHandler.removeMulitpleEmptyLine,
+      func: this.#activeEditor.lineHandler.removeMulitpleEmptyLine,
       type: LineType.LineEditType.DELETE,
-      block: true
+      block: {
+        priority: LineType.LineEditBlockPriority.MID
+      }
     };
     this.#removeCommentedTextFromLines = {
-      func: this.#ActiveEditor.lineHandler.removeCommentedLine,
+      func: this.#activeEditor.lineHandler.removeCommentedLine,
       type: LineType.LineEditType.DELETE
     };
     this.#removeEmptyLines = {
-      func: this.#ActiveEditor.lineHandler.removeEmptyLine,
+      func: this.#activeEditor.lineHandler.removeEmptyLine,
       type: LineType.LineEditType.DELETE,
-      block: true
+      block: {
+        priority: LineType.LineEditBlockPriority.LOW
+      }
     };
     this.#removeDuplicateLines = {
-      func: this.#ActiveEditor.lineHandler.removeDuplicateLine,
+      func: this.#activeEditor.lineHandler.removeDuplicateLine,
       type: LineType.LineEditType.DELETE,
-      block: true
+      block: {
+        priority: LineType.LineEditBlockPriority.LOW
+      }
     };
     this.#removeEmptyBlockCommentLineOnStart = {
-      func: this.#ActiveEditor.lineHandler.removeEmptyBlockCommentLineOnStart,
+      func: this.#activeEditor.lineHandler.removeEmptyBlockCommentLineOnStart,
       type: LineType.LineEditType.DELETE,
-      block: true
+      block: {
+        priority: LineType.LineEditBlockPriority.VERYHIGH
+      }
     };
     this.#removeMultipleEmptyBlockCommentLine = {
-      func: this.#ActiveEditor.lineHandler.removeMultipleEmptyBlockCommentLine,
+      func: this.#activeEditor.lineHandler.removeMultipleEmptyBlockCommentLine,
       type: LineType.LineEditType.DELETE,
-      block: true
+      block: {
+        priority: LineType.LineEditBlockPriority.HIGH
+      }
     };
     this.#insertEmptyBlockCommentLineOnEnd = {
-      func: this.#ActiveEditor.lineHandler.insertEmptyBlockCommentLineOnEnd,
-      type: LineType.LineEditType.DELETE,
-      block: true
+      func: this.#activeEditor.lineHandler.insertEmptyBlockCommentLineOnEnd,
+      type: LineType.LineEditType.APPEND,
+      block: {
+        priority: LineType.LineEditBlockPriority.LOW
+      }
     };
     this.#setNowDateTimeOnLineOnLine = {
-      func: this.#ActiveEditor.lineHandler.setNowDateTimeOnLine,
+      func: this.#activeEditor.lineHandler.setNowDateTimeOnLine,
       type: LineType.LineEditType.APPEND
     };
   }
@@ -913,12 +990,9 @@ var Command = class {
    * @param args unused, future reference 
    */
   removeTrailingWhitespaceFromSelection = (editor, edit, args) => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeTrailingWhiteSpaceFromLine
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeTrailingWhiteSpaceFromLine
+    ], false);
   };
   /**
    * removes multiple empty lines with EOL. 
@@ -928,12 +1002,10 @@ var Command = class {
    * 
    */
   removeMulitpleEmptyLinesFromSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeMulitpleEmptyLines
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeDocumentStartingEmptyLines,
+      this.#removeMulitpleEmptyLines
+    ], false);
   };
   /**
    * removes whitespaces that are longer than 1. 
@@ -947,57 +1019,44 @@ var Command = class {
    * 
    */
   removeMultipleWhitespaceFromSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeMultipleWhitespaceFromLine,
-        this.#removeTrailingWhiteSpaceFromLine
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeMultipleWhitespaceFromLine,
+      this.#removeTrailingWhiteSpaceFromLine
+    ], false);
   };
   /**
    * this will remove all empty whitespace lines from selection
    * function type is line.delete.
    */
   removeEmptyLinesFromSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeEmptyLines,
-        this.#removeTrailingWhiteSpaceFromLine
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeEmptyLines,
+      this.#removeTrailingWhiteSpaceFromLine
+    ], false);
   };
   /**
    * this will remove all commented lines from selection
    * function type is line.delete with EOL.
    */
   removeCommentedTextFromSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeCommentedTextFromLines
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeCommentedTextFromLines
+    ], false);
   };
+  /**
+   * if 
+   */
   removeDuplicateLineFromSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeDuplicateLines
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeDuplicateLines
+    ], false);
   };
   cleanUpBlockCommentFromSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeEmptyBlockCommentLineOnStart,
-        this.#removeMultipleEmptyBlockCommentLine,
-        this.#insertEmptyBlockCommentLineOnEnd
-        // this.#cleanUpBlockCommentLines,
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeEmptyBlockCommentLineOnStart,
+      this.#removeMultipleEmptyBlockCommentLine,
+      this.#insertEmptyBlockCommentLineOnEnd
+    ], false);
   };
   /**
    * this command will do combined edit which are; 
@@ -1007,29 +1066,23 @@ var Command = class {
    * - cleanUpBlockCommentLines
    */
   cleanUpWhitespaceFromSelection = () => {
-    console.log("????");
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#removeMultipleWhitespaceFromLine,
-        this.#removeTrailingWhiteSpaceFromLine,
-        this.#removeEmptyBlockCommentLineOnStart,
-        this.#removeMultipleEmptyBlockCommentLine,
-        this.#insertEmptyBlockCommentLineOnEnd,
-        this.#removeMulitpleEmptyLines
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#removeDocumentStartingEmptyLines,
+      this.#removeMultipleWhitespaceFromLine,
+      this.#removeTrailingWhiteSpaceFromLine,
+      this.#removeEmptyBlockCommentLineOnStart,
+      this.#removeMultipleEmptyBlockCommentLine,
+      this.#insertEmptyBlockCommentLineOnEnd,
+      this.#removeMulitpleEmptyLines
+    ], false);
   };
   /**
    * this command will print datetime on where the cursor is.
    */
   printNowDateTimeOnSelection = () => {
-    this.#ActiveEditor.prepareEdit(
-      [
-        this.#setNowDateTimeOnLineOnLine
-      ],
-      false
-    );
+    this.#activeEditor.prepareEdit([
+      this.#setNowDateTimeOnLineOnLine
+    ], false);
   };
   // public joinMultipleLines = () => {
   //     this.editorEdit(this.joinLines);
@@ -1055,14 +1108,6 @@ var Register = (context, handleLocal = true) => {
       }
     })
   );
-  disposable.push(vscode5.window.onDidChangeWindowState((editor) => {
-    if (editor) {
-    }
-  }));
-  disposable.push(vscode5.window.onDidChangeActiveTextEditor((editor) => {
-    if (editor) {
-    }
-  }));
   context.subscriptions.push(...disposable);
 };
 

@@ -17,13 +17,13 @@ import {
 export class ActiveEditor {
     
     // unused. for future reference.
-    #documentSnapshot: string | undefined; 
+    #editorText: string | undefined; 
     #editor: vscode.TextEditor | undefined;
     #lineHandler : InstanceType<typeof LineHandler>;
 
-
     constructor() {
         this.#setActiveEditor();        
+        this.#documentSnapshot();
         this.#lineHandler = new LineHandler();
     }
 
@@ -33,10 +33,26 @@ export class ActiveEditor {
      */
     #setActiveEditor = () => {
         this.#editor = vscode.window.activeTextEditor;
-        if (this.#editor) {
-            this.#documentSnapshot = this.#editor.document.getText();
-        } else {
+        if (!this.#editor) {
             return;
+        }
+    };
+
+    #resetCursor = () : void => {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const range : vscode.Range = editor.selections[0];
+            editor.selection = new vscode.Selection(new vscode.Position(range.start.line, 0),new vscode.Position(range.start.line, 0));;
+        }
+    };
+
+    #documentSnapshot = (editorText : string | undefined = undefined) : boolean | undefined => {
+        if (this.#editor) {
+            if (editorText === undefined) {
+                this.#editorText = this.#editor.document.getText();
+            } else {
+                return editorText === this.#editorText;
+            }
         }
     };
 
@@ -71,21 +87,6 @@ export class ActiveEditor {
         };
     };
     
-    // =============================================================================
-    // > RPOTECED FUNCTIONS: 
-    // =============================================================================
-
-    protected snapshotDocument = () : void => {
-        this.#documentSnapshot = vscode.window.activeTextEditor?.document.getText();
-    };
-
-    private resetCursor = () : void => {
-    };
-
-    // protected addEmptyLine = () => {
-    //     if (this.#editor?.document.lineCount)
-    // };
-
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
@@ -138,17 +139,21 @@ export class ActiveEditor {
      */
     public editInRange = async (lineCallback: LineType.LineEditInfo[]) : Promise<void> => {
         try {
-            const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
-                lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit ,editBuilder));
-            }).then(res => {
-                console.log(res);
-                this.resetCursor();
-            });
-
-            if (success) {
-                console.log('Edit applied successfully!');
+            
+            if (!this.#documentSnapshot(vscode.window.activeTextEditor?.document.getText())) {
+                const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
+                    lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit ,editBuilder));
+                });
+    
+                if (success) {
+                    this.#resetCursor();
+                    this.#documentSnapshot();
+                    console.log('Edit applied successfully!');
+                } else {
+                    console.log('Failed to apply edit.');
+                }
             } else {
-                console.log('Failed to apply edit.');
+                console.log('Duplicate edit entry');
             }
         } catch (err) {
             console.log('Error applying edit:', err);

@@ -22,6 +22,38 @@ export class LineHandler extends Line implements Edithandler {
     constructor() {
         super();
     }
+
+    public removeDocumentStartingEmptyLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        let lineNumber: number = range.start.line;
+        if (lineNumber === 0) {
+            let newTextLine : vscode.TextLine;
+            let newRange; 
+            const lineSkip : number[] = [];
+            while(lineNumber < this.doc.lineCount) {
+                newTextLine = this.getTextLineFromRange(lineNumber);
+                if (newTextLine.isEmptyOrWhitespace) {
+                    newRange = newTextLine.range;
+                    lineSkip.push(lineNumber);
+                    lineNumber++;
+                } else {
+                    break;
+                }
+            }
+            console.log(lineSkip);
+            return {
+                range: new vscode.Range(
+                    new vscode.Position(0, 0),
+                    new vscode.Position(lineNumber, 0)
+                ),
+                block: {
+                    lineSkip: lineSkip,
+                    priority: LineType.LineEditBlockPriority.HIGH
+                }
+            };
+        }
+        return; 
+    };
+
     /**
      * remove trailing whitespace lines from range if there is non-whitespace-character present. 
      * 
@@ -31,13 +63,19 @@ export class LineHandler extends Line implements Edithandler {
 
     public removeTrailingWhiteSpace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const textString = this.getText(range);
-        const whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(textString);
-        if (whitespacePos >= 0) {
+        let whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(textString);
+
+        if (!LineUtil.isEmptyBlockComment(textString)) {
+            whitespacePos += 1;
+        }
+
+        if (whitespacePos > 0) {
             const textLineLength = (textString.length);
             return {
                 range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
             };
         } 
+
         return;
     };
 
@@ -147,41 +185,46 @@ export class LineHandler extends Line implements Edithandler {
         const nextLine : vscode.TextLine  = this.getTextLineFromRange(range, 1);
 
         if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
-            let ln : number = range.start.line;
-            let rg : vscode.Range | undefined = undefined;
-            let tl : vscode.TextLine;
+            let lineNumber : number = range.start.line;
+            let newRange : vscode.Range | undefined = undefined;
+            let newTextLine : vscode.TextLine;
             const lineSkip : number[] = [];
-            while(ln) {
-                tl = this.getTextLineFromRange(ln);
-                if (LineUtil.isEmptyBlockComment(tl.text)) {
-                    rg = tl.range;
-                    lineSkip.push(ln);
+            while(lineNumber) {
+                newTextLine = this.getTextLineFromRange(lineNumber);
+                if (LineUtil.isEmptyBlockComment(newTextLine.text)) {
+                    newRange = newTextLine.range;
+                    lineSkip.push(lineNumber);
                 } else {
                     break;
                 }
-                ln++;
+                lineNumber++;
             }
-            if (rg) {
+            if (newRange) {
                 return {
                     range: new vscode.Range(
                         new vscode.Position(range.start.line, 0),
-                        new vscode.Position(rg.start.line + 1, 0)
+                        new vscode.Position(newRange.start.line + 1, 0)
                     ),
-                    lineSkip: lineSkip
+                    block : {
+                        priority: LineType.LineEditBlockPriority.MID,
+                        lineSkip: lineSkip
+                    }
                 };
             }
         } 
         return;
     };
 
-    
     public removeMultipleEmptyBlockCommentLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
         const nextLine : vscode.TextLine  = this.getTextLineFromRange(range, 1);
         const nextLineIsBlockCommend  : boolean  = LineUtil.isEmptyBlockComment(nextLine.text);
         const LineIsBlockCommend : boolean = LineUtil.isEmptyBlockComment(currentLine.text);
+        const beforeLine : vscode.TextLine = this.getTextLineFromRange(range, -1);
+        const blockCommentStart : boolean  = LineUtil.isBlockCommentStartingLine(beforeLine.text);
 
-        if ((LineIsBlockCommend && nextLineIsBlockCommend)) {
+
+        if (LineIsBlockCommend && nextLineIsBlockCommend && !blockCommentStart) {
             return {
                 range: this.lineFullRangeWithEOL(range)
             };
@@ -198,8 +241,7 @@ export class LineHandler extends Line implements Edithandler {
         if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
             return {
                 range: this.newRangeZeroBased(range.start.line, currentLine.text.length, currentLine.text.length),
-                string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " ",
-                type: LineType.LineEditType.APPEND
+                string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " "
             };
         } 
         return;

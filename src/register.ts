@@ -23,7 +23,6 @@ import {
  * it is something to check
  */
 
-
 export const Register = (
     context: vscode.ExtensionContext,
     handleLocal: boolean = true) => {
@@ -31,14 +30,12 @@ export const Register = (
     const disposable: vscode.Disposable[] = [];
     
     /**
-     * if, if this extension need more features other than editor, 
+     * if this extension need more features other than editor, 
      * this iteration canb be wrapped in callback and be used from 
      * other command list enum if the command changes. 
      * 
      */
-
     const command = new Command();
-
     disposable.push(...Object.keys(EditorCommandId)
         .filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key))
         .map(key => {
@@ -57,35 +54,11 @@ export const Register = (
     // > EDITOR EVENTS: 
     // =============================================================================
 
-    disposable.push(vscode.window.onDidChangeWindowState((editor) => {
-        if (editor) {
-        }
-    }));
+    // disposable.push(vscode.window.onDidChangeWindowState((editor) => {
+    // }));
 
-    disposable.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
-        if (editor) {
-            // vscode
-            // const line = editor.selection.active.line;
-            // const decorationType = vscode.window.createTextEditorDecorationType({
-            //     backgroundColor: 'rgba(255, 255, 0, 0.3)' 
-            // });
-
-            // const range = new vscode.Range(line, 0, line, editor.document.lineAt(line).text.length);
-            // editor.setDecorations(decorationType, [range]);
-            // editor.options.cursorStyle = 1;
-            // editor.options.cursorStyle = vscode.TextEditorCursorStyle.BlockOutline;
-            // editor.renderLineHighlight
-
-            // console.log('onDidChangeActiveTextEditor');
-            // console.log(window.window !== undefined)
-
-            // console.log(editor.viewColumn)
-            // editor.document.
-            // 
-            // editor.viewColumn
-            // vscode.window.showInformationMessage(`Active editor changed to: ${editor.document.uri.toString()}`);
-        }
-    }));
+    // disposable.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
+    // }));
 
     context.subscriptions.push(...disposable);
 };

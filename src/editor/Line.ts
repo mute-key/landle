@@ -2,16 +2,6 @@ import * as vscode from "vscode";
 
 export namespace LineType {
 
-    /**
-     * this is to check if more than one edit is trying to perform the edit 
-     * on overlapping range which will throw runtime error. but this is not. 
-     */
-    export enum LineEditCollisionGroup {
-        DEFAULT = 0b0000,
-        NO_RANGE_OVERLAPPING = 0b0001,
-        IGNORE_ON_COLLISION = 0b0010,
-        PRIORITY = 0b0100,
-    }
 
     /**
      * bitmask to check multiple edit.type.
@@ -20,7 +10,7 @@ export namespace LineType {
      * switch. 
      * 
      */
-    export enum LineEditType {
+    export const enum LineEditType {
         APPEND = 0b00000001,
         PREPEND = 0b00000010,
         REPLACE = 0b00000100,
@@ -28,6 +18,22 @@ export namespace LineType {
         DELETE = 0b00100000
     };
 
+    /**
+     * this is to check if more than one edit is trying to perform the edit 
+     * on overlapping range which will throw runtime error. but this is not. 
+     */
+    export const enum LineEditBlockPriority {
+        UNSET       = 0,
+        LOW         = 1,
+        MID         = 2,
+        HIGH        = 3,
+        VERYHIGH    = 4,
+    }
+
+    export type lineEditBlockType = {
+        priority: LineEditBlockPriority
+        lineSkip?: number[],
+    }
 
     /**
      * detail about line edit, to be performed. 
@@ -36,11 +42,9 @@ export namespace LineType {
         range: vscode.Range,
         string?: string,
         type?: LineEditType,
-        block?: boolean,
-        lineSkip?: number[];
+        block?: lineEditBlockType
     }
     
-
     /**
      * detail about line edit, to check on each line. 
      */
@@ -48,7 +52,7 @@ export namespace LineType {
     export type LineEditDefintion = {
         func: (range : vscode.Range) => LineEditInfo,
         type: LineEditType,
-        block? : boolean
+        block? : lineEditBlockType
     }
 }
 
@@ -56,16 +60,16 @@ export namespace LineType {
  * class handles the lines and range in editor
  */
 export abstract class Line {
-    #doc: vscode.TextDocument;
-    #editor: vscode.TextEditor | undefined;
+    protected doc: vscode.TextDocument;
+    protected editor: vscode.TextEditor | undefined;
 
     constructor() {
-        this.#editor = vscode.window.activeTextEditor;
-        if (!this.#editor) {
+        this.editor = vscode.window.activeTextEditor;
+        if (!this.editor) {
             console.error("No Active Editor");
             return;
         } else {
-            this.#doc = this.#editor.document;
+            this.doc = this.editor.document;
         }
     }
 
@@ -115,19 +119,21 @@ export abstract class Line {
     #editedLineInfo = (currntRange: vscode.Range, fn: LineType.LineEditDefintion): LineType.LineEditInfo | undefined => {
         const editInfo: LineType.LineEditInfo = fn.func(currntRange);
         if (editInfo) {
-            if (editInfo.type) {
+            // edit type override if required.
+            if (fn.block || editInfo.block) {
                 return <LineType.LineEditInfo>{
                     range: editInfo.range,
                     string: editInfo?.string,
                     type: editInfo.type ? editInfo.type : fn.type,
-                    block: fn.block ? true : false,
-                    lineSkip: editInfo.lineSkip
-                };    
+                    block: {
+                        priority: editInfo.block?.priority ? editInfo.block?.priority : fn.block?.priority,
+                        lineSkip: editInfo.block?.lineSkip
+                    }
+                };
             } else {
                 return <LineType.LineEditInfo>{
                     ...editInfo,
-                    type: fn.type,
-                    block: fn.block ? true : false
+                    type: editInfo.type ? editInfo.type : fn.type,
                 };
             }
         }
@@ -144,20 +150,24 @@ export abstract class Line {
      * so thats why it is for loop. 
      * 
      * @param range 
-     * 
      * @param callback 
      * @returns 
      * 
      */
     #callbackIteration = (range: vscode.Range, callback : LineType.LineEditDefintion[]) : LineType.LineEditInfo[] => {
         let currentLineEdit : LineType.LineEditInfo[] = [];
+        let priority = LineType.LineEditBlockPriority.UNSET;
+        let blockFlag : boolean = false;
         for (const fn of callback) {
             const result : LineType.LineEditInfo | undefined = this.#editedLineInfo(range, fn);
             if (result) {
-                if (fn.block === true) {
-                    currentLineEdit = [result] as LineType.LineEditInfo[];
-                    break;
-                } else {
+                if (result.block) {
+                    if (result.block.priority > priority) {
+                        currentLineEdit = [result];
+                        priority = result.block.priority;
+                        blockFlag = true;
+                    } 
+                } else if (!blockFlag) {
                     currentLineEdit.push(result);
                 }
             }
@@ -198,8 +208,11 @@ export abstract class Line {
     
             const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
             if (currentLineEdit.length > 0) {
-                if (currentLineEdit[0].lineSkip) {
-                    currentLineEdit[0].lineSkip.forEach(line => lineSkip.add(line));
+                if (currentLineEdit[0].block) {
+                    console.log(currentLineEdit[0].block);
+                    if (currentLineEdit[0].block.lineSkip) {
+                        currentLineEdit[0].block.lineSkip.forEach(line => lineSkip.add(line));
+                    }
                 }
                 _lineEdit_.push(...currentLineEdit);
             }
@@ -218,7 +231,7 @@ export abstract class Line {
      * 
      * @returns 
      */
-    protected getEndofLine = () => this.#editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+    protected getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
 
     /**
      * get text as string from range
@@ -227,7 +240,7 @@ export abstract class Line {
      * @returns text as string
      */
     protected getText = (range: vscode.Range): string => {
-        return this.#doc.getText(range);
+        return this.doc.getText(range);
     };
 
     /**
@@ -238,18 +251,18 @@ export abstract class Line {
      */
     protected getTextLineFromRange = (range: vscode.Range | number, lineDelta = 0): vscode.TextLine => {
         if (typeof range === 'number') {
-            return this.#doc.lineAt(range + lineDelta);
+            return this.doc.lineAt(range + lineDelta);
         }
 
         if (range.start.line + lineDelta < 0) {
-            return this.#doc.lineAt(range.start.line);    
+            return this.doc.lineAt(range.start.line);    
         }
 
-        if (this.#doc.lineCount > range.start.line + lineDelta) {
-            return this.#doc.lineAt(range.start.line + lineDelta);
+        if (this.doc.lineCount > range.start.line + lineDelta) {
+            return this.doc.lineAt(range.start.line + lineDelta);
         } 
 
-        return this.#doc.lineAt(range.start.line);               
+        return this.doc.lineAt(range.start.line);               
     };
 
     /**
@@ -278,7 +291,12 @@ export abstract class Line {
         );
     };
 
-    
+    protected checkNextline = (range : vscode.Range, callback) : boolean => {
+        const textLine = this.getTextLineFromRange(range, 1);
+        return callback(textLine.text); 
+    };
+
+
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
@@ -292,9 +310,9 @@ export abstract class Line {
 
     public lineFullRange = (range: vscode.Range | number): vscode.Range => {
         if (typeof range === 'number') {
-            return this.#doc.lineAt(<number>range).range;
+            return this.doc.lineAt(<number>range).range;
         }
-        return this.#doc.lineAt(range.start.line).range;
+        return this.doc.lineAt(range.start.line).range;
     };
 
     /**
