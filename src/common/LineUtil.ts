@@ -39,7 +39,6 @@ export class LineUtil {
 
     public static cleanBlockComment = (line: string) => line.replace(/(?<=\*).*/, "");
 
-
     public static pushMessage = (message: string): vscode.ProviderResult<typeof message> => {
         return vscode.window.showInformationMessage(message);
     };

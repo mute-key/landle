@@ -38,18 +38,50 @@ export class ActiveEditor {
         }
     };
 
-    #resetCursor = () : void => {
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            const range : vscode.Range = editor.selections[0];
-            editor.selection = new vscode.Selection(new vscode.Position(range.start.line, 0),new vscode.Position(range.start.line, 0));;
+    /**
+     * reset cursor position as well as the selection. 
+     */
+    #selectionReset = () : void => {
+        if (this.#editor) {
+            const range : vscode.Range = this.#editor.selections[0];
+            this.#editor.selection = new vscode.Selection(
+                new vscode.Position(range.start.line, 0), 
+                new vscode.Position(range.start.line, 0)
+            );
         }
     };
 
-    #documentSnapshot = (editorText: string | undefined): boolean => {
+    /**
+     * force selection range to cover entire document.
+     */
+    #selectionEntireDocument = () : void => {
+        if (this.#editor) {
+            this.#editor.selection = new vscode.Selection(
+                new vscode.Position(0, 0), 
+                new vscode.Position(this.#editor.document.lineCount-1, 0)
+            );
+        }
+    };
+
+    /**
+     * function that store current document if no arugment is supplied. 
+     * if arguement supplied in function call; it compares last cached 
+     * document with argument and comparing if the document has been 
+     * modified. 
+     * 
+     * 
+     * @param editorText 
+     * @returns boolean 
+     *  - true when no argument supplied indicate the editor has been cached. 
+     *  - true when argument supplied indicate document has not been modified.
+     *  - false when arguement supplied indiciate document has been modified. 
+     */
+    #documentSnapshot = (editorText: string | undefined = undefined): boolean => {
         if (this.#editor) {
             if (editorText === undefined) {
-                this.#editorText = this.#editor.document.getText();
+                if (editorText !== this.#editorText) {
+                    this.#editorText = this.#editor.document.getText();
+                }
                 return true; 
             } else {
                 return editorText === this.#editorText;
@@ -122,7 +154,12 @@ export class ActiveEditor {
      * @param includeCursorLine unused. for future reference. 
      * 
      */
-    public prepareEdit = (callback: LineType.LineEditDefintion[], includeCursorLine: boolean): void => {
+    public prepareEdit = (callback: LineType.LineEditDefintion[], selectWholeEditor: boolean): void => {
+
+        if (selectWholeEditor) {
+            this.#selectionEntireDocument();
+        }
+
         this.#setActiveEditor();
         const editSchedule: LineType.LineEditInfo[] = [];
         const selections = this.#editor?.selections;
@@ -147,7 +184,7 @@ export class ActiveEditor {
                 });
     
                 if (success) {
-                    this.#resetCursor();
+                    this.#selectionReset();
                     this.#documentSnapshot();
                     console.log('Edit applied successfully!');
                 } else {

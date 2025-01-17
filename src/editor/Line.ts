@@ -1,6 +1,8 @@
+import { posix } from "path";
 import * as vscode from "vscode";
 
 export namespace LineType {
+    
     /**
      * bitmask to check multiple edit.type.
      * if, it comes down to editor need to perform multiple edits with single callback, 
@@ -9,11 +11,11 @@ export namespace LineType {
      * 
      */
     export const enum LineEditType {
-        APPEND = 0b00000001,
-        PREPEND = 0b00000010,
-        REPLACE = 0b00000100,
-        CLEAR = 0b00001000,
-        DELETE = 0b00100000
+        APPEND      = 0b00000001,
+        PREPEND     = 0b00000010,
+        REPLACE     = 0b00000100,
+        CLEAR       = 0b00001000,
+        DELETE      = 0b00100000
     };
 
     /**
@@ -28,6 +30,10 @@ export namespace LineType {
         VERYHIGH    = 4,
     }
 
+    /**
+     * type of to check the priority of which edit to perform as well as 
+     * if the block requires to skip lines.
+     */
     export type lineEditBlockType = {
         priority: LineEditBlockPriority
         lineSkip?: number[],
@@ -289,12 +295,6 @@ export abstract class Line {
         );
     };
 
-    protected checkNextline = (range : vscode.Range, callback) : boolean => {
-        const textLine = this.getTextLineFromRange(range, 1);
-        return callback(textLine.text); 
-    };
-
-
     // =============================================================================
     // > PUBLIC FUNCTIONS: 
     // =============================================================================
@@ -338,6 +338,5 @@ export abstract class Line {
             targetLine,
             <LineType.LineEditInfo[]>[]);
     };
-
 }
 

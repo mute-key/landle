@@ -52,6 +52,7 @@ export class Command implements CommandInterface {
 
     #activeEditor: ActiveEditor;
     // these private variables defines the line function bindings.
+    // lineHandler binding 
     #removeTrailingWhiteSpaceFromLine;
     #removeMultipleWhitespaceFromLine;
     #removeMulitpleEmptyLines;
@@ -155,7 +156,6 @@ export class Command implements CommandInterface {
     /**
      * removes trailing whitespace from the line.
      * 
-     * function type is; line.delete. 
      * 
      * @param editor unused, future reference  
      * @param edit unused, future reference 
@@ -223,7 +223,7 @@ export class Command implements CommandInterface {
     };
 
     /**
-     * if 
+     * remove the current line if next line is identical as the current one. 
      */
     public removeDuplicateLineFromSelection = (): void => {
         this.#activeEditor.prepareEdit([
@@ -231,6 +231,15 @@ export class Command implements CommandInterface {
         ], false);
     };
 
+    /**
+     * clean up any block commants includes jsdoc. 
+     * if next line after block command starting line is empty block comment, 
+     * remove until the line is not empty. also delete line if the current line 
+     * and next line is also empty block comment line. i will append empty block 
+     * comment line. if the current line is not empty block comment line and next 
+     * line is block comment ending line. 
+     * 
+     */
     public cleanUpBlockCommentFromSelection = () => {
         this.#activeEditor.prepareEdit([
             this.#removeEmptyBlockCommentLineOnStart,
@@ -255,7 +264,7 @@ export class Command implements CommandInterface {
             this.#removeMultipleEmptyBlockCommentLine,
             this.#insertEmptyBlockCommentLineOnEnd,
             this.#removeMulitpleEmptyLines
-        ], false);
+        ], true);
     };
 
     /**

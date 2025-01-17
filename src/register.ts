@@ -10,7 +10,6 @@ import {
     EditorCommandId
 } from './command';
 
-
 /**
  * the function will iterate the commandID enum and bind the class function from class Command. 
  * 

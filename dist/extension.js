@@ -396,10 +396,6 @@ var Line = class {
       new vscode.Position(lineNuber, endPosition)
     );
   };
-  checkNextline = (range, callback) => {
-    const textLine = this.getTextLineFromRange(range, 1);
-    return callback(textLine.text);
-  };
   // =============================================================================
   // > PUBLIC FUNCTIONS: 
   // =============================================================================
@@ -525,6 +521,13 @@ var LineHandler = class extends Line {
   constructor() {
     super();
   }
+  /**
+   * check if the document is starting 
+   * 
+   * 
+   * @param range 
+   * @returns 
+   */
   removeDocumentStartingEmptyLine = (range) => {
     let lineNumber = range.start.line;
     if (lineNumber === 0) {
@@ -541,7 +544,6 @@ var LineHandler = class extends Line {
           break;
         }
       }
-      console.log(lineSkip);
       return {
         range: new vscode3.Range(
           new vscode3.Position(0, 0),
@@ -666,6 +668,13 @@ var LineHandler = class extends Line {
     }
     return;
   };
+  /**
+   * remove empty block comment line if the previous line is block comment start
+   * 
+   * 
+   * @param range 
+   * @returns 
+   */
   removeEmptyBlockCommentLineOnStart = (range) => {
     const currentLine = this.getTextLineFromRange(range);
     const beforeLine = this.getTextLineFromRange(range, -1);
@@ -701,6 +710,13 @@ var LineHandler = class extends Line {
     }
     return;
   };
+  /**
+   * remove current empty block comment line if next line is also 
+   * empty block comment line.
+   * 
+   * @param range 
+   * @returns 
+   */
   removeMultipleEmptyBlockCommentLine = (range) => {
     const currentLine = this.getTextLineFromRange(range);
     const nextLine = this.getTextLineFromRange(range, 1);
@@ -715,6 +731,12 @@ var LineHandler = class extends Line {
     }
     return;
   };
+  /**
+   * insert empty block comment line if next line is block comment end
+   * 
+   * @param range 
+   * @returns 
+   */
   insertEmptyBlockCommentLineOnEnd = (range) => {
     const EOL = this.getEndofLine();
     const currentLine = this.getTextLineFromRange(range);
@@ -767,18 +789,48 @@ var ActiveEditor = class {
       return;
     }
   };
-  #resetCursor = () => {
-    const editor = vscode4.window.activeTextEditor;
-    if (editor) {
-      const range = editor.selections[0];
-      editor.selection = new vscode4.Selection(new vscode4.Position(range.start.line, 0), new vscode4.Position(range.start.line, 0));
-      ;
+  /**
+   * reset cursor position as well as the selection. 
+   */
+  #selectionReset = () => {
+    if (this.#editor) {
+      const range = this.#editor.selections[0];
+      this.#editor.selection = new vscode4.Selection(
+        new vscode4.Position(range.start.line, 0),
+        new vscode4.Position(range.start.line, 0)
+      );
     }
   };
-  #documentSnapshot = (editorText) => {
+  /**
+   * force selection range to cover entire document.
+   */
+  #selectionEntireDocument = () => {
+    if (this.#editor) {
+      this.#editor.selection = new vscode4.Selection(
+        new vscode4.Position(0, 0),
+        new vscode4.Position(this.#editor.document.lineCount - 1, 0)
+      );
+    }
+  };
+  /**
+   * function that store current document if no arugment is supplied. 
+   * if arguement supplied in function call; it compares last cached 
+   * document with argument and comparing if the document has been 
+   * modified. 
+   * 
+   * 
+   * @param editorText 
+   * @returns boolean 
+   *  - true when no argument supplied indicate the editor has been cached. 
+   *  - true when argument supplied indicate document has not been modified.
+   *  - false when arguement supplied indiciate document has been modified. 
+   */
+  #documentSnapshot = (editorText = void 0) => {
     if (this.#editor) {
       if (editorText === void 0) {
-        this.#editorText = this.#editor.document.getText();
+        if (editorText !== this.#editorText) {
+          this.#editorText = this.#editor.document.getText();
+        }
         return true;
       } else {
         return editorText === this.#editorText;
@@ -848,7 +900,10 @@ var ActiveEditor = class {
    * @param includeCursorLine unused. for future reference. 
    * 
    */
-  prepareEdit = (callback, includeCursorLine) => {
+  prepareEdit = (callback, selectWholeEditor) => {
+    if (selectWholeEditor) {
+      this.#selectionEntireDocument();
+    }
     this.#setActiveEditor();
     const editSchedule = [];
     const selections = this.#editor?.selections;
@@ -869,7 +924,7 @@ var ActiveEditor = class {
           lineCallback.forEach((edit) => this.#editSwitch(edit, editBuilder));
         });
         if (success) {
-          this.#resetCursor();
+          this.#selectionReset();
           this.#documentSnapshot();
           console.log("Edit applied successfully!");
         } else {
@@ -900,6 +955,7 @@ var EditorCommandId = /* @__PURE__ */ ((EditorCommandId2) => {
 var Command = class {
   #activeEditor;
   // these private variables defines the line function bindings.
+  // lineHandler binding 
   #removeTrailingWhiteSpaceFromLine;
   #removeMultipleWhitespaceFromLine;
   #removeMulitpleEmptyLines;
@@ -985,7 +1041,6 @@ var Command = class {
   /**
    * removes trailing whitespace from the line.
    * 
-   * function type is; line.delete. 
    * 
    * @param editor unused, future reference  
    * @param edit unused, future reference 
@@ -1046,13 +1101,22 @@ var Command = class {
     ], false);
   };
   /**
-   * if 
+   * remove the current line if next line is identical as the current one. 
    */
   removeDuplicateLineFromSelection = () => {
     this.#activeEditor.prepareEdit([
       this.#removeDuplicateLines
     ], false);
   };
+  /**
+   * clean up any block commants includes jsdoc. 
+   * if next line after block command starting line is empty block comment, 
+   * remove until the line is not empty. also delete line if the current line 
+   * and next line is also empty block comment line. i will append empty block 
+   * comment line. if the current line is not empty block comment line and next 
+   * line is block comment ending line. 
+   * 
+   */
   cleanUpBlockCommentFromSelection = () => {
     this.#activeEditor.prepareEdit([
       this.#removeEmptyBlockCommentLineOnStart,
@@ -1076,7 +1140,7 @@ var Command = class {
       this.#removeMultipleEmptyBlockCommentLine,
       this.#insertEmptyBlockCommentLineOnEnd,
       this.#removeMulitpleEmptyLines
-    ], false);
+    ], true);
   };
   /**
    * this command will print datetime on where the cursor is.
