@@ -13,7 +13,6 @@ import {
     LineHandler
 } from "./LineHandler";
 
-
 export class ActiveEditor {
     
     // unused. for future reference.

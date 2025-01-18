@@ -40,9 +40,9 @@ var vscode5 = __toESM(require("vscode"));
 
 // package.json
 var package_default = {
-  name: "lindle",
-  displayName: "lindle",
-  description: "lindle",
+  name: "landle",
+  displayName: "landle",
+  description: "landle",
   version: "0.9.1",
   engines: {
     vscode: "^1.96.0"
@@ -57,77 +57,77 @@ var package_default = {
   contributes: {
     commands: [
       {
-        command: "lindle.removeTrailingWhitespaceFromSelection",
+        command: "landle.removeTrailingWhitespaceFromSelection",
         title: "Remove Trailing Whitespace From Selection"
       },
       {
-        command: "lindle.removeMulitpleEmptyLinesFromSelection",
+        command: "landle.removeMulitpleEmptyLinesFromSelection",
         title: "Remove Mulitple Empty Lines From Selection"
       },
       {
-        command: "lindle.removeEmptyLinesFromSelection",
+        command: "landle.removeEmptyLinesFromSelection",
         title: "Remove Empty Lines From Selection"
       },
       {
-        command: "lindle.removeMultipleWhitespaceFromSelection",
+        command: "landle.removeMultipleWhitespaceFromSelection",
         title: "Remove Multiple Whitespace From Selection"
       },
       {
-        command: "lindle.removeCommentedTextFromSelection",
+        command: "landle.removeCommentedTextFromSelection",
         title: "Remove Commented Text From Selection"
       },
       {
-        command: "lindle.removeDuplicateLineFromSelection",
+        command: "landle.removeDuplicateLineFromSelection",
         title: "Remove Duplicate Line From Selection"
       },
       {
-        command: "lindle.cleanUpBlockCommentFromSelection",
+        command: "landle.cleanUpBlockCommentFromSelection",
         title: "clean-up Block Comment From Selection"
       },
       {
-        command: "lindle.cleanUpWhitespaceFromSelection",
+        command: "landle.cleanUpWhitespaceFromSelection",
         title: "Clean-up Whitespace From Selection"
       },
       {
-        command: "lindle.printNowDateTimeOnSelection",
+        command: "landle.printNowDateTimeOnSelection",
         title: "Print Now DateTime On Selection"
       }
     ],
     keybindings: [
       {
-        command: "lindle.removeTrailingWhitespaceFromSelection",
+        command: "landle.removeTrailingWhitespaceFromSelection",
         key: "ctrl+alt+w"
       },
       {
-        command: "lindle.removeMulitpleEmptyLinesFromSelection",
+        command: "landle.removeMulitpleEmptyLinesFromSelection",
         key: "ctrl+alt+m"
       },
       {
-        command: "lindle.removeEmptyLinesFromSelection",
+        command: "landle.removeEmptyLinesFromSelection",
         key: "ctrl+alt+e"
       },
       {
-        command: "lindle.removeMultipleWhitespaceFromSelection",
+        command: "landle.removeMultipleWhitespaceFromSelection",
         key: "ctrl+alt+space"
       },
       {
-        command: "lindle.removeCommentedTextFromSelection",
+        command: "landle.removeCommentedTextFromSelection",
         key: "ctrl+alt+/"
       },
       {
-        command: "lindle.removeDuplicateLineFromSelection",
+        command: "landle.removeDuplicateLineFromSelection",
         key: "ctrl+alt+d"
       },
       {
-        command: "lindle.cleanUpBlockCommentFromSelection",
+        command: "landle.cleanUpBlockCommentFromSelection",
         key: "ctrl+alt+b"
       },
       {
-        command: "lindle.cleanUpWhitespaceFromSelection",
+        command: "landle.cleanUpWhitespaceFromSelection",
         key: "ctrl+alt+c"
       },
       {
-        command: "lindle.printNowDateTimeOnSelection",
+        command: "landle.printNowDateTimeOnSelection",
         key: "ctrl+alt+n"
       }
     ]
@@ -192,20 +192,20 @@ var Line = class {
   constructor() {
     this.editor = vscode.window.activeTextEditor;
     if (!this.editor) {
-      console.error("No Active Editor");
       return;
     } else {
       this.doc = this.editor.document;
     }
   }
   // =============================================================================
-  // > PRIVATE FUNCTIONS: 
+  // > PRIVATE FUNCTIONS:
   // =============================================================================
   /**
-   * unused. staple for future reference. 
+   * unused. staple for future reference.
    * 
    * @param range unused
    * @returns unused
+   * 
    */
   #getLineNumbersFromRange = (range) => {
     const startLine = range.start.line;
@@ -213,10 +213,11 @@ var Line = class {
     return { startLine, endLine };
   };
   /**
-   * unused. staple for future reference. 
+   * unused. staple for future reference.
    * 
    * @param range unused
    * @returns unused
+   * 
    */
   #editLineBindOnCondition = (range, callback, cond) => {
     return cond ? {
@@ -225,18 +226,19 @@ var Line = class {
     } : void 0;
   };
   /**
-   * this private function is a wrap and shape the return object for each callback for a line. 
-   * the function will take current range with callback and execute to get the information 
-   * how to edit the line, which described in object with type of LineEditInfo. 
+   * this private function is a wrap and shape the return object for each callback for a line.
+   * the function will take current range with callback and execute to get the information
+   * how to edit the line, which described in object with type of LineEditInfo.
    * this is where the default blocking value will be set to block additional edit on line;
-   * default for blocking the edit is true, and it is false if it is not defined in callback object. 
-   * this means that only a function with block:true will be executed and every other callbacks 
+   * default for blocking the edit is true, and it is false if it is not defined in callback object.
+   * this means that only a function with block:true will be executed and every other callbacks
    * will be drop for the further.
    * 
-   * @param currntRange 
-   * @param fn 
-   * @param _lineEdit_ 
+   * @param currntRange
+   * @param fn
+   * @param _lineEdit_
    * @returns LineType.LineEditInfo | undefined
+   * 
    */
   #editedLineInfo = (currntRange, fn) => {
     const editInfo = fn.func(currntRange);
@@ -261,17 +263,17 @@ var Line = class {
   };
   /**
    * this is the mian loop to iterate the callbacks that are defined from command class.
-   * there is a object key named block. when the property block is true, it will drop all the 
+   * there is a object key named block. when the property block is true, it will drop all the
    * added edit, and assign itself and stops further iteration to prevent no more changes to be
-   * applied to that line. when the for loop is finished, it will be stacked into _line_edit_ refernce 
-   * and goes into next iteration. 
+   * applied to that line. when the for loop is finished, it will be stacked into _line_edit_ refernce
+   * and goes into next iteration.
    * 
    * this iteration could well have been done in array.reduce but it does unnecessary exection in the iteartion.
-   * so thats why it is for loop. 
+   * so thats why it is for loop.
    * 
-   * @param range 
-   * @param callback 
-   * @returns 
+   * @param range
+   * @param callback
+   * @returns
    * 
    */
   #callbackIteration = (range, callback) => {
@@ -297,24 +299,25 @@ var Line = class {
   /**
    * this funciton will iterate each line and stack the line edit object.
    * iteration will continue unitl the current line number is less than less than line number of
-   * the each selection. the range at this point of execution will represent a single range and 
-   * not entire document. callback will be a list of callbacks to check/apply to each line. 
-   * _lineEdit_ variable are being used as a references so no direct assignement becuase 
-   * the variable is what this function will return upon the end of the iteration. 
+   * the each selection. the range at this point of execution will represent a single range and
+   * not entire document. callback will be a list of callbacks to check/apply to each line.
+   * _lineEdit_ variable are being used as a references so no direct assignement becuase
+   * the variable is what this function will return upon the end of the iteration.
    * 
-   * there is a for loop that will iterate each every callback. the problem with js array api is 
-   * it lacks handling the undefined value being returned in single api functions rather, 
-   * you have to chain them. using array api in callback object (becuase it is what it needs to 
-   * iterate on), the type-mismatch forces to return either a typed object or undefined becasuse 
-   * the callback will have a return type. this means the reseult of the iteration will contain undefiend 
-   * item if callback returns undefined; and it makes to iterate twice to filter them for each every line. 
-   * further explanation continues in function #editedLineInfo. 
+   * there is a for loop that will iterate each every callback. the problem with js array api is
+   * it lacks handling the undefined value being returned in single api functions rather,
+   * you have to chain them. using array api in callback object (becuase it is what it needs to
+   * iterate on), the type-mismatch forces to return either a typed object or undefined becasuse
+   * the callback will have a return type. this means the reseult of the iteration will contain undefiend
+   * item if callback returns undefined; and it makes to iterate twice to filter them for each every line.
+   * further explanation continues in function #editedLineInfo.
    * 
-   * @param range 
-   * @param callback 
-   * @param currentLineNumber 
-   * @param _lineEdit_ 
+   * @param range
+   * @param callback
+   * @param currentLineNumber
+   * @param _lineEdit_
    * @returns IterateLineType[]
+   * 
    */
   #lineIteration = (range, callback, currentLineNumber, _lineEdit_, lineSkip) => {
     lineSkip = lineSkip ?? /* @__PURE__ */ new Set();
@@ -326,7 +329,6 @@ var Line = class {
       const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
       if (currentLineEdit.length > 0) {
         if (currentLineEdit[0].block) {
-          console.log(currentLineEdit[0].block);
           if (currentLineEdit[0].block.lineSkip) {
             currentLineEdit[0].block.lineSkip.forEach((line) => lineSkip.add(line));
           }
@@ -338,12 +340,13 @@ var Line = class {
     return _lineEdit_;
   };
   // =============================================================================
-  // > PROTECTED FUNCTIONS: 
+  // > PROTECTED FUNCTIONS:
   // =============================================================================
   /**
    * get EOL of current document set
    * 
    * @returns 
+   * 
    */
   getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
   /**
@@ -351,15 +354,17 @@ var Line = class {
    * 
    * @param range target range
    * @returns text as string
+   * 
    */
   getText = (range) => {
     return this.doc.getText(range);
   };
   /**
-   * get TextLine object from range or from line number. 
+   * get TextLine object from range or from line number.
    * 
    * @param range target range
    * @returns TextLine object of range or line.
+   * 
    */
   getTextLineFromRange = (range, lineDelta = 0) => {
     if (typeof range === "number") {
@@ -378,6 +383,7 @@ var Line = class {
    * 
    * @param range target range
    * @returns 
+   * 
    */
   lineFullRangeWithEOL = (range) => {
     return this.getTextLineFromRange(range).rangeIncludingLineBreak;
@@ -389,6 +395,7 @@ var Line = class {
    * @param startPosition starting position of range
    * @param endPosition end position of range
    * @returns 
+   * 
    */
   newRangeZeroBased = (lineNuber, startPosition, endPosition) => {
     return new vscode.Range(
@@ -397,13 +404,14 @@ var Line = class {
     );
   };
   // =============================================================================
-  // > PUBLIC FUNCTIONS: 
+  // > PUBLIC FUNCTIONS:
   // =============================================================================
   /**
-   * get the range of line with any characters including whitespaces. 
+   * get the range of line with any characters including whitespaces.
    * 
-   * @param range vscode.Range | number. 
+   * @param range vscode.Range | number.
    * @returns first line of the range or whole line of the the line number.
+   * 
    */
   lineFullRange = (range) => {
     if (typeof range === "number") {
@@ -412,15 +420,16 @@ var Line = class {
     return this.doc.lineAt(range.start.line).range;
   };
   /**
-   * take range as a single selection that could be a single line, empty (cursor only) 
-   * or mulitple lines. the callback will be defined in Command.ts. this function will return 
-   * either a single LineEditInfo or array of them to schedule the document edit. 
-   * if the selection is either of empty (whitespaces only) or a single line, the 
-   * range should be the whole line. 
+   * take range as a single selection that could be a single line, empty (cursor only)
+   * or mulitple lines. the callback will be defined in Command.ts. this function will return
+   * either a single LineEditInfo or array of them to schedule the document edit.
+   * if the selection is either of empty (whitespaces only) or a single line, the
+   * range should be the whole line.
    * 
-   * @param range 
-   * @param callback 
+   * @param range
+   * @param callback
    * @returns 
+   * 
    */
   prepareLines = (range, callback) => {
     const targetLine = range.start.line;
@@ -529,7 +538,6 @@ var LineHandler = class extends Line {
    * @returns 
    */
   removeDocumentStartingEmptyLine = (range) => {
-    console.log("removeDocumentStartingEmptyLine");
     let lineNumber = range.start.line;
     if (lineNumber === 0) {
       let newTextLine;
@@ -567,7 +575,6 @@ var LineHandler = class extends Line {
   removeTrailingWhiteSpace = (range) => {
     const textString = this.getText(range);
     let whitespacePos = LineUtil.findTrailingWhiteSpaceString(textString);
-    console.log(range.start.line);
     if (LineUtil.isEmptyBlockComment(textString)) {
       whitespacePos += 1;
     }
@@ -598,7 +605,7 @@ var LineHandler = class extends Line {
       const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
       const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
       return {
-        range: this.newRangeZeroBased(range.start.line, startPos, endPos),
+        range: this.newRangeZeroBased(range.start.line, startPos, endPos + 1),
         string: newLineText.padEnd(endPos, " ").trim()
       };
     }

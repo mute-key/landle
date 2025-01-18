@@ -30,7 +30,6 @@ export class LineHandler extends Line {
      * @returns 
      */
     public removeDocumentStartingEmptyLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
-        console.log("removeDocumentStartingEmptyLine")
         let lineNumber: number = range.start.line;
         if (lineNumber === 0) {
             let newTextLine : vscode.TextLine;
@@ -70,8 +69,7 @@ export class LineHandler extends Line {
     public removeTrailingWhiteSpace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const textString = this.getText(range);
         let whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(textString);
-
-        console.log(range.start.line);
+        
         if (LineUtil.isEmptyBlockComment(textString)) {
             whitespacePos += 1;
         }
@@ -106,7 +104,7 @@ export class LineHandler extends Line {
             const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
             const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
             return {
-                range: this.newRangeZeroBased(range.start.line, startPos, endPos),
+                range: this.newRangeZeroBased(range.start.line, startPos, endPos + 1),
                 string: newLineText.padEnd(endPos, " ").trim()
             };
         }
