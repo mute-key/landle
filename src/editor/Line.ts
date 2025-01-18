@@ -1,21 +1,21 @@
-import { posix } from "path";
 import * as vscode from "vscode";
-
+             
 export namespace LineType {
-    
+
     /**
      * bitmask to check multiple edit.type.
-     * if, it comes down to editor need to perform multiple edits with single callback, 
-     * this will be very useful and ActiveEditor.#editSwitch need be rewriten other than
+     * 
+     * if, it comes down to editor need to perform multiple edits with single callback,,
+     * this will be very useful and ActiveEditor.#editSwitch need be rwriten other than
      * switch. 
      * 
      */
     export const enum LineEditType {
-        APPEND      = 0b00000001,
-        PREPEND     = 0b00000010,
-        REPLACE     = 0b00000100,
-        CLEAR       = 0b00001000,
-        DELETE      = 0b00100000
+        APPEND      = 1 << 0,
+        PREPEND     = 1 << 1,
+        REPLACE     = 1 << 2,
+        CLEAR       = 1 << 3,
+        DELETE      = 1 << 4
     };
 
     /**
@@ -82,7 +82,7 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * unused. for future reference. 
+     * unused. staple for future reference. 
      * 
      * @param range unused
      * @returns unused
@@ -94,7 +94,7 @@ export abstract class Line {
     };
 
     /**
-     * unused. for future reference. 
+     * unused. staple for future reference. 
      * 
      * @param range unused
      * @returns unused

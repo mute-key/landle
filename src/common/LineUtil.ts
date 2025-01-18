@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { Line } from "../editor/Line";
 
 export class LineUtil {
     

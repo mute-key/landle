@@ -1,76 +1,89 @@
-## Introduction
+# Introduction
 
-this is my rehab code 
+this is my rehab code.
+i did not aim to make a funciton which formatter can do already. 
 
-will not implement what formatter can do already 
+# Commands
 
+Each command call has its functions as a class member functions. no functionality call overlap even it would seeems to. 
 
-## Commands
+#### > __removeTrailingWhitespaceFromSelection__<br>
+Shortcut key : `ctrl + alt + w`<br>
 
-each command call has its functions as a class member functions. no functionality call overlap even it would seeems to. 
+removes trailing whitespaces from the lines in selection. 
 
-#### > __deco.removeEmptyLinesFromSelection__<br>
-shortcut key : `ctrl+ alt+ e`<br>
+<img src="./demo/removeTrailingWhitespaceFromSelection.gif" alt ="GIF" height ="240" style="border: solid 2px black">
 
-removes continous lines either empty or whitespace only strings within the selection.
+<br><hr><br>
 
-<br><br>
+#### > __removeMulitpleEmptyLinesFromSelection__<br>
+Shortcut key : `ctrl + alt + m`<br>
 
-#### > __deco.removeMulitpleEmptyLinesFromSelection__<br>
-shortcut key : `ctrl+ alt+ m`<br>
+remove lines either empty or whitespace only in selection range but leaving 1 empty lines to keep the contents block.
 
-removes continous lines either empty or whitespace only strings within the selection but leaving 1 empty lines to keep the contents block.
+<img src="./demo/removeMulitpleEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 2px black" height ="240">
 
-<br><br>
+<br><hr><br>
 
+#### > __removeEmptyLinesFromSelection__<br>
+Shortcut key : `ctrl + alt + e`<br>
 
-#### > __deco.removeTrailingWhitespaceFromSelection__<br>
-shortcut key : `ctrl + alt + w`<br>
+removes lines either empty or whitespace only in selection range.
 
-removes trailing whitespaces from the line. 
+<img src="./demo/removeEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 2px black" height ="240">
 
-<br><br>
+<br><hr><br>
 
-#### > __deco.removeMultipleWhitespace__<br>
-shortcut key : `ctrl+ alt+ space`<br>
+#### > __removeMultipleWhitespaceFromSelection__<br>
+Shortcut key : `ctrl + alt + space`<br>
 
-removes whitespaces within the characters if the whitespace is longer than 1.<br>
-the starting index is after the indentation. this command will be executed with;<br>
-[+] removeTrailingWhitespaceFromSelection<br>
+removes whitespaces characters that are longer than size of 1.<br>
+this command ignores indentation. 
 
-<br><br>
+<img src="./demo/removeMultipleWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 2px black" height ="240">
 
+<br><hr><br>
 
-#### > __deco.cleanUpWhitespace__<br>
-shortcut key : `ctrl+ alt+ c`<br>
+#### > __removeCommentedTextFromSelection__<br>
+Shortcut key : `ctrl + alt + /`<br>
 
-This command is the combination of these commands. Probably most useful commands.<br>
-[+] removeMulitpleEmptyLinesFromSelection<br>
-[+] removeTrailingWhitespaceFromSelection<br>
-[+] removeMultipleWhitespace<br>
+removes all commented lines. 
 
-<br><br>
+<br><hr><br>
 
-#### > __deco.printNowDateTime__
+#### > __removeDuplicateLineFromSelection__<br>
+Shortcut key : `ctrl + alt + d`<br>
 
-shortcut key :`ctrl+ alt+ n`<br>
+removes redundant lines and leaving only 1 of the line. 
+
+<br><hr><br>
+
+#### > __cleanUpBlockCommentFromSelection__<br>
+Shortcut key : `ctrl + alt + b`<br>
+
+- removes empty block comment lines between block comment starting line and non empty block comment lines. 
+- removes duplicate empty block comment lines.
+- removes empty whitespace lines after block comment ending line and non empty whitespace lines. 
+- insert empty block comment lines before block comment ending lines and non empty block comment lines. 
+
+<img src="./demo/cleanUpBlockCommentFromSelection.gif" alt ="GIF" style="border: solid 2px black" height ="270">
+
+<br><hr><br>
+
+#### > __cleanUpWhitespaceFromSelection__<br>
+Shortcut key : `ctrl + alt + c`<br>
+
+<br>
+<img src="./demo/cleanUpWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 2px black" height ="330">
+
+<br><hr><br>
+
+#### > __printNowDateTimeOnSelection__<br>
+Shortcut key : `ctrl + alt + n`<br>
 
 print DateTime string on current position of the selection.
 
+<br><hr><br>
 
 
-
-
-
-
-# todo
-
-need true condition for when no range is in selection for certain commands.
-
-need invoke function for promise callback stacks
-more shortcut keys 
-
-prob change command enum as key and property name for selection as auto bind
-
-want to check if line.lineRange is actually needed to get the full line as range.  
 

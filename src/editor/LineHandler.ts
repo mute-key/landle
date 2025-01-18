@@ -7,15 +7,15 @@ import {
 
 import { LineUtil } from "../common/LineUtil";
 
-// export interface Edithandler {
-//     removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined
-//     removeMultipleWhitespace: (range: vscode.Range) => LineType.LineEditInfo | undefined
-//     removeMulitpleEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-//     removeCommentedLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-//     removeEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-//     removeDuplicateLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-//     setNowDateTimeOnLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-// }
+export interface Edithandler {
+    removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    removeMultipleWhitespace: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    removeMulitpleEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    removeCommentedLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    removeEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    removeDuplicateLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    setNowDateTimeOnLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+}
 
 export class LineHandler extends Line {
     constructor() {
@@ -30,10 +30,11 @@ export class LineHandler extends Line {
      * @returns 
      */
     public removeDocumentStartingEmptyLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        console.log("removeDocumentStartingEmptyLine")
         let lineNumber: number = range.start.line;
         if (lineNumber === 0) {
             let newTextLine : vscode.TextLine;
-            let newRange; 
+            let newRange : vscode.Range; 
             const lineSkip : number[] = [];
             while(lineNumber < this.doc.lineCount) {
                 newTextLine = this.getTextLineFromRange(lineNumber);
@@ -70,7 +71,8 @@ export class LineHandler extends Line {
         const textString = this.getText(range);
         let whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(textString);
 
-        if (!LineUtil.isEmptyBlockComment(textString)) {
+        console.log(range.start.line);
+        if (LineUtil.isEmptyBlockComment(textString)) {
             whitespacePos += 1;
         }
 
@@ -194,7 +196,6 @@ export class LineHandler extends Line {
         const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
         const beforeLine : vscode.TextLine = this.getTextLineFromRange(range, -1);
         const blockCommentStart : boolean  = LineUtil.isBlockCommentStartingLine(beforeLine.text);
-        const nextLine : vscode.TextLine  = this.getTextLineFromRange(range, 1);
 
         if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
             let lineNumber : number = range.start.line;
@@ -242,7 +243,6 @@ export class LineHandler extends Line {
         const beforeLine : vscode.TextLine = this.getTextLineFromRange(range, -1);
         const blockCommentStart : boolean  = LineUtil.isBlockCommentStartingLine(beforeLine.text);
 
-
         if (LineIsBlockCommend && nextLineIsBlockCommend && !blockCommentStart) {
             return {
                 range: this.lineFullRangeWithEOL(range)
@@ -272,6 +272,38 @@ export class LineHandler extends Line {
         return;
     };
 
+    public removeEmptyLinesBetweenBlockCommantAndCode = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        const currentTextLine = this.getTextLineFromRange(range);
+        const previousTextLine = this.getTextLineFromRange(range, -1);
+        if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
+            let lineNumber: number = range.start.line;
+            let newTextLine : vscode.TextLine;
+            let newRange : vscode.Range; 
+            const lineSkip : number[] = [];
+            while(lineNumber < this.doc.lineCount) {
+                newTextLine = this.getTextLineFromRange(lineNumber);
+                if (newTextLine.isEmptyOrWhitespace) {
+                    newRange = newTextLine.range;
+                    lineSkip.push(lineNumber);
+                    lineNumber++;
+                } else {
+                    break;
+                }
+            }
+            return {
+                range: new vscode.Range(
+                    new vscode.Position(range.start.line, 0),
+                    new vscode.Position(lineNumber, 0)
+                ),
+                block: {
+                    lineSkip: lineSkip,
+                    priority: LineType.LineEditBlockPriority.HIGH
+                }
+            };
+        }
+        return;
+    };
+
     /**
      * funciton to print current datetime where the cursor is. 
      * - locale 
@@ -285,6 +317,6 @@ export class LineHandler extends Line {
         return {
             range: range,
             string: LineUtil.getNowDateTimeStamp.custom()
-        };;
+        };
     };    
 }

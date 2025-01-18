@@ -43,7 +43,7 @@ var package_default = {
   name: "lindle",
   displayName: "lindle",
   description: "lindle",
-  version: "0.0.1",
+  version: "0.9.1",
   engines: {
     vscode: "^1.96.0"
   },
@@ -174,7 +174,7 @@ var LineType;
     LineEditType2[LineEditType2["PREPEND"] = 2] = "PREPEND";
     LineEditType2[LineEditType2["REPLACE"] = 4] = "REPLACE";
     LineEditType2[LineEditType2["CLEAR"] = 8] = "CLEAR";
-    LineEditType2[LineEditType2["DELETE"] = 32] = "DELETE";
+    LineEditType2[LineEditType2["DELETE"] = 16] = "DELETE";
   })(LineEditType = LineType2.LineEditType || (LineType2.LineEditType = {}));
   ;
   let LineEditBlockPriority;
@@ -202,7 +202,7 @@ var Line = class {
   // > PRIVATE FUNCTIONS: 
   // =============================================================================
   /**
-   * unused. for future reference. 
+   * unused. staple for future reference. 
    * 
    * @param range unused
    * @returns unused
@@ -213,7 +213,7 @@ var Line = class {
     return { startLine, endLine };
   };
   /**
-   * unused. for future reference. 
+   * unused. staple for future reference. 
    * 
    * @param range unused
    * @returns unused
@@ -529,6 +529,7 @@ var LineHandler = class extends Line {
    * @returns 
    */
   removeDocumentStartingEmptyLine = (range) => {
+    console.log("removeDocumentStartingEmptyLine");
     let lineNumber = range.start.line;
     if (lineNumber === 0) {
       let newTextLine;
@@ -566,7 +567,8 @@ var LineHandler = class extends Line {
   removeTrailingWhiteSpace = (range) => {
     const textString = this.getText(range);
     let whitespacePos = LineUtil.findTrailingWhiteSpaceString(textString);
-    if (!LineUtil.isEmptyBlockComment(textString)) {
+    console.log(range.start.line);
+    if (LineUtil.isEmptyBlockComment(textString)) {
       whitespacePos += 1;
     }
     if (whitespacePos > 0) {
@@ -679,7 +681,6 @@ var LineHandler = class extends Line {
     const currentLine = this.getTextLineFromRange(range);
     const beforeLine = this.getTextLineFromRange(range, -1);
     const blockCommentStart = LineUtil.isBlockCommentStartingLine(beforeLine.text);
-    const nextLine = this.getTextLineFromRange(range, 1);
     if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
       let lineNumber = range.start.line;
       let newRange = void 0;
@@ -750,6 +751,37 @@ var LineHandler = class extends Line {
     }
     return;
   };
+  removeEmptyLinesBetweenBlockCommantAndCode = (range) => {
+    const currentTextLine = this.getTextLineFromRange(range);
+    const previousTextLine = this.getTextLineFromRange(range, -1);
+    if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
+      let lineNumber = range.start.line;
+      let newTextLine;
+      let newRange;
+      const lineSkip = [];
+      while (lineNumber < this.doc.lineCount) {
+        newTextLine = this.getTextLineFromRange(lineNumber);
+        if (newTextLine.isEmptyOrWhitespace) {
+          newRange = newTextLine.range;
+          lineSkip.push(lineNumber);
+          lineNumber++;
+        } else {
+          break;
+        }
+      }
+      return {
+        range: new vscode3.Range(
+          new vscode3.Position(range.start.line, 0),
+          new vscode3.Position(lineNumber, 0)
+        ),
+        block: {
+          lineSkip,
+          priority: LineType.LineEditBlockPriority.HIGH
+        }
+      };
+    }
+    return;
+  };
   /**
    * funciton to print current datetime where the cursor is. 
    * - locale 
@@ -764,7 +796,6 @@ var LineHandler = class extends Line {
       range,
       string: LineUtil.getNowDateTimeStamp.custom()
     };
-    ;
   };
 };
 
@@ -965,6 +996,7 @@ var Command = class {
   #removeEmptyBlockCommentLineOnStart;
   #removeMultipleEmptyBlockCommentLine;
   #insertEmptyBlockCommentLineOnEnd;
+  #removeEmptyLinesBetweenBlockCommantAndCode;
   #removeDocumentStartingEmptyLines;
   #setNowDateTimeOnLineOnLine;
   constructor() {
@@ -1023,6 +1055,13 @@ var Command = class {
         priority: LineType.LineEditBlockPriority.HIGH
       }
     };
+    this.#removeEmptyLinesBetweenBlockCommantAndCode = {
+      func: this.#activeEditor.lineHandler.removeEmptyLinesBetweenBlockCommantAndCode,
+      type: LineType.LineEditType.DELETE,
+      block: {
+        priority: LineType.LineEditBlockPriority.HIGH
+      }
+    };
     this.#insertEmptyBlockCommentLineOnEnd = {
       func: this.#activeEditor.lineHandler.insertEmptyBlockCommentLineOnEnd,
       type: LineType.LineEditType.APPEND,
@@ -1040,11 +1079,11 @@ var Command = class {
   // =============================================================================
   /**
    * removes trailing whitespace from the line.
-   * 
-   * 
-   * @param editor unused, future reference  
-   * @param edit unused, future reference 
-   * @param args unused, future reference 
+   *
+   *
+   * @param editor unused, future reference
+   * @param edit unused, future reference
+   * @param args unused, future reference
    */
   removeTrailingWhitespaceFromSelection = (editor, edit, args) => {
     this.#activeEditor.prepareEdit([
@@ -1066,13 +1105,7 @@ var Command = class {
   };
   /**
    * removes whitespaces that are longer than 1. 
-   * this function will ignore starting whitespace group 
-   * and remove all whitespaces in the line. 
-   * this function could lead into range overlapping, which means 
-   * that there is multiple edits in the same range which seems is 
-   * not allowed. this collision happens when the range is 
-   * empty line with whitespaces only and it start with it. 
-   * more details in trailing whitespace function.
+   * this function will ignore indentation and keep the indent. 
    * 
    */
   removeMultipleWhitespaceFromSelection = () => {
@@ -1082,7 +1115,7 @@ var Command = class {
     ], false);
   };
   /**
-   * this will remove all empty whitespace lines from selection
+   * remove all empty whitespace lines from selection
    * function type is line.delete.
    */
   removeEmptyLinesFromSelection = () => {
@@ -1092,14 +1125,16 @@ var Command = class {
     ], false);
   };
   /**
-   * this will remove all commented lines from selection
+   * remove all commented lines from selection
    * function type is line.delete with EOL.
    */
+  // test commant 
   removeCommentedTextFromSelection = () => {
     this.#activeEditor.prepareEdit([
       this.#removeCommentedTextFromLines
     ], false);
   };
+  // and another 
   /**
    * remove the current line if next line is identical as the current one. 
    */
@@ -1110,9 +1145,11 @@ var Command = class {
   };
   /**
    * clean up any block commants includes jsdoc. 
+   * 
    * if next line after block command starting line is empty block comment, 
    * remove until the line is not empty. also delete line if the current line 
    * and next line is also empty block comment line. i will append empty block 
+   * 
    * comment line. if the current line is not empty block comment line and next 
    * line is block comment ending line. 
    * 
@@ -1121,11 +1158,12 @@ var Command = class {
     this.#activeEditor.prepareEdit([
       this.#removeEmptyBlockCommentLineOnStart,
       this.#removeMultipleEmptyBlockCommentLine,
-      this.#insertEmptyBlockCommentLineOnEnd
+      this.#insertEmptyBlockCommentLineOnEnd,
+      this.#removeEmptyLinesBetweenBlockCommantAndCode
     ], false);
   };
   /**
-   * this command will do combined edit which are; 
+   * combined edit which are; 
    * - removeMultipleWhitespaceFromLine
    * - removeTrailingWhiteSpaceFromLine
    * - removeMulitpleEmptyLines
@@ -1139,11 +1177,12 @@ var Command = class {
       this.#removeEmptyBlockCommentLineOnStart,
       this.#removeMultipleEmptyBlockCommentLine,
       this.#insertEmptyBlockCommentLineOnEnd,
+      this.#removeEmptyLinesBetweenBlockCommantAndCode,
       this.#removeMulitpleEmptyLines
-    ], true);
+    ], false);
   };
   /**
-   * this command will print datetime on where the cursor is.
+   * print datetime on where the cursor is.
    */
   printNowDateTimeOnSelection = () => {
     this.#activeEditor.prepareEdit([

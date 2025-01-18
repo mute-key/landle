@@ -1,6 +1,6 @@
 /**
  * this is kind of generic command class but for editor. 
- * it might need to be refactored if to be used other than just editor. 
+ * it might need to be refactored if to be used other than just editor edit. 
  * probably will need to revise to make it either even more generic or 
  * even more to specific use-case.
  */
@@ -54,7 +54,7 @@ export class Command implements CommandInterface {
     // these private variables defines the line function bindings.
     // lineHandler binding 
     #removeTrailingWhiteSpaceFromLine;
-    #removeMultipleWhitespaceFromLine;
+    #removeMultipleWhitespaceFromLine ;
     #removeMulitpleEmptyLines;
     #removeCommentedTextFromLines;
     #removeEmptyLines;
@@ -62,6 +62,7 @@ export class Command implements CommandInterface {
     #removeEmptyBlockCommentLineOnStart;
     #removeMultipleEmptyBlockCommentLine;
     #insertEmptyBlockCommentLineOnEnd;
+    #removeEmptyLinesBetweenBlockCommantAndCode;
     #removeDocumentStartingEmptyLines;
     #setNowDateTimeOnLineOnLine;
 
@@ -135,6 +136,14 @@ export class Command implements CommandInterface {
             }
         };
 
+        this.#removeEmptyLinesBetweenBlockCommantAndCode = <LT.LineEditDefintion>{
+            func: this.#activeEditor.lineHandler.removeEmptyLinesBetweenBlockCommantAndCode,
+            type: LT.LineEditType.DELETE,
+            block: {
+                priority: LT.LineEditBlockPriority.HIGH
+            }
+        };
+
         this.#insertEmptyBlockCommentLineOnEnd = <LT.LineEditDefintion>{
             func: this.#activeEditor.lineHandler.insertEmptyBlockCommentLineOnEnd,
             type: LT.LineEditType.APPEND,
@@ -155,15 +164,15 @@ export class Command implements CommandInterface {
 
     /**
      * removes trailing whitespace from the line.
-     * 
-     * 
-     * @param editor unused, future reference  
-     * @param edit unused, future reference 
-     * @param args unused, future reference 
+     *
+     *
+     * @param editor unused, future reference
+     * @param edit unused, future reference
+     * @param args unused, future reference
      */
     public removeTrailingWhitespaceFromSelection = (editor, edit, args): void => {
         // this is example funciton with arugments for future refernce in case
-        // if it needs to use them. 
+        // if it needs to use them.
         this.#activeEditor.prepareEdit([
             this.#removeTrailingWhiteSpaceFromLine
         ], false);
@@ -182,27 +191,21 @@ export class Command implements CommandInterface {
             this.#removeMulitpleEmptyLines,
         ], false);
     };
-
+    
     /**
      * removes whitespaces that are longer than 1. 
-     * this function will ignore starting whitespace group 
-     * and remove all whitespaces in the line. 
-     * this function could lead into range overlapping, which means 
-     * that there is multiple edits in the same range which seems is 
-     * not allowed. this collision happens when the range is 
-     * empty line with whitespaces only and it start with it. 
-     * more details in trailing whitespace function.
+     * this function will ignore indentation and keep the indent. 
      * 
      */
-    public removeMultipleWhitespaceFromSelection = (): void => {
+    public removeMultipleWhitespaceFromSelection = () : void => {
         this.#activeEditor.prepareEdit([
             this.#removeMultipleWhitespaceFromLine,
             this.#removeTrailingWhiteSpaceFromLine
         ], false);
-    };
+    }; 
 
     /**
-     * this will remove all empty whitespace lines from selection
+     * remove all empty whitespace lines from selection
      * function type is line.delete.
      */
     public removeEmptyLinesFromSelection = (): void => {
@@ -213,14 +216,16 @@ export class Command implements CommandInterface {
     };
 
     /**
-     * this will remove all commented lines from selection
+     * remove all commented lines from selection
      * function type is line.delete with EOL.
      */
+    // test commant 
     public removeCommentedTextFromSelection = (): void => {
+        // comment line 1
         this.#activeEditor.prepareEdit([
             this.#removeCommentedTextFromLines
         ], false);
-    };
+    }; // and another 
 
     /**
      * remove the current line if next line is identical as the current one. 
@@ -233,9 +238,11 @@ export class Command implements CommandInterface {
 
     /**
      * clean up any block commants includes jsdoc. 
+     * 
      * if next line after block command starting line is empty block comment, 
      * remove until the line is not empty. also delete line if the current line 
      * and next line is also empty block comment line. i will append empty block 
+     * 
      * comment line. if the current line is not empty block comment line and next 
      * line is block comment ending line. 
      * 
@@ -245,16 +252,18 @@ export class Command implements CommandInterface {
             this.#removeEmptyBlockCommentLineOnStart,
             this.#removeMultipleEmptyBlockCommentLine,
             this.#insertEmptyBlockCommentLineOnEnd,
+            this.#removeEmptyLinesBetweenBlockCommantAndCode
         ], false);
     };
 
     /**
-     * this command will do combined edit which are; 
+     * combined edit which are; 
      * - removeMultipleWhitespaceFromLine
      * - removeTrailingWhiteSpaceFromLine
      * - removeMulitpleEmptyLines
      * - cleanUpBlockCommentLines
      */
+
     public cleanUpWhitespaceFromSelection = (): void => {
         this.#activeEditor.prepareEdit([
             this.#removeDocumentStartingEmptyLines,
@@ -263,12 +272,13 @@ export class Command implements CommandInterface {
             this.#removeEmptyBlockCommentLineOnStart,
             this.#removeMultipleEmptyBlockCommentLine,
             this.#insertEmptyBlockCommentLineOnEnd,
+            this.#removeEmptyLinesBetweenBlockCommantAndCode,
             this.#removeMulitpleEmptyLines
-        ], true);
+        ], false);
     };
 
     /**
-     * this command will print datetime on where the cursor is.
+     * print datetime on where the cursor is.
      */
     public printNowDateTimeOnSelection = (): void => {
         this.#activeEditor.prepareEdit([

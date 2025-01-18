@@ -2,7 +2,7 @@
     "name": "lindle",
     "displayName": "lindle",
     "description": "lindle",
-    "version": "0.0.1",
+    "version": "0.9.1",
     "engines": {
         "vscode": "^1.96.0"
     },
