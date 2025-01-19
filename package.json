@@ -40,11 +40,11 @@
                 "title": "Remove Duplicate Line From Selection"
             },
             {
-                "command": "landle.cleanUpBlockCommentFromSelection",
+                "command": "landle.cleanUBlockCommentCommand",
                 "title": "clean-up Block Comment From Selection"
             },
             {
-                "command": "landle.cleanUpWhitespaceFromSelection",
+                "command": "landle.cleanUpDocumentCommand",
                 "title": "Clean-up Whitespace From Selection"
             },
             {
@@ -78,11 +78,11 @@
                 "key": "ctrl+alt+d"
             },
             {
-                "command": "landle.cleanUpBlockCommentFromSelection",
+                "command": "landle.cleanUBlockCommentCommand",
                 "key": "ctrl+alt+b"
             },
             {
-                "command": "landle.cleanUpWhitespaceFromSelection",
+                "command": "landle.cleanUpDocumentCommand",
                 "key": "ctrl+alt+c"
             },
             {

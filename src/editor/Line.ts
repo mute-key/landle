@@ -1,14 +1,13 @@
 import * as vscode from "vscode";
              
 export namespace LineType {
-
+ 
     /**
      * bitmask to check multiple edit.type.
-     * 
-     * if, it comes down to editor need to perform multiple edits with single callback,,
-     * this will be very useful and ActiveEditor.#editSwitch need be rwriten other than
-     * switch.
-     * 
+     * if, it comes down to editor need to perform multiple edits with single callback, 
+     * this will be very useful and ActiveEditor.#editSwitch need be rewriten other than
+     * switch. 
+     *
      */
     export const enum LineEditType {
         APPEND = 1 << 0,
@@ -51,13 +50,13 @@ export namespace LineType {
         type?: LineEditType,
         block?: lineEditBlockType
     }
-    
+ 
     /**
      * detail about line edit, to check on each line. 
      * 
      */
     export type LineEditDefintion = {
-        func: (range : vscode.Range) => LineEditInfo,
+        func: (range : vscode.Range) => LineEditInfo | undefined,
         type: LineEditType,
         block? : lineEditBlockType
     }
@@ -85,15 +84,15 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * unused. staple for future reference.
-     * 
+     * unused. for future reference. 
+     *
      * @param range unused
      * @returns unused
      * 
      */
     #getLineNumbersFromRange = (range: vscode.Range) : { startLine: number, endLine: number } => {
-        const startLine = range.start.line;
-        const endLine = range.end.line;
+        const startLine = range.start.line; 
+        const endLine = range.end.line; 
         return { startLine, endLine };
     };
 
@@ -119,15 +118,15 @@ export abstract class Line {
      * default for blocking the edit is true, and it is false if it is not defined in callback object.
      * this means that only a function with block:true will be executed and every other callbacks
      * will be drop for the further.
-     * 
-     * @param currntRange
-     * @param fn
-     * @param _lineEdit_
+     *
+     * @param currntRange 
+     * @param fn 
+     * @param _lineEdit_ 
      * @returns LineType.LineEditInfo | undefined
      * 
      */
     #editedLineInfo = (currntRange: vscode.Range, fn: LineType.LineEditDefintion): LineType.LineEditInfo | undefined => {
-        const editInfo: LineType.LineEditInfo = fn.func(currntRange);
+        const editInfo: LineType.LineEditInfo | undefined = fn.func(currntRange);
         if (editInfo) {
             // edit type override if required.
             if (fn.block || editInfo.block) {
@@ -148,7 +147,7 @@ export abstract class Line {
             }
         }
     };
-    
+ 
     /**
      * this is the mian loop to iterate the callbacks that are defined from command class.
      * there is a object key named block. when the property block is true, it will drop all the
@@ -210,13 +209,13 @@ export abstract class Line {
      */
     #lineIteration = (range: vscode.Range, callback: LineType.LineEditDefintion[], currentLineNumber: number, _lineEdit_: LineType.LineEditInfo[], lineSkip?: Set<number>): LineType.LineEditInfo[] => {
         lineSkip = lineSkip ?? new Set();
-    
+ 
         while (currentLineNumber <= range.end.line) {
             if (lineSkip.has(currentLineNumber)) {
                 currentLineNumber++;
                 continue;
             }
-    
+ 
             const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
             if (currentLineEdit.length > 0) {
                 if (currentLineEdit[0].block) {
@@ -228,7 +227,7 @@ export abstract class Line {
             }
             currentLineNumber++;
         }
-    
+ 
         return _lineEdit_;
     };
 
@@ -238,7 +237,7 @@ export abstract class Line {
 
     /**
      * get EOL of current document set
-     * 
+     *
      * @returns 
      * 
      */
@@ -246,7 +245,7 @@ export abstract class Line {
 
     /**
      * get text as string from range
-     * 
+     *
      * @param range target range
      * @returns text as string
      * 
@@ -256,8 +255,13 @@ export abstract class Line {
     };
 
     /**
+<<<<<<< HEAD
      * get TextLine object from range or from line number.
      * 
+=======
+     * get TextLine object from range or from line number. 
+     *
+>>>>>>> dev
      * @param range target range
      * @returns TextLine object of range or line.
      * 
@@ -280,7 +284,7 @@ export abstract class Line {
 
     /**
      * get the range of entire line including EOL.
-     * 
+     *
      * @param range target range
      * @returns 
      * 
@@ -291,7 +295,7 @@ export abstract class Line {
 
     /**
      * create new range with line number, starting position and end position
-     * 
+     *
      * @param lineNuber line number of new range object
      * @param startPosition starting position of range
      * @param endPosition end position of range
@@ -310,9 +314,9 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * get the range of line with any characters including whitespaces.
-     * 
-     * @param range vscode.Range | number.
+     * get the range of line with any characters including whitespaces. 
+     *
+     * @param range vscode.Range | number. 
      * @returns first line of the range or whole line of the the line number.
      * 
      */
@@ -324,21 +328,21 @@ export abstract class Line {
     };
 
     /**
-     * take range as a single selection that could be a single line, empty (cursor only)
-     * or mulitple lines. the callback will be defined in Command.ts. this function will return
-     * either a single LineEditInfo or array of them to schedule the document edit.
-     * if the selection is either of empty (whitespaces only) or a single line, the
-     * range should be the whole line.
-     * 
-     * @param range
-     * @param callback
+     * take range as a single selection that could be a single line, empty (cursor only) 
+     * or mulitple lines. the callback will be defined in Command.ts. this function will return 
+     * either a single LineEditInfo or array of them to schedule the document edit. 
+     * if the selection is either of empty (whitespaces only) or a single line, the 
+     * range should be the whole line. 
+     *
+     * @param range 
+     * @param callback 
      * @returns 
      * 
      */
     public prepareLines = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         const targetLine = range.start.line;
-        
-        // on each selection, starting line is: isEmpty or if selection is singleLine
+ 
+        // on each selection, starting line is: isEmpty or if selection is singleLine 
         if (range.isEmpty || range.isSingleLine) {
             return this.#callbackIteration(this.lineFullRange(targetLine), callback);
         }

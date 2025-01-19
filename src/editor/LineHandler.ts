@@ -40,10 +40,10 @@ export class LineHandler extends Line {
                 if (newTextLine.isEmptyOrWhitespace) {
                     newRange = newTextLine.range;
                     lineSkip.push(lineNumber);
-                    lineNumber++;
                 } else {
                     break;
                 }
+                lineNumber++;
             }
             return {
                 range: new vscode.Range(
@@ -205,16 +205,16 @@ export class LineHandler extends Line {
                 if (LineUtil.isEmptyBlockComment(newTextLine.text)) {
                     newRange = newTextLine.range;
                     lineSkip.push(lineNumber);
+                    lineNumber++;
                 } else {
                     break;
                 }
-                lineNumber++;
             }
             if (newRange) {
                 return {
                     range: new vscode.Range(
                         new vscode.Position(range.start.line, 0),
-                        new vscode.Position(newRange.start.line + 1, 0)
+                        new vscode.Position(lineNumber, 0)
                     ),
                     block : {
                         priority: LineType.LineEditBlockPriority.MID,
@@ -275,8 +275,8 @@ export class LineHandler extends Line {
         const previousTextLine = this.getTextLineFromRange(range, -1);
         if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
             let lineNumber: number = range.start.line;
-            let newTextLine : vscode.TextLine;
             let newRange : vscode.Range; 
+            let newTextLine : vscode.TextLine;
             const lineSkip : number[] = [];
             while(lineNumber < this.doc.lineCount) {
                 newTextLine = this.getTextLineFromRange(lineNumber);
