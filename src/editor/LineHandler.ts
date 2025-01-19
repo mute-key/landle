@@ -40,10 +40,10 @@ export class LineHandler extends Line {
                 if (newTextLine.isEmptyOrWhitespace) {
                     newRange = newTextLine.range;
                     lineSkip.push(lineNumber);
-                    lineNumber++;
                 } else {
                     break;
                 }
+                lineNumber++;
             }
             return {
                 range: new vscode.Range(
@@ -104,7 +104,7 @@ export class LineHandler extends Line {
             const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
             const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
             return {
-                range: this.newRangeZeroBased(range.start.line, startPos, endPos),
+                range: this.newRangeZeroBased(range.start.line, startPos, endPos + 1),
                 string: newLineText.padEnd(endPos, " ").trim()
             };
         }
@@ -206,16 +206,16 @@ export class LineHandler extends Line {
                 if (LineUtil.isEmptyBlockComment(newTextLine.text)) {
                     newRange = newTextLine.range;
                     lineSkip.push(lineNumber);
+                    lineNumber++;
                 } else {
                     break;
                 }
-                lineNumber++;
             }
             if (newRange) {
                 return {
                     range: new vscode.Range(
                         new vscode.Position(range.start.line, 0),
-                        new vscode.Position(newRange.start.line + 1, 0)
+                        new vscode.Position(lineNumber, 0)
                     ),
                     block : {
                         priority: LineType.LineEditBlockPriority.MID,
@@ -269,6 +269,38 @@ export class LineHandler extends Line {
                 string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " "
             };
         } 
+        return;
+    };
+
+    public removeEmptyLinesBetweenBlockCommantAndCode = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        const currentTextLine = this.getTextLineFromRange(range);
+        const previousTextLine = this.getTextLineFromRange(range, -1);
+        if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
+            let lineNumber: number = range.start.line;
+            let newRange : vscode.Range; 
+            let newTextLine : vscode.TextLine;
+            const lineSkip : number[] = [];
+            while(lineNumber < this.doc.lineCount) {
+                newTextLine = this.getTextLineFromRange(lineNumber);
+                if (newTextLine.isEmptyOrWhitespace) {
+                    newRange = newTextLine.range;
+                    lineSkip.push(lineNumber);
+                    lineNumber++;
+                } else {
+                    break;
+                }
+            }
+            return {
+                range: new vscode.Range(
+                    new vscode.Position(range.start.line, 0),
+                    new vscode.Position(lineNumber, 0)
+                ),
+                block: {
+                    lineSkip: lineSkip,
+                    priority: LineType.LineEditBlockPriority.HIGH
+                }
+            };
+        }
         return;
     };
 

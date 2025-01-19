@@ -1,38 +1,39 @@
-import { posix } from "path";
 import * as vscode from "vscode";
 
 export namespace LineType {
-    
+ 
     /**
      * bitmask to check multiple edit.type.
      * if, it comes down to editor need to perform multiple edits with single callback, 
      * this will be very useful and ActiveEditor.#editSwitch need be rewriten other than
      * switch. 
-     * 
+     *
      */
     export const enum LineEditType {
-        APPEND      = 0b00000001,
-        PREPEND     = 0b00000010,
-        REPLACE     = 0b00000100,
-        CLEAR       = 0b00001000,
-        DELETE      = 0b00100000
+        APPEND = 1 << 0,
+        PREPEND = 1 << 1,
+        REPLACE = 1 << 2,
+        CLEAR = 1 << 3,
+        DELETE = 1 << 4,
     };
 
     /**
      * this is to check if more than one edit is trying to perform the edit 
      * on overlapping range which will throw runtime error. but this is not. 
+     * 
      */
     export const enum LineEditBlockPriority {
-        UNSET       = 0,
-        LOW         = 1,
-        MID         = 2,
-        HIGH        = 3,
-        VERYHIGH    = 4,
+        UNSET = 0,
+        LOW = 1,
+        MID = 2,
+        HIGH = 3,
+        VERYHIGH = 4,
     }
 
     /**
      * type of to check the priority of which edit to perform as well as 
      * if the block requires to skip lines.
+     * 
      */
     export type lineEditBlockType = {
         priority: LineEditBlockPriority
@@ -41,6 +42,7 @@ export namespace LineType {
 
     /**
      * detail about line edit, to be performed. 
+     * 
      */
     export type LineEditInfo = {
         range: vscode.Range,
@@ -48,13 +50,13 @@ export namespace LineType {
         type?: LineEditType,
         block?: lineEditBlockType
     }
-    
+ 
     /**
      * detail about line edit, to check on each line. 
+     * 
      */
-
     export type LineEditDefintion = {
-        func: (range : vscode.Range) => LineEditInfo,
+        func: (range : vscode.Range) => LineEditInfo | undefined,
         type: LineEditType,
         block? : lineEditBlockType
     }
@@ -62,6 +64,7 @@ export namespace LineType {
 
 /**
  * class handles the lines and range in editor
+ * 
  */
 export abstract class Line {
     protected doc: vscode.TextDocument;
@@ -83,21 +86,23 @@ export abstract class Line {
 
     /**
      * unused. for future reference. 
-     * 
+     *
      * @param range unused
      * @returns unused
+     * 
      */
     #getLineNumbersFromRange = (range: vscode.Range) : { startLine: number, endLine: number } => {
         const startLine = range.start.line; 
-        const endLine = range.end.line;     
+        const endLine = range.end.line; 
         return { startLine, endLine };
     };
 
     /**
      * unused. for future reference. 
-     * 
+     *
      * @param range unused
      * @returns unused
+     * 
      */
     #editLineBindOnCondition = (range : vscode.Range, callback : LineType.LineEditDefintion, cond: boolean) : LineType.LineEditInfo | undefined => {
         return cond ? <LineType.LineEditInfo>{
@@ -114,14 +119,15 @@ export abstract class Line {
      * default for blocking the edit is true, and it is false if it is not defined in callback object. 
      * this means that only a function with block:true will be executed and every other callbacks 
      * will be drop for the further.
-     * 
+     *
      * @param currntRange 
      * @param fn 
      * @param _lineEdit_ 
      * @returns LineType.LineEditInfo | undefined
+     * 
      */
     #editedLineInfo = (currntRange: vscode.Range, fn: LineType.LineEditDefintion): LineType.LineEditInfo | undefined => {
-        const editInfo: LineType.LineEditInfo = fn.func(currntRange);
+        const editInfo: LineType.LineEditInfo | undefined = fn.func(currntRange);
         if (editInfo) {
             // edit type override if required.
             if (fn.block || editInfo.block) {
@@ -142,21 +148,21 @@ export abstract class Line {
             }
         }
     };
-    
+ 
     /**
      * this is the mian loop to iterate the callbacks that are defined from command class.
      * there is a object key named block. when the property block is true, it will drop all the 
      * added edit, and assign itself and stops further iteration to prevent no more changes to be
      * applied to that line. when the for loop is finished, it will be stacked into _line_edit_ refernce 
      * and goes into next iteration. 
-     * 
+     *
      * this iteration could well have been done in array.reduce but it does unnecessary exection in the iteartion.
      * so thats why it is for loop. 
-     * 
+     *
      * @param range 
      * @param callback 
      * @returns 
-     * 
+     *
      */
     #callbackIteration = (range: vscode.Range, callback : LineType.LineEditDefintion[]) : LineType.LineEditInfo[] => {
         let currentLineEdit : LineType.LineEditInfo[] = [];
@@ -186,7 +192,7 @@ export abstract class Line {
      * not entire document. callback will be a list of callbacks to check/apply to each line. 
      * _lineEdit_ variable are being used as a references so no direct assignement becuase 
      * the variable is what this function will return upon the end of the iteration. 
-     * 
+     *
      * there is a for loop that will iterate each every callback. the problem with js array api is 
      * it lacks handling the undefined value being returned in single api functions rather, 
      * you have to chain them. using array api in callback object (becuase it is what it needs to 
@@ -194,26 +200,26 @@ export abstract class Line {
      * the callback will have a return type. this means the reseult of the iteration will contain undefiend 
      * item if callback returns undefined; and it makes to iterate twice to filter them for each every line. 
      * further explanation continues in function #editedLineInfo. 
-     * 
+     *
      * @param range 
      * @param callback 
      * @param currentLineNumber 
      * @param _lineEdit_ 
      * @returns IterateLineType[]
+     * 
      */
     #lineIteration = (range: vscode.Range, callback: LineType.LineEditDefintion[], currentLineNumber: number, _lineEdit_: LineType.LineEditInfo[], lineSkip?: Set<number>): LineType.LineEditInfo[] => {
         lineSkip = lineSkip ?? new Set();
-    
+ 
         while (currentLineNumber <= range.end.line) {
             if (lineSkip.has(currentLineNumber)) {
                 currentLineNumber++;
                 continue;
             }
-    
+ 
             const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
             if (currentLineEdit.length > 0) {
                 if (currentLineEdit[0].block) {
-                    console.log(currentLineEdit[0].block);
                     if (currentLineEdit[0].block.lineSkip) {
                         currentLineEdit[0].block.lineSkip.forEach(line => lineSkip.add(line));
                     }
@@ -222,7 +228,7 @@ export abstract class Line {
             }
             currentLineNumber++;
         }
-    
+ 
         return _lineEdit_;
     };
 
@@ -232,16 +238,18 @@ export abstract class Line {
 
     /**
      * get EOL of current document set
-     * 
+     *
      * @returns 
+     * 
      */
     protected getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
 
     /**
      * get text as string from range
-     * 
+     *
      * @param range target range
      * @returns text as string
+     * 
      */
     protected getText = (range: vscode.Range): string => {
         return this.doc.getText(range);
@@ -249,9 +257,10 @@ export abstract class Line {
 
     /**
      * get TextLine object from range or from line number. 
-     * 
+     *
      * @param range target range
      * @returns TextLine object of range or line.
+     * 
      */
     protected getTextLineFromRange = (range: vscode.Range | number, lineDelta = 0): vscode.TextLine => {
         if (typeof range === 'number') {
@@ -259,34 +268,35 @@ export abstract class Line {
         }
 
         if (range.start.line + lineDelta < 0) {
-            return this.doc.lineAt(range.start.line);    
+            return this.doc.lineAt(range.start.line); 
         }
 
         if (this.doc.lineCount > range.start.line + lineDelta) {
             return this.doc.lineAt(range.start.line + lineDelta);
         } 
 
-        return this.doc.lineAt(range.start.line);               
+        return this.doc.lineAt(range.start.line); 
     };
 
     /**
      * get the range of entire line including EOL.
-     * 
+     *
      * @param range target range
      * @returns 
+     * 
      */
     protected lineFullRangeWithEOL = (range: vscode.Range): vscode.Range => {
         return this.getTextLineFromRange(range).rangeIncludingLineBreak;
     };
 
-
     /**
      * create new range with line number, starting position and end position
-     * 
+     *
      * @param lineNuber line number of new range object
      * @param startPosition starting position of range
      * @param endPosition end position of range
      * @returns 
+     * 
      */
     protected newRangeZeroBased = (lineNuber : number, startPosition : number, endPosition : number) : vscode.Range => {
         return new vscode.Range(
@@ -301,11 +311,11 @@ export abstract class Line {
 
     /**
      * get the range of line with any characters including whitespaces. 
-     * 
+     *
      * @param range vscode.Range | number. 
      * @returns first line of the range or whole line of the the line number.
+     * 
      */
-
     public lineFullRange = (range: vscode.Range | number): vscode.Range => {
         if (typeof range === 'number') {
             return this.doc.lineAt(<number>range).range;
@@ -319,14 +329,15 @@ export abstract class Line {
      * either a single LineEditInfo or array of them to schedule the document edit. 
      * if the selection is either of empty (whitespaces only) or a single line, the 
      * range should be the whole line. 
-     * 
+     *
      * @param range 
      * @param callback 
      * @returns 
+     * 
      */
     public prepareLines = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         const targetLine = range.start.line;
-        
+ 
         // on each selection, starting line is: isEmpty or if selection is singleLine 
         if (range.isEmpty || range.isSingleLine) {
             return this.#callbackIteration(this.lineFullRange(targetLine), callback);
@@ -339,4 +350,3 @@ export abstract class Line {
             <LineType.LineEditInfo[]>[]);
     };
 }
-

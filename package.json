@@ -1,7 +1,7 @@
 {
-    "name": "lindle",
-    "displayName": "lindle",
-    "description": "lindle",
+    "name": "landle",
+    "displayName": "landle",
+    "description": "landle",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.96.0"
@@ -16,77 +16,77 @@
     "contributes": {
         "commands": [
             {
-                "command": "lindle.removeTrailingWhitespaceFromSelection",
+                "command": "landle.removeTrailingWhitespaceFromSelection",
                 "title": "Remove Trailing Whitespace From Selection"
             },
             {
-                "command": "lindle.removeMulitpleEmptyLinesFromSelection",
+                "command": "landle.removeMulitpleEmptyLinesFromSelection",
                 "title": "Remove Mulitple Empty Lines From Selection"
             },
             {
-                "command": "lindle.removeEmptyLinesFromSelection",
+                "command": "landle.removeEmptyLinesFromSelection",
                 "title": "Remove Empty Lines From Selection"
             },
             {
-                "command": "lindle.removeMultipleWhitespaceFromSelection",
+                "command": "landle.removeMultipleWhitespaceFromSelection",
                 "title": "Remove Multiple Whitespace From Selection"
             },
             {
-                "command": "lindle.removeCommentedTextFromSelection",
+                "command": "landle.removeCommentedTextFromSelection",
                 "title": "Remove Commented Text From Selection"
             },
             {
-                "command": "lindle.removeDuplicateLineFromSelection",
+                "command": "landle.removeDuplicateLineFromSelection",
                 "title": "Remove Duplicate Line From Selection"
             },
             {
-                "command": "lindle.cleanUpBlockCommentFromSelection",
+                "command": "landle.cleanUBlockCommentCommand",
                 "title": "clean-up Block Comment From Selection"
             },
             {
-                "command": "lindle.cleanUpWhitespaceFromSelection",
+                "command": "landle.cleanUpDocumentCommand",
                 "title": "Clean-up Whitespace From Selection"
             },
             {
-                "command": "lindle.printNowDateTimeOnSelection",
+                "command": "landle.printNowDateTimeOnSelection",
                 "title": "Print Now DateTime On Selection"
             }
         ],
         "keybindings": [
             {
-                "command": "lindle.removeTrailingWhitespaceFromSelection",
+                "command": "landle.removeTrailingWhitespaceFromSelection",
                 "key": "ctrl+alt+w"
             },
             {
-                "command": "lindle.removeMulitpleEmptyLinesFromSelection",
+                "command": "landle.removeMulitpleEmptyLinesFromSelection",
                 "key": "ctrl+alt+m"
             },
             {
-                "command": "lindle.removeEmptyLinesFromSelection",
+                "command": "landle.removeEmptyLinesFromSelection",
                 "key": "ctrl+alt+e"
             },
             {
-                "command": "lindle.removeMultipleWhitespaceFromSelection",
+                "command": "landle.removeMultipleWhitespaceFromSelection",
                 "key": "ctrl+alt+space"
             },
             {
-                "command": "lindle.removeCommentedTextFromSelection",
+                "command": "landle.removeCommentedTextFromSelection",
                 "key": "ctrl+alt+/"
             },
             {
-                "command": "lindle.removeDuplicateLineFromSelection",
+                "command": "landle.removeDuplicateLineFromSelection",
                 "key": "ctrl+alt+d"
             },
             {
-                "command": "lindle.cleanUpBlockCommentFromSelection",
+                "command": "landle.cleanUBlockCommentCommand",
                 "key": "ctrl+alt+b"
             },
             {
-                "command": "lindle.cleanUpWhitespaceFromSelection",
+                "command": "landle.cleanUpDocumentCommand",
                 "key": "ctrl+alt+c"
             },
             {
-                "command": "lindle.printNowDateTimeOnSelection",
+                "command": "landle.printNowDateTimeOnSelection",
                 "key": "ctrl+alt+n"
             }
         ]
