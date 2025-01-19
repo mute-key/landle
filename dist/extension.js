@@ -1141,28 +1141,29 @@ var EditorCommandGroupId = /* @__PURE__ */ ((EditorCommandGroupId2) => {
   EditorCommandGroupId2[EditorCommandGroupId2["cleanUBlockCommentCommand"] = 1] = "cleanUBlockCommentCommand";
   return EditorCommandGroupId2;
 })(EditorCommandGroupId || {});
-var EditorCommandGroup = class extends EditorCommand {
+var EditorCommandGroup = class {
+  #editorCommand;
   constructor() {
-    super();
+    this.#editorCommand = new EditorCommand();
   }
   cleanUpDocumentCommand = () => {
     return [
-      this.removeDocumentStartingEmptyLine(),
-      this.removeTrailingWhitespaceFromSelection(),
-      this.removeMulitpleEmptyLinesFromSelection(),
-      this.removeMultipleWhitespaceFromSelection(),
-      this.removeEmptyBlockCommentLineOnStart(),
-      this.removeMultipleEmptyBlockCommentLine(),
-      this.insertEmptyBlockCommentLineOnEnd(),
-      this.removeEmptyLinesBetweenBlockCommantAndCode()
+      this.#editorCommand.removeDocumentStartingEmptyLine(),
+      this.#editorCommand.removeTrailingWhitespaceFromSelection(),
+      this.#editorCommand.removeMulitpleEmptyLinesFromSelection(),
+      this.#editorCommand.removeMultipleWhitespaceFromSelection(),
+      this.#editorCommand.removeEmptyBlockCommentLineOnStart(),
+      this.#editorCommand.removeMultipleEmptyBlockCommentLine(),
+      this.#editorCommand.insertEmptyBlockCommentLineOnEnd(),
+      this.#editorCommand.removeEmptyLinesBetweenBlockCommantAndCode()
     ];
   };
   cleanUBlockCommentCommand = () => {
     return [
-      this.removeEmptyBlockCommentLineOnStart(),
-      this.removeMultipleEmptyBlockCommentLine(),
-      this.insertEmptyBlockCommentLineOnEnd(),
-      this.removeEmptyLinesBetweenBlockCommantAndCode()
+      this.#editorCommand.removeEmptyBlockCommentLineOnStart(),
+      this.#editorCommand.removeMultipleEmptyBlockCommentLine(),
+      this.#editorCommand.insertEmptyBlockCommentLineOnEnd(),
+      this.#editorCommand.removeEmptyLinesBetweenBlockCommantAndCode()
     ];
   };
 };

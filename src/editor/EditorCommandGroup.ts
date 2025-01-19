@@ -1,4 +1,3 @@
-import { ActiveEditor } from "./ActiveEditor";
 import { EditorCommand } from "./EditorCommand";
 import { LineType as LT } from "./Line";
 
@@ -19,30 +18,30 @@ type CommandInterface = {
  * as composition. 
  * 
  */
-export class EditorCommandGroup extends EditorCommand implements CommandInterface {
+export class EditorCommandGroup implements CommandInterface {
+    #editorCommand;
     constructor() {
-        super();
+        this.#editorCommand = new EditorCommand();
     }   
 
-    public cleanUpDocumentCommand = () : LT.LineEditDefintion[]  => {
+    public cleanUpDocumentCommand = () : LT.LineEditDefintion[] => {
         return [
-            this.removeDocumentStartingEmptyLine(),
-            this.removeTrailingWhitespaceFromSelection(),
-            this.removeMulitpleEmptyLinesFromSelection(),
-            this.removeMultipleWhitespaceFromSelection(),
-            this.removeEmptyBlockCommentLineOnStart(), 
-            this.removeMultipleEmptyBlockCommentLine(), 
-            this.insertEmptyBlockCommentLineOnEnd(), 
-            this.removeEmptyLinesBetweenBlockCommantAndCode(), 
+            this.#editorCommand.removeDocumentStartingEmptyLine(),
+            this.#editorCommand.removeTrailingWhitespaceFromSelection(),
+            this.#editorCommand.removeMulitpleEmptyLinesFromSelection(),
+            this.#editorCommand.removeMultipleWhitespaceFromSelection(),
+            this.#editorCommand.removeEmptyBlockCommentLineOnStart(), 
+            this.#editorCommand.removeMultipleEmptyBlockCommentLine(), 
+            this.#editorCommand.insertEmptyBlockCommentLineOnEnd(), 
+            this.#editorCommand.removeEmptyLinesBetweenBlockCommantAndCode(), 
         ];
     };
-
     public cleanUBlockCommentCommand = () : LT.LineEditDefintion[] =>  {
         return [
-            this.removeEmptyBlockCommentLineOnStart(), 
-            this.removeMultipleEmptyBlockCommentLine(), 
-            this.insertEmptyBlockCommentLineOnEnd(), 
-            this.removeEmptyLinesBetweenBlockCommantAndCode(), 
+            this.#editorCommand.removeEmptyBlockCommentLineOnStart(), 
+            this.#editorCommand.removeMultipleEmptyBlockCommentLine(), 
+            this.#editorCommand.insertEmptyBlockCommentLineOnEnd(), 
+            this.#editorCommand.removeEmptyLinesBetweenBlockCommantAndCode(), 
         ];
     };
 
