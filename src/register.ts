@@ -27,15 +27,17 @@ import {
  * it is something to check
  */
 
+const filterMapIds = (ids, mapCallback) => {
+    return Object.keys(ids)
+        .filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key))
+        .map(mapCallback) as vscode.Disposable[];
+};
+
 export const Register = (
     context: vscode.ExtensionContext,
     handleLocal: boolean = true) => {
     
     const disposable: vscode.Disposable[] = [];
-    const combinedCommandIds = [
-        ...Object.keys(EditorCommandId), 
-        ...Object.keys(EditorCommandGroupId)]; 
-
     /**
      * if this extension need more features other than editor, 
      * this iteration canb be wrapped in callback and be used from 
@@ -43,40 +45,36 @@ export const Register = (
      * 
      */
     const editorCommand = new EditorCommand();
-    disposable.push(...Object.keys(EditorCommandId)
-        .filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key))
-        .map(key => {
-            if (key in editorCommand) {
-                return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
-                    const args = { 
-                        lineEditFlag: EditorCommandId[key] 
-                    };
-                    editorCommand.execute([editorCommand[key](editor, edit, args)], false);
-                });
-            } else {
-                console.log('command ', key, 'has no implementation');
-            }
-        }) as vscode.Disposable[]
-    );
-
     const editorCommandGroup = new EditorCommandGroup();
-    disposable.push(...Object.keys(EditorCommandGroupId)
-        .filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key))
-        .map(key => {
-            if (key in editorCommandGroup) {
-                return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
-                    const args = { 
-                        lineEditFlag: EditorCommandGroupId[key] 
-                    };
-                    editorCommandGroup.execute(editorCommandGroup[key](editor, edit, args), false);
-                });
-            } else {
-                console.log('command ', key, 'has no implementation');
-            }
-        }) as vscode.Disposable[]
-    );
 
 
+    disposable.push(...filterMapIds(EditorCommandId,(key => {
+        if (key in editorCommand) {
+            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+                const args = { 
+                    lineEditFlag: EditorCommandId[key] 
+                };
+                editorCommand.execute([editorCommand[key](editor, edit, args)], false);
+            });
+        } else {
+            console.log('command ', key, 'has no implementation');
+        }
+    })));
+
+    disposable.push(...filterMapIds(EditorCommandGroupId,(key => {
+        if (key in editorCommandGroup) {
+            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+                const args = { 
+                    lineEditFlag: EditorCommandGroupId[key] 
+                };
+                editorCommand.execute(editorCommandGroup[key](editor, edit, args), false);
+            });
+        } else {
+            console.log('command ', key, 'has no implementation');
+        }
+    })));
+
+    
     // =============================================================================
     // > EDITOR EVENTS: 
     // =============================================================================

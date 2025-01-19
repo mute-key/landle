@@ -1009,6 +1009,10 @@ var EditorCommand = class {
   execute = (command, includeFullEdiotr) => {
     this.#activeEditor.prepareEdit(command, includeFullEdiotr);
   };
+  /**
+   * 
+   * @returns 
+   */
   removeDocumentStartingEmptyLine = () => {
     return {
       func: this.#activeEditor.lineHandler.removeDocumentStartingEmptyLine,
@@ -1169,42 +1173,37 @@ var EditorCommandGroup = class {
 };
 
 // src/register.ts
+var filterMapIds = (ids, mapCallback) => {
+  return Object.keys(ids).filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key)).map(mapCallback);
+};
 var Register = (context, handleLocal = true) => {
   const disposable = [];
-  const combinedCommandIds = [
-    ...Object.keys(EditorCommandId),
-    ...Object.keys(EditorCommandGroupId)
-  ];
   const editorCommand = new EditorCommand();
-  disposable.push(
-    ...Object.keys(EditorCommandId).filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key)).map((key) => {
-      if (key in editorCommand) {
-        return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
-          const args = {
-            lineEditFlag: EditorCommandId[key]
-          };
-          editorCommand.execute([editorCommand[key](editor, edit, args)], false);
-        });
-      } else {
-        console.log("command ", key, "has no implementation");
-      }
-    })
-  );
   const editorCommandGroup = new EditorCommandGroup();
-  disposable.push(
-    ...Object.keys(EditorCommandGroupId).filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key)).map((key) => {
-      if (key in editorCommandGroup) {
-        return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
-          const args = {
-            lineEditFlag: EditorCommandGroupId[key]
-          };
-          editorCommandGroup.execute(editorCommandGroup[key](editor, edit, args), false);
-        });
-      } else {
-        console.log("command ", key, "has no implementation");
-      }
-    })
-  );
+  disposable.push(...filterMapIds(EditorCommandId, (key) => {
+    if (key in editorCommand) {
+      return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+        const args = {
+          lineEditFlag: EditorCommandId[key]
+        };
+        editorCommand.execute([editorCommand[key](editor, edit, args)], false);
+      });
+    } else {
+      console.log("command ", key, "has no implementation");
+    }
+  }));
+  disposable.push(...filterMapIds(EditorCommandGroupId, (key) => {
+    if (key in editorCommandGroup) {
+      return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+        const args = {
+          lineEditFlag: EditorCommandGroupId[key]
+        };
+        editorCommand.execute(editorCommandGroup[key](editor, edit, args), false);
+      });
+    } else {
+      console.log("command ", key, "has no implementation");
+    }
+  }));
   context.subscriptions.push(...disposable);
 };
 

@@ -58,7 +58,7 @@ removes redundant lines and leaving only 1 of the line.
 
 <br><hr><br>
 
-#### > __cleanUpBlockCommentFromSelection__<br>
+#### > __cleanUBlockCommentCommand__<br>
 Shortcut key : `ctrl + alt + b`<br>
 
 - removes empty block comment lines between block comment starting line and non empty block comment lines. 
@@ -70,7 +70,7 @@ Shortcut key : `ctrl + alt + b`<br>
 
 <br><hr><br>
 
-#### > __cleanUpWhitespaceFromSelection__<br>
+#### > __cleanUpDocumentCommand__<br>
 Shortcut key : `ctrl + alt + c`<br>
 
 <br>

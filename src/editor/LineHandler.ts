@@ -8,12 +8,12 @@ import {
 import { LineUtil } from "../common/LineUtil";
 
 export interface Edithandler {
-    removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined
-    removeMultipleWhitespace: (range: vscode.Range) => LineType.LineEditInfo | undefined
-    removeMulitpleEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-    removeCommentedLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-    removeEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-    removeDuplicateLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
+    removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined,
+    removeMultipleWhitespace: (range: vscode.Range) => LineType.LineEditInfo | undefined,
+    removeMulitpleEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
+    removeCommentedLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
+    removeEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
+    removeDuplicateLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
     setNowDateTimeOnLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
 }
 

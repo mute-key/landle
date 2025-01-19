@@ -66,6 +66,10 @@ export class EditorCommand implements CommandInterface {
         this.#activeEditor.prepareEdit(command, includeFullEdiotr);
     };
 
+    /**
+     * 
+     * @returns 
+     */
     public removeDocumentStartingEmptyLine = () : LT.LineEditDefintion => {
         return {
             func: this.#activeEditor.lineHandler.removeDocumentStartingEmptyLine,
