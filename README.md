@@ -1,5 +1,7 @@
 # Introduction
-![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mutekey.landle)
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mutekey.landle) <br>
+[Check it on VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mutekey.landle)
+
 
 this is my rehab code.
 i did not aim to make a funciton which formatter can do already. 
