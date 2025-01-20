@@ -3,7 +3,7 @@
     "publisher": "mutekey", 
     "displayName": "landle",
     "description": "landle",
-    "version": "0.9.2",
+    "version": "0.9.201",
     "repository": {
         "type": "git",
         "url": "https://github.com/mute-key/landle"

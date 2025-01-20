@@ -44,7 +44,7 @@ var package_default = {
   publisher: "mutekey",
   displayName: "landle",
   description: "landle",
-  version: "0.9.2",
+  version: "0.9.201",
   repository: {
     type: "git",
     url: "https://github.com/mute-key/landle"
@@ -171,7 +171,7 @@ var package_default = {
 };
 
 // src/editor/ActiveEditor.ts
-var vscode4 = __toESM(require("vscode"));
+var vscode2 = __toESM(require("vscode"));
 
 // src/editor/Line.ts
 var vscode = __toESM(require("vscode"));
@@ -465,11 +465,187 @@ var Line = class {
   };
 };
 
+// src/editor/ActiveEditor.ts
+var ActiveEditor = class {
+  // unused. for future reference.
+  #editorText;
+  #editor;
+  #lineHandler;
+  constructor(lineHandler) {
+    this.#editor = vscode2.window.activeTextEditor;
+    this.#documentSnapshot();
+    this.#lineHandler = lineHandler;
+  }
+  /**
+   * get current active text editor
+   * @returns 
+   */
+  #setActiveEditor = () => {
+    this.#editor = vscode2.window.activeTextEditor;
+    this.#lineHandler.setCurrentDocument();
+    if (!this.#editor) {
+      return;
+    }
+  };
+  /**
+   * reset cursor position as well as the selection. 
+   */
+  #selectionReset = () => {
+    if (this.#editor) {
+      const range = this.#editor.selections[0];
+      this.#editor.selection = new vscode2.Selection(
+        new vscode2.Position(range.start.line, 0),
+        new vscode2.Position(range.start.line, 0)
+      );
+    }
+  };
+  /**
+   * force selection range to cover entire document.
+   */
+  #selectionEntireDocument = () => {
+    if (this.#editor) {
+      this.#editor.selection = new vscode2.Selection(
+        new vscode2.Position(0, 0),
+        new vscode2.Position(this.#editor.document.lineCount - 1, 0)
+      );
+    }
+  };
+  /**
+   * function that store current document if no arugment is supplied. 
+   * if arguement supplied in function call; it compares last cached 
+   * document with argument and comparing if the document has been 
+   * modified. 
+   * 
+   * 
+   * @param editorText 
+   * @returns boolean 
+   *  - true when no argument supplied indicate the editor has been cached. 
+   *  - true when argument supplied indicate document has not been modified.
+   *  - false when arguement supplied indiciate document has been modified. 
+   */
+  #documentSnapshot = (editorText = void 0) => {
+    if (this.#editor) {
+      if (editorText === void 0) {
+        if (editorText !== this.#editorText) {
+          this.#editorText = this.#editor.document.getText();
+        }
+        return true;
+      } else {
+        return editorText === this.#editorText;
+      }
+    }
+    return false;
+  };
+  /**
+   * this function will perform edit with it's given range with string. 
+   * 
+   * @param edit :LineType.LineEditType will have the;
+   * - range
+   * - type 
+   * - string
+   * @param editBuilder as it's type. 
+   */
+  #editSwitch = (edit, editBuilder) => {
+    if (edit) {
+      switch (edit.type) {
+        case LineType.LineEditType.APPEND:
+          editBuilder.insert(edit.range.start, edit.string ?? "");
+          break;
+        case LineType.LineEditType.CLEAR:
+          editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
+          break;
+        case LineType.LineEditType.DELETE:
+          editBuilder.delete(edit.range);
+          break;
+        case LineType.LineEditType.REPLACE:
+          editBuilder.replace(edit.range, edit.string ?? "");
+          break;
+        case LineType.LineEditType.PREPEND:
+          break;
+        default:
+      }
+    }
+    ;
+  };
+  // =============================================================================
+  // > PUBLIC FUNCTIONS: 
+  // =============================================================================
+  /**
+   * returns object literal of class linHandler with it's method.
+   * @return private instance of lineHandler
+   */
+  // public lineHandler = () : InstanceType<typeof LineHandler> => {
+  //     if (this.#lineHandler === undefined) {
+  //         if (this.#editor) {
+  //             this.#lineHandler = new LineHandler();
+  //         }
+  //     }
+  //     return this.#lineHandler;
+  // };
+  /**
+   * it picks up current editor then, will iterate for each selection range in the 
+   * curernt open editor, and stack the callback function references. 
+   * each selection could be either; empty or singleline or multiple lines but 
+   * they will be handled in the Line class. 
+   * 
+   * it could have not started to ieterate if the selection is not a multiple line,
+   * however then it more conditions need to be checked in this class function. 
+   * beside, if choose not to iterate, means, will not use array, the arugment and
+   * it's type will not be an array or either explicitly use array with a single entry.
+   * that will end up line handling to either recieve array or an single callback 
+   * object which is inconsistance. plus, it is better to handle at one execution point 
+   * and that would be not here. 
+   * 
+   * @param callback line edit function and there could be more than one edit required.
+   * @param includeCursorLine unused. for future reference. 
+   * 
+   */
+  prepareEdit = (callback, selectWholeEditor) => {
+    if (selectWholeEditor) {
+      this.#selectionEntireDocument();
+    }
+    this.#setActiveEditor();
+    const editSchedule = [];
+    if (this.#editor) {
+      const selections = this.#editor.selections;
+      selections.forEach((range) => {
+        editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+      });
+      this.editInRange(editSchedule);
+    }
+  };
+  /**
+   * performes aysnc edit and aplit it all at once they are complete. 
+   * 
+   * @param lineCallback collecion of edits for the document how and where to edit. 
+   */
+  editInRange = async (lineCallback) => {
+    try {
+      if (!this.#documentSnapshot(vscode2.window.activeTextEditor?.document.getText())) {
+        const success = await this.#editor?.edit((editBuilder) => {
+          lineCallback.forEach((edit) => this.#editSwitch(edit, editBuilder));
+        });
+        if (success) {
+          this.#selectionReset();
+          this.#documentSnapshot();
+          console.log("Edit applied successfully!");
+        } else {
+          console.log("Failed to apply edit.");
+        }
+      } else {
+        console.log("Duplicate edit entry");
+      }
+    } catch (err) {
+      console.log("Error applying edit:", err);
+    }
+  };
+};
+
 // src/editor/LineHandler.ts
-var vscode3 = __toESM(require("vscode"));
+var vscode4 = __toESM(require("vscode"));
 
 // src/common/LineUtil.ts
-var vscode2 = __toESM(require("vscode"));
+var vscode3 = __toESM(require("vscode"));
 var LineUtil = class {
   // #rmTrailingWhiteSpaceString = /[ \t]+$/;
   // #ifTrailingWhiteSpaceString = /\s(?=\s*$)/g;
@@ -493,7 +669,7 @@ var LineUtil = class {
   static isBlockCommentEndingLine = (line) => line.search(/^\s*\*\//) !== -1;
   static cleanBlockComment = (line) => line.replace(/(?<=\*).*/, "");
   static pushMessage = (message) => {
-    return vscode2.window.showInformationMessage(message);
+    return vscode3.window.showInformationMessage(message);
   };
   static splitStringOn(slicable, ...indices) {
     return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
@@ -574,9 +750,9 @@ var LineHandler = class extends Line {
         }
       }
       return {
-        range: new vscode3.Range(
-          new vscode3.Position(0, 0),
-          new vscode3.Position(lineNumber, 0)
+        range: new vscode4.Range(
+          new vscode4.Position(0, 0),
+          new vscode4.Position(lineNumber, 0)
         ),
         block: {
           lineSkip,
@@ -728,9 +904,9 @@ var LineHandler = class extends Line {
       }
       if (newRange) {
         return {
-          range: new vscode3.Range(
-            new vscode3.Position(range.start.line, 0),
-            new vscode3.Position(lineNumber, 0)
+          range: new vscode4.Range(
+            new vscode4.Position(range.start.line, 0),
+            new vscode4.Position(lineNumber, 0)
           ),
           block: {
             priority: LineType.LineEditBlockPriority.MID,
@@ -800,9 +976,9 @@ var LineHandler = class extends Line {
         }
       }
       return {
-        range: new vscode3.Range(
-          new vscode3.Position(range.start.line, 0),
-          new vscode3.Position(lineNumber, 0)
+        range: new vscode4.Range(
+          new vscode4.Position(range.start.line, 0),
+          new vscode4.Position(lineNumber, 0)
         ),
         block: {
           lineSkip,
@@ -830,182 +1006,6 @@ var LineHandler = class extends Line {
   };
 };
 
-// src/editor/ActiveEditor.ts
-var ActiveEditor = class {
-  // unused. for future reference.
-  #editorText;
-  #editor;
-  #lineHandler;
-  constructor() {
-    this.#editor = vscode4.window.activeTextEditor;
-    this.#documentSnapshot();
-    this.#lineHandler = new LineHandler();
-  }
-  /**
-   * get current active text editor
-   * @returns 
-   */
-  #setActiveEditor = () => {
-    this.#editor = vscode4.window.activeTextEditor;
-    this.#lineHandler.setCurrentDocument();
-    if (!this.#editor) {
-      return;
-    }
-  };
-  /**
-   * reset cursor position as well as the selection. 
-   */
-  #selectionReset = () => {
-    if (this.#editor) {
-      const range = this.#editor.selections[0];
-      this.#editor.selection = new vscode4.Selection(
-        new vscode4.Position(range.start.line, 0),
-        new vscode4.Position(range.start.line, 0)
-      );
-    }
-  };
-  /**
-   * force selection range to cover entire document.
-   */
-  #selectionEntireDocument = () => {
-    if (this.#editor) {
-      this.#editor.selection = new vscode4.Selection(
-        new vscode4.Position(0, 0),
-        new vscode4.Position(this.#editor.document.lineCount - 1, 0)
-      );
-    }
-  };
-  /**
-   * function that store current document if no arugment is supplied. 
-   * if arguement supplied in function call; it compares last cached 
-   * document with argument and comparing if the document has been 
-   * modified. 
-   * 
-   * 
-   * @param editorText 
-   * @returns boolean 
-   *  - true when no argument supplied indicate the editor has been cached. 
-   *  - true when argument supplied indicate document has not been modified.
-   *  - false when arguement supplied indiciate document has been modified. 
-   */
-  #documentSnapshot = (editorText = void 0) => {
-    if (this.#editor) {
-      if (editorText === void 0) {
-        if (editorText !== this.#editorText) {
-          this.#editorText = this.#editor.document.getText();
-        }
-        return true;
-      } else {
-        return editorText === this.#editorText;
-      }
-    }
-    return false;
-  };
-  /**
-   * this function will perform edit with it's given range with string. 
-   * 
-   * @param edit :LineType.LineEditType will have the;
-   * - range
-   * - type 
-   * - string
-   * @param editBuilder as it's type. 
-   */
-  #editSwitch = (edit, editBuilder) => {
-    if (edit) {
-      switch (edit.type) {
-        case LineType.LineEditType.APPEND:
-          editBuilder.insert(edit.range.start, edit.string ?? "");
-          break;
-        case LineType.LineEditType.CLEAR:
-          editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
-          break;
-        case LineType.LineEditType.DELETE:
-          editBuilder.delete(edit.range);
-          break;
-        case LineType.LineEditType.REPLACE:
-          editBuilder.replace(edit.range, edit.string ?? "");
-          break;
-        case LineType.LineEditType.PREPEND:
-          break;
-        default:
-      }
-    }
-    ;
-  };
-  // =============================================================================
-  // > PUBLIC FUNCTIONS: 
-  // =============================================================================
-  /**
-   * returns object literal of class linHandler with it's method.
-   * @return private instance of lineHandler
-   */
-  lineHandler = () => {
-    if (this.#lineHandler === void 0) {
-      if (this.#editor) {
-        this.#lineHandler = new LineHandler();
-      }
-    }
-    return this.#lineHandler;
-  };
-  /**
-   * it picks up current editor then, will iterate for each selection range in the 
-   * curernt open editor, and stack the callback function references. 
-   * each selection could be either; empty or singleline or multiple lines but 
-   * they will be handled in the Line class. 
-   * 
-   * it could have not started to ieterate if the selection is not a multiple line,
-   * however then it more conditions need to be checked in this class function. 
-   * beside, if choose not to iterate, means, will not use array, the arugment and
-   * it's type will not be an array or either explicitly use array with a single entry.
-   * that will end up line handling to either recieve array or an single callback 
-   * object which is inconsistance. plus, it is better to handle at one execution point 
-   * and that would be not here. 
-   * 
-   * @param callback line edit function and there could be more than one edit required.
-   * @param includeCursorLine unused. for future reference. 
-   * 
-   */
-  prepareEdit = (callback, selectWholeEditor) => {
-    if (selectWholeEditor) {
-      this.#selectionEntireDocument();
-    }
-    this.#setActiveEditor();
-    const editSchedule = [];
-    if (this.#editor) {
-      const selections = this.#editor.selections;
-      selections.forEach((range) => {
-        editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
-      });
-      this.editInRange(editSchedule);
-    }
-  };
-  /**
-   * performes aysnc edit and aplit it all at once they are complete. 
-   * 
-   * @param lineCallback collecion of edits for the document how and where to edit. 
-   */
-  editInRange = async (lineCallback) => {
-    try {
-      if (!this.#documentSnapshot(vscode4.window.activeTextEditor?.document.getText())) {
-        const success = await this.#editor?.edit((editBuilder) => {
-          lineCallback.forEach((edit) => this.#editSwitch(edit, editBuilder));
-        });
-        if (success) {
-          this.#selectionReset();
-          this.#documentSnapshot();
-          console.log("Edit applied successfully!");
-        } else {
-          console.log("Failed to apply edit.");
-        }
-      } else {
-        console.log("Duplicate edit entry");
-      }
-    } catch (err) {
-      console.log("Error applying edit:", err);
-    }
-  };
-};
-
 // src/editor/EditorCommand.ts
 var EditorCommandId = /* @__PURE__ */ ((EditorCommandId2) => {
   EditorCommandId2[EditorCommandId2["removeDocumentStartingEmptyLine"] = 0] = "removeDocumentStartingEmptyLine";
@@ -1024,8 +1024,10 @@ var EditorCommandId = /* @__PURE__ */ ((EditorCommandId2) => {
 })(EditorCommandId || {});
 var EditorCommand = class {
   #activeEditor;
+  #lineHandler;
   constructor() {
-    this.#activeEditor = new ActiveEditor();
+    this.#lineHandler = new LineHandler();
+    this.#activeEditor = new ActiveEditor(this.#lineHandler);
   }
   // =============================================================================
   // > PUBLIC FUNCTIONS:
@@ -1039,7 +1041,7 @@ var EditorCommand = class {
    */
   removeDocumentStartingEmptyLine = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeDocumentStartingEmptyLine,
+      func: this.#lineHandler.removeDocumentStartingEmptyLine,
       type: LineType.LineEditType.DELETE
     };
   };
@@ -1053,7 +1055,7 @@ var EditorCommand = class {
    */
   removeTrailingWhitespaceFromSelection = (editor, edit, args) => {
     return {
-      func: this.#activeEditor.lineHandler().removeTrailingWhiteSpace,
+      func: this.#lineHandler.removeTrailingWhiteSpace,
       type: LineType.LineEditType.DELETE
     };
   };
@@ -1066,7 +1068,7 @@ var EditorCommand = class {
    */
   removeMulitpleEmptyLinesFromSelection = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeMulitpleEmptyLine,
+      func: this.#lineHandler.removeMulitpleEmptyLine,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.MID
@@ -1080,7 +1082,7 @@ var EditorCommand = class {
    */
   removeMultipleWhitespaceFromSelection = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeMultipleWhitespace,
+      func: this.#lineHandler.removeMultipleWhitespace,
       type: LineType.LineEditType.REPLACE
     };
   };
@@ -1091,7 +1093,7 @@ var EditorCommand = class {
    */
   removeEmptyLinesFromSelection = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeEmptyLine,
+      func: this.#lineHandler.removeEmptyLine,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.LOW
@@ -1105,7 +1107,7 @@ var EditorCommand = class {
    */
   removeCommentedTextFromSelection = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeCommentedLine,
+      func: this.#lineHandler.removeCommentedLine,
       type: LineType.LineEditType.DELETE
     };
   };
@@ -1115,7 +1117,7 @@ var EditorCommand = class {
    */
   removeDuplicateLineFromSelection = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeDuplicateLine,
+      func: this.#lineHandler.removeDuplicateLine,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.LOW
@@ -1124,7 +1126,7 @@ var EditorCommand = class {
   };
   removeEmptyBlockCommentLineOnStart = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeEmptyBlockCommentLineOnStart,
+      func: this.#lineHandler.removeEmptyBlockCommentLineOnStart,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.VERYHIGH
@@ -1133,7 +1135,7 @@ var EditorCommand = class {
   };
   removeMultipleEmptyBlockCommentLine = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeMultipleEmptyBlockCommentLine,
+      func: this.#lineHandler.removeMultipleEmptyBlockCommentLine,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.HIGH
@@ -1142,7 +1144,7 @@ var EditorCommand = class {
   };
   insertEmptyBlockCommentLineOnEnd = () => {
     return {
-      func: this.#activeEditor.lineHandler().insertEmptyBlockCommentLineOnEnd,
+      func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
       type: LineType.LineEditType.APPEND,
       block: {
         priority: LineType.LineEditBlockPriority.LOW
@@ -1151,7 +1153,7 @@ var EditorCommand = class {
   };
   removeEmptyLinesBetweenBlockCommantAndCode = () => {
     return {
-      func: this.#activeEditor.lineHandler().removeEmptyLinesBetweenBlockCommantAndCode,
+      func: this.#lineHandler.removeEmptyLinesBetweenBlockCommantAndCode,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.HIGH
@@ -1160,7 +1162,7 @@ var EditorCommand = class {
   };
   printNowDateTimeOnSelection = () => {
     return {
-      func: this.#activeEditor.lineHandler().setNowDateTimeOnLine,
+      func: this.#lineHandler.setNowDateTimeOnLine,
       type: LineType.LineEditType.APPEND
     };
   };
@@ -1199,45 +1201,44 @@ var EditorCommandGroup = class extends EditorCommand {
 };
 
 // src/register.ts
+var bindEditorCommands = () => {
+  return filterMapIds(EditorCommandId, (key) => {
+    const editorCommand = new EditorCommand();
+    if (key in editorCommand) {
+      return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+        const args = {
+          lineEditFlag: EditorCommandId[key]
+        };
+        editorCommand.execute([editorCommand[key]()], false);
+      });
+    } else {
+      console.log("command ", key, "has no implementation");
+    }
+  });
+};
+var bindEditorCommandGroups = () => {
+  const editorCommandGroup = new EditorCommandGroup();
+  return filterMapIds(EditorCommandGroupId, (key) => {
+    if (key in editorCommandGroup) {
+      return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+        const args = {
+          lineEditFlag: EditorCommandGroupId[key]
+        };
+        editorCommandGroup.execute(editorCommandGroup[key](), false);
+      });
+    } else {
+      console.log("command ", key, "has no implementation");
+    }
+  });
+};
 var filterMapIds = (ids, mapCallback) => {
   return Object.keys(ids).filter((key) => !/^[+-]?\d+(\.\d+)?$/.test(key)).map(mapCallback);
 };
 var Register = (context, handleLocal = true) => {
   const disposable = [];
-  const bindEditorCommands = () => {
-    return filterMapIds(EditorCommandId, (key) => {
-      const editorCommand = new EditorCommand();
-      if (key in editorCommand) {
-        return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
-          const args = {
-            lineEditFlag: EditorCommandId[key]
-          };
-          editorCommand.execute([editorCommand[key]()], false);
-        });
-      } else {
-        console.log("command ", key, "has no implementation");
-      }
-    });
-  };
-  const bindEditorCommandGroups = () => {
-    const editorCommandGroup = new EditorCommandGroup();
-    return filterMapIds(EditorCommandGroupId, (key) => {
-      if (key in editorCommandGroup) {
-        return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
-          const args = {
-            lineEditFlag: EditorCommandGroupId[key]
-          };
-          editorCommandGroup.execute(editorCommandGroup[key](), false);
-        });
-      } else {
-        console.log("command ", key, "has no implementation");
-      }
-    });
-  };
   disposable.push(...bindEditorCommands());
   disposable.push(...bindEditorCommandGroups());
   disposable.push(vscode5.window.onDidChangeActiveTextEditor((editor) => {
-    console.log(editor?.document.fileName);
     if (editor) {
       bindEditorCommands();
       bindEditorCommandGroups();

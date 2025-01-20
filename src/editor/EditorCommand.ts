@@ -8,6 +8,9 @@
 import * as vscode from "vscode";
 import { ActiveEditor } from "./ActiveEditor";
 import { LineType as LT } from "./Line";
+import {
+    LineHandler
+} from "./LineHandler";
 
 /**
  * thsese command ids should match the commands names in package.json.
@@ -53,10 +56,12 @@ type CommandInterface = {
  * 
  */
 export class EditorCommand implements CommandInterface {
-    #activeEditor: ActiveEditor;
+    #activeEditor: InstanceType<typeof ActiveEditor>;
+    #lineHandler : InstanceType<typeof LineHandler>;
 
     constructor() {
-        this.#activeEditor = new ActiveEditor();
+        this.#lineHandler = new LineHandler();
+        this.#activeEditor = new ActiveEditor(this.#lineHandler);
     }
 
     // =============================================================================
@@ -73,7 +78,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeDocumentStartingEmptyLine = () : LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeDocumentStartingEmptyLine,
+            func: this.#lineHandler.removeDocumentStartingEmptyLine,
             type: LT.LineEditType.DELETE
         };
     };
@@ -88,7 +93,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeTrailingWhitespaceFromSelection = (editor?, edit?, args?) : LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeTrailingWhiteSpace,
+            func: this.#lineHandler.removeTrailingWhiteSpace,
             type: LT.LineEditType.DELETE
         };
     };
@@ -102,7 +107,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeMulitpleEmptyLinesFromSelection = () : LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeMulitpleEmptyLine,
+            func: this.#lineHandler.removeMulitpleEmptyLine,
             type: LT.LineEditType.DELETE,
             block: {
                 priority: LT.LineEditBlockPriority.MID
@@ -117,7 +122,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeMultipleWhitespaceFromSelection = () : LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeMultipleWhitespace,
+            func: this.#lineHandler.removeMultipleWhitespace,
             type: LT.LineEditType.REPLACE,
         };
     };
@@ -129,7 +134,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeEmptyLinesFromSelection = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeEmptyLine,
+            func: this.#lineHandler.removeEmptyLine,
             type: LT.LineEditType.DELETE,
             block: {
                 priority: LT.LineEditBlockPriority.LOW
@@ -144,7 +149,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeCommentedTextFromSelection = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeCommentedLine,
+            func: this.#lineHandler.removeCommentedLine,
             type: LT.LineEditType.DELETE,
         };
     };
@@ -155,7 +160,7 @@ export class EditorCommand implements CommandInterface {
      */
     public removeDuplicateLineFromSelection = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeDuplicateLine,
+            func: this.#lineHandler.removeDuplicateLine,
             type: LT.LineEditType.DELETE,
             block: {
                 priority: LT.LineEditBlockPriority.LOW
@@ -165,7 +170,7 @@ export class EditorCommand implements CommandInterface {
 
     public removeEmptyBlockCommentLineOnStart = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeEmptyBlockCommentLineOnStart,
+            func: this.#lineHandler.removeEmptyBlockCommentLineOnStart,
             type: LT.LineEditType.DELETE,
             block: {
                 priority: LT.LineEditBlockPriority.VERYHIGH
@@ -175,7 +180,7 @@ export class EditorCommand implements CommandInterface {
 
     public removeMultipleEmptyBlockCommentLine = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeMultipleEmptyBlockCommentLine,
+            func: this.#lineHandler.removeMultipleEmptyBlockCommentLine,
             type: LT.LineEditType.DELETE,
             block: {
                 priority: LT.LineEditBlockPriority.HIGH
@@ -185,7 +190,7 @@ export class EditorCommand implements CommandInterface {
 
     public insertEmptyBlockCommentLineOnEnd = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().insertEmptyBlockCommentLineOnEnd,
+            func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
             type: LT.LineEditType.APPEND,
             block: {
                 priority: LT.LineEditBlockPriority.LOW
@@ -195,7 +200,7 @@ export class EditorCommand implements CommandInterface {
 
     public removeEmptyLinesBetweenBlockCommantAndCode = () : LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().removeEmptyLinesBetweenBlockCommantAndCode,
+            func: this.#lineHandler.removeEmptyLinesBetweenBlockCommantAndCode,
             type: LT.LineEditType.DELETE,
             block: {
                 priority: LT.LineEditBlockPriority.HIGH
@@ -205,7 +210,7 @@ export class EditorCommand implements CommandInterface {
 
     public printNowDateTimeOnSelection = (): LT.LineEditDefintion => {
         return {
-            func: this.#activeEditor.lineHandler().setNowDateTimeOnLine,
+            func: this.#lineHandler.setNowDateTimeOnLine,
             type: LT.LineEditType.APPEND,
         };
     };
