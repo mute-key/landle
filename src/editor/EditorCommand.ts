@@ -61,7 +61,8 @@ export class EditorCommand implements CommandInterface {
 
     constructor() {
         this.#lineHandler = new LineHandler();
-        this.#activeEditor = new ActiveEditor(this.#lineHandler);
+        this.#activeEditor = new ActiveEditor();
+        this.#activeEditor.setLineHandler(this.#lineHandler);
     }
 
     // =============================================================================

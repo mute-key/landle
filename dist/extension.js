@@ -471,10 +471,9 @@ var ActiveEditor = class {
   #editorText;
   #editor;
   #lineHandler;
-  constructor(lineHandler) {
+  constructor() {
     this.#editor = vscode2.window.activeTextEditor;
     this.#documentSnapshot();
-    this.#lineHandler = lineHandler;
   }
   /**
    * get current active text editor
@@ -574,14 +573,9 @@ var ActiveEditor = class {
    * returns object literal of class linHandler with it's method.
    * @return private instance of lineHandler
    */
-  // public lineHandler = () : InstanceType<typeof LineHandler> => {
-  //     if (this.#lineHandler === undefined) {
-  //         if (this.#editor) {
-  //             this.#lineHandler = new LineHandler();
-  //         }
-  //     }
-  //     return this.#lineHandler;
-  // };
+  setLineHandler = (lineHandler) => {
+    this.#lineHandler = lineHandler;
+  };
   /**
    * it picks up current editor then, will iterate for each selection range in the 
    * curernt open editor, and stack the callback function references. 
@@ -1027,7 +1021,8 @@ var EditorCommand = class {
   #lineHandler;
   constructor() {
     this.#lineHandler = new LineHandler();
-    this.#activeEditor = new ActiveEditor(this.#lineHandler);
+    this.#activeEditor = new ActiveEditor();
+    this.#activeEditor.setLineHandler(this.#lineHandler);
   }
   // =============================================================================
   // > PUBLIC FUNCTIONS:

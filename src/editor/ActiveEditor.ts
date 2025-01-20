@@ -20,10 +20,10 @@ export class ActiveEditor {
     #editor: vscode.TextEditor | undefined;
     #lineHandler : InstanceType<typeof LineHandler>;
 
-    constructor(lineHandler: LineHandler) {
+    constructor() {
         this.#editor = vscode.window.activeTextEditor;
         this.#documentSnapshot();
-        this.#lineHandler = lineHandler;
+        // this.#lineHandler = lineHandler;
     }
 
     /**
@@ -129,14 +129,9 @@ export class ActiveEditor {
      * returns object literal of class linHandler with it's method.
      * @return private instance of lineHandler
      */
-    // public lineHandler = () : InstanceType<typeof LineHandler> => {
-    //     if (this.#lineHandler === undefined) {
-    //         if (this.#editor) {
-    //             this.#lineHandler = new LineHandler();
-    //         }
-    //     }
-    //     return this.#lineHandler;
-    // };
+    public setLineHandler = (lineHandler: LineHandler) : void => {
+        this.#lineHandler = lineHandler;
+    };
 
     /**
      * it picks up current editor then, will iterate for each selection range in the 
