@@ -1,4 +1,5 @@
 # Introduction
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mutekey.landle)
 
 this is my rehab code.
 i did not aim to make a funciton which formatter can do already. 
@@ -84,6 +85,8 @@ Shortcut key : `ctrl + alt + n`<br>
 print DateTime string on current position of the selection.
 
 <br><hr><br>
+
+
 
 
 
