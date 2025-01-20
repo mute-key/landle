@@ -18,30 +18,30 @@ type CommandInterface = {
  * as composition. 
  * 
  */
-export class EditorCommandGroup implements CommandInterface {
-    #editorCommand;
+export class EditorCommandGroup extends EditorCommand implements CommandInterface {
     constructor() {
-        this.#editorCommand = new EditorCommand();
+        super();
     }   
 
     public cleanUpDocumentCommand = () : LT.LineEditDefintion[] => {
         return [
-            this.#editorCommand.removeDocumentStartingEmptyLine(),
-            this.#editorCommand.removeTrailingWhitespaceFromSelection(),
-            this.#editorCommand.removeMulitpleEmptyLinesFromSelection(),
-            this.#editorCommand.removeMultipleWhitespaceFromSelection(),
-            this.#editorCommand.removeEmptyBlockCommentLineOnStart(), 
-            this.#editorCommand.removeMultipleEmptyBlockCommentLine(), 
-            this.#editorCommand.insertEmptyBlockCommentLineOnEnd(), 
-            this.#editorCommand.removeEmptyLinesBetweenBlockCommantAndCode(), 
+            this.removeDocumentStartingEmptyLine(),
+            this.removeTrailingWhitespaceFromSelection(),
+            this.removeMulitpleEmptyLinesFromSelection(),
+            this.removeMultipleWhitespaceFromSelection(),
+            this.removeEmptyBlockCommentLineOnStart(), 
+            this.removeMultipleEmptyBlockCommentLine(), 
+            this.insertEmptyBlockCommentLineOnEnd(), 
+            this.removeEmptyLinesBetweenBlockCommantAndCode(), 
         ];
     };
+    
     public cleanUBlockCommentCommand = () : LT.LineEditDefintion[] =>  {
         return [
-            this.#editorCommand.removeEmptyBlockCommentLineOnStart(), 
-            this.#editorCommand.removeMultipleEmptyBlockCommentLine(), 
-            this.#editorCommand.insertEmptyBlockCommentLineOnEnd(), 
-            this.#editorCommand.removeEmptyLinesBetweenBlockCommantAndCode(), 
+            this.removeEmptyBlockCommentLineOnStart(), 
+            this.removeMultipleEmptyBlockCommentLine(), 
+            this.insertEmptyBlockCommentLineOnEnd(), 
+            this.removeEmptyLinesBetweenBlockCommantAndCode(), 
         ];
     };
 

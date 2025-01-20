@@ -1,8 +1,17 @@
 {
     "name": "landle",
+    "publisher": "mutekey", 
     "displayName": "landle",
     "description": "landle",
-    "version": "0.9.1",
+    "version": "0.9.2",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mute-key/landle"
+    },
+    "content": {
+        "baseContentUrl": "https://github.com/mute-key/landle/blob/master/",
+        "baseImagesUrl": "https://github.com/mute-key/landle/raw/master/"
+    },
     "engines": {
         "vscode": "^1.96.0"
     },

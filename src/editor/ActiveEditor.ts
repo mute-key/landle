@@ -21,7 +21,7 @@ export class ActiveEditor {
     #lineHandler : InstanceType<typeof LineHandler>;
 
     constructor() {
-        this.#setActiveEditor();        
+        this.#editor = vscode.window.activeTextEditor;
         this.#documentSnapshot();
         this.#lineHandler = new LineHandler();
     }
@@ -32,6 +32,7 @@ export class ActiveEditor {
      */
     #setActiveEditor = () : void => {
         this.#editor = vscode.window.activeTextEditor;
+        this.#lineHandler.setCurrentDocument();
         if (!this.#editor) {
             return;
         }
@@ -128,12 +129,14 @@ export class ActiveEditor {
      * returns object literal of class linHandler with it's method.
      * @return private instance of lineHandler
      */
-    public lineHandler = (() : InstanceType<typeof LineHandler> => {
+    public lineHandler = () : InstanceType<typeof LineHandler> => {
         if (this.#lineHandler === undefined) {
-            this.#lineHandler = new LineHandler();
+            if (this.#editor) {
+                this.#lineHandler = new LineHandler();
+            }
         }
         return this.#lineHandler;
-    })();
+    };
 
     /**
      * it picks up current editor then, will iterate for each selection range in the 
@@ -161,13 +164,15 @@ export class ActiveEditor {
 
         this.#setActiveEditor();
         const editSchedule: LineType.LineEditInfo[] = [];
-        const selections = this.#editor?.selections;
+        if (this.#editor) {
+            const selections = this.#editor.selections;
 
-        selections?.forEach((range : vscode.Range) => {
-            editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
-        });
-
-        this.editInRange(editSchedule);
+            selections.forEach((range : vscode.Range) => {
+                editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+            });
+    
+            this.editInRange(editSchedule);
+        }
     };
 
     /**

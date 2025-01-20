@@ -4,9 +4,9 @@ export namespace LineType {
  
     /**
      * bitmask to check multiple edit.type.
-     * if, it comes down to editor need to perform multiple edits with single callback, 
+     * if, it comes down to editor need to perform multiple edits with single callback,
      * this will be very useful and ActiveEditor.#editSwitch need be rewriten other than
-     * switch. 
+     * switch.
      *
      */
     export const enum LineEditType {
@@ -19,7 +19,7 @@ export namespace LineType {
 
     /**
      * this is to check if more than one edit is trying to perform the edit
-     * on overlapping range which will throw runtime error. but this is not. 
+     * on overlapping range which will throw runtime error. but this is not.
      * 
      */
     export const enum LineEditBlockPriority {
@@ -41,7 +41,7 @@ export namespace LineType {
     }
 
     /**
-     * detail about line edit, to be performed. 
+     * detail about line edit, to be performed.
      * 
      */
     export type LineEditInfo = {
@@ -52,7 +52,7 @@ export namespace LineType {
     }
  
     /**
-     * detail about line edit, to check on each line. 
+     * detail about line edit, to check on each line.
      * 
      */
     export type LineEditDefintion = {
@@ -72,9 +72,7 @@ export abstract class Line {
 
     constructor() {
         this.editor = vscode.window.activeTextEditor;
-        if (!this.editor) {
-            return;
-        } else {
+        if (this.editor) {
             this.doc = this.editor.document;
         }
     }
@@ -84,15 +82,15 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * unused. for future reference. 
+     * unused. for future reference.
      *
      * @param range unused
      * @returns unused
      * 
      */
     #getLineNumbersFromRange = (range: vscode.Range) : { startLine: number, endLine: number } => {
-        const startLine = range.start.line; 
-        const endLine = range.end.line; 
+        const startLine = range.start.line;
+        const endLine = range.end.line;
         return { startLine, endLine };
     };
 
@@ -119,9 +117,9 @@ export abstract class Line {
      * this means that only a function with block:true will be executed and every other callbacks
      * will be drop for the further.
      *
-     * @param currntRange 
-     * @param fn 
-     * @param _lineEdit_ 
+     * @param currntRange
+     * @param fn
+     * @param _lineEdit_
      * @returns LineType.LineEditInfo | undefined
      * 
      */
@@ -238,7 +236,7 @@ export abstract class Line {
     /**
      * get EOL of current document set
      *
-     * @returns 
+     * @returns
      * 
      */
     protected getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
@@ -255,19 +253,17 @@ export abstract class Line {
     };
 
     /**
-<<<<<<< HEAD
      * get TextLine object from range or from line number.
      * 
-=======
-     * get TextLine object from range or from line number. 
-     *
->>>>>>> dev
      * @param range target range
      * @returns TextLine object of range or line.
      * 
      */
     protected getTextLineFromRange = (range: vscode.Range | number, lineDelta = 0): vscode.TextLine => {
         if (typeof range === 'number') {
+            if (range + lineDelta >= this.doc.lineCount) {
+                return this.doc.lineAt(range);
+            }
             return this.doc.lineAt(range + lineDelta);
         }
 
@@ -286,7 +282,7 @@ export abstract class Line {
      * get the range of entire line including EOL.
      *
      * @param range target range
-     * @returns 
+     * @returns
      * 
      */
     protected lineFullRangeWithEOL = (range: vscode.Range): vscode.Range => {
@@ -299,7 +295,7 @@ export abstract class Line {
      * @param lineNuber line number of new range object
      * @param startPosition starting position of range
      * @param endPosition end position of range
-     * @returns 
+     * @returns
      * 
      */
     protected newRangeZeroBased = (lineNuber : number, startPosition : number, endPosition : number) : vscode.Range => {
@@ -314,35 +310,35 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * get the range of line with any characters including whitespaces. 
+     * get the range of line with any characters including whitespaces.
      *
-     * @param range vscode.Range | number. 
+     * @param range vscode.Range | number.
      * @returns first line of the range or whole line of the the line number.
      * 
      */
     public lineFullRange = (range: vscode.Range | number): vscode.Range => {
         if (typeof range === 'number') {
-            return this.doc.lineAt(<number>range).range;
+            return this.doc?.lineAt(<number>range).range;
         }
-        return this.doc.lineAt(range.start.line).range;
+        return this.doc?.lineAt(range.start.line).range;
     };
 
     /**
-     * take range as a single selection that could be a single line, empty (cursor only) 
-     * or mulitple lines. the callback will be defined in Command.ts. this function will return 
-     * either a single LineEditInfo or array of them to schedule the document edit. 
-     * if the selection is either of empty (whitespaces only) or a single line, the 
-     * range should be the whole line. 
+     * take range as a single selection that could be a single line, empty (cursor only)
+     * or mulitple lines. the callback will be defined in Command.ts. this function will return
+     * either a single LineEditInfo or array of them to schedule the document edit.
+     * if the selection is either of empty (whitespaces only) or a single line, the
+     * range should be the whole line.
      *
-     * @param range 
-     * @param callback 
-     * @returns 
+     * @param range
+     * @param callback
+     * @returns
      * 
      */
     public prepareLines = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         const targetLine = range.start.line;
  
-        // on each selection, starting line is: isEmpty or if selection is singleLine 
+        // on each selection, starting line is: isEmpty or if selection is singleLine
         if (range.isEmpty || range.isSingleLine) {
             return this.#callbackIteration(this.lineFullRange(targetLine), callback);
         }
@@ -352,5 +348,16 @@ export abstract class Line {
             callback,
             targetLine,
             <LineType.LineEditInfo[]>[]);
+    };
+
+    /**
+     * @returns
+     * 
+     */
+    public setCurrentDocument = () : void => {
+        this.editor = vscode.window.activeTextEditor;
+        if (this.editor) {
+            this.doc = this.editor.document;
+        }
     };
 }

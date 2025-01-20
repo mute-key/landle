@@ -44,35 +44,68 @@ export const Register = (
      * other command list enum if the command changes. 
      * 
      */
-    const editorCommand = new EditorCommand();
-    const editorCommandGroup = new EditorCommandGroup();
+    
+    const bindEditorCommands = () : vscode.Disposable[] => {
+        return filterMapIds(EditorCommandId, (key => {
+            const editorCommand = new EditorCommand();
+            if (key in editorCommand) {
+                return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+                    const args = { 
+                        lineEditFlag: EditorCommandId[key] 
+                    };
+                    editorCommand.execute([editorCommand[key]()], false);
+                });
+            } else {
+                console.log('command ', key, 'has no implementation');
+            }
+        }));
+        
+    };
+    
+    const bindEditorCommandGroups = () : vscode.Disposable[] => {
+        const editorCommandGroup = new EditorCommandGroup();
+        return filterMapIds(EditorCommandGroupId, (key => {
+            if (key in editorCommandGroup) {
+                return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+                    const args = { 
+                        lineEditFlag: EditorCommandGroupId[key] 
+                    };
+                    editorCommandGroup.execute(editorCommandGroup[key](), false);
+                });
+            } else {
+                console.log('command ', key, 'has no implementation');
+            }
+        }));
+    };
+    
+    disposable.push(...bindEditorCommands());
+    disposable.push(...bindEditorCommandGroups());
 
+    // disposable.push(...filterMapIds(EditorCommandId, (key => {
+    //     if (key in editorCommand) {
+    //         return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+    //             const args = { 
+    //                 lineEditFlag: EditorCommandId[key] 
+    //             };
+    //             editorCommand.execute([editorCommand[key]()], false);
+    //         });
+    //     } else {
+    //         console.log('command ', key, 'has no implementation');
+    //     }
+    // })));
 
-    disposable.push(...filterMapIds(EditorCommandId,(key => {
-        if (key in editorCommand) {
-            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
-                const args = { 
-                    lineEditFlag: EditorCommandId[key] 
-                };
-                editorCommand.execute([editorCommand[key](editor, edit, args)], false);
-            });
-        } else {
-            console.log('command ', key, 'has no implementation');
-        }
-    })));
-
-    disposable.push(...filterMapIds(EditorCommandGroupId,(key => {
-        if (key in editorCommandGroup) {
-            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
-                const args = { 
-                    lineEditFlag: EditorCommandGroupId[key] 
-                };
-                editorCommand.execute(editorCommandGroup[key](editor, edit, args), false);
-            });
-        } else {
-            console.log('command ', key, 'has no implementation');
-        }
-    })));
+    // disposable.push(...filterMapIds(EditorCommandGroupId, (key => {
+    //     if (key in editorCommandGroup) {
+    //         return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+    //             const args = { 
+    //                 lineEditFlag: EditorCommandGroupId[key] 
+    //             };
+    //             editorCommand.execute(editorCommandGroup[key](), false);
+    //         });
+    //     } else {
+    //         console.log('command ', key, 'has no implementation');
+    //     }
+    // })));
 
     
     // =============================================================================
@@ -81,9 +114,15 @@ export const Register = (
 
     // disposable.push(vscode.window.onDidChangeWindowState((editor) => {
     // }));
+    // vscode.commands.
 
-    // disposable.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
-    // }));
+    disposable.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
+        console.log(editor?.document.fileName)
+        if (editor) {
+            bindEditorCommands();
+            bindEditorCommandGroups();
+        }
+    }));
 
     context.subscriptions.push(...disposable);
 };
