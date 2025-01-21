@@ -49,6 +49,10 @@
                 "title": "Remove Duplicate Line From Selection"
             },
             {
+                "command": "landle.printNowDateTimeOnSelection",
+                "title": "Print Now DateTime On Selection"
+            },
+            {
                 "command": "landle.cleanUBlockCommentCommand",
                 "title": "clean-up Block Comment From Selection"
             },
@@ -57,8 +61,8 @@
                 "title": "Clean-up Whitespace From Selection"
             },
             {
-                "command": "landle.printNowDateTimeOnSelection",
-                "title": "Print Now DateTime On Selection"
+                "command": "landle.cleanUpCodeCommand",
+                "title": "Clean-up Code From Selection"
             }
         ],
         "keybindings": [
@@ -87,16 +91,16 @@
                 "key": "ctrl+alt+d"
             },
             {
+                "command": "landle.printNowDateTimeOnSelection",
+                "key": "ctrl+alt+n"
+            },
+            {
                 "command": "landle.cleanUBlockCommentCommand",
                 "key": "ctrl+alt+b"
             },
             {
-                "command": "landle.cleanUpDocumentCommand",
-                "key": "ctrl+alt+c"
-            },
-            {
-                "command": "landle.printNowDateTimeOnSelection",
-                "key": "ctrl+alt+n"
+                "command": "landle.cleanUpCodeCommand",
+                "key": "ctrl+alt+x"
             }
         ]
     },

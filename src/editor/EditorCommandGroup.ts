@@ -2,8 +2,9 @@ import { EditorCommand } from "./EditorCommand";
 import { LineType as LT } from "./Line";
 
 export enum EditorCommandGroupId {
+    cleanUBlockCommentCommand,
+    cleanUpCodeCommand,
     cleanUpDocumentCommand,
-    cleanUBlockCommentCommand
 };
 
 type CommandInterface = {
@@ -22,6 +23,25 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
     constructor() {
         super();
     }
+    
+    public cleanUBlockCommentCommand = () : LT.LineEditDefintion[] => {
+        return [
+            this.removeEmptyBlockCommentLineOnStart(),
+            this.removeMultipleEmptyBlockCommentLine(),
+            this.insertEmptyBlockCommentLineOnEnd(),
+            this.removeEmptyLinesBetweenBlockCommantAndCode(),
+        ];
+    };
+
+    
+    public cleanUpCodeCommand = () : LT.LineEditDefintion[] => {
+        return [
+            this.removeDocumentStartingEmptyLine(),
+            this.removeTrailingWhitespaceFromSelection(),
+            this.removeMulitpleEmptyLinesFromSelection(),
+            this.removeMultipleWhitespaceFromSelection()
+        ];
+    };
 
     public cleanUpDocumentCommand = () : LT.LineEditDefintion[] => {
         return [
@@ -36,13 +56,5 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
         ];
     };
     
-    public cleanUBlockCommentCommand = () : LT.LineEditDefintion[] => {
-        return [
-            this.removeEmptyBlockCommentLineOnStart(),
-            this.removeMultipleEmptyBlockCommentLine(),
-            this.insertEmptyBlockCommentLineOnEnd(),
-            this.removeEmptyLinesBetweenBlockCommantAndCode(),
-        ];
-    };
     
 }

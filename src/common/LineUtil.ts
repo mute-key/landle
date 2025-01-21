@@ -11,7 +11,7 @@ export class LineUtil {
     // #isCommented = /^\s*\/\//g;
 
     private constructor() {
-        // this is static class 
+        // this is static class
     }
     
     public static removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, " ");

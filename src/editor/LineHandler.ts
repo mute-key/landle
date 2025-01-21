@@ -271,6 +271,13 @@ export class LineHandler extends Line {
         return;
     };
 
+    /**
+     * funciton removes empty-lines next block-comment lines.
+     * 
+     * @param range range of the line.
+     * @returns LineEditInfo or undefined
+     * 
+     */
     public removeEmptyLinesBetweenBlockCommantAndCode = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         const currentTextLine = this.getTextLineFromRange(range);
         const previousTextLine = this.getTextLineFromRange(range, -1);
