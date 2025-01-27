@@ -12,7 +12,8 @@ import {
     LineHandler
 } from "./LineHandler";
 import { 
-    enableAutoLength
+    enableAutoLength,
+    addExtraLineAtEndOnBlockComment
 } from "../common/config";
 
 /**
@@ -67,9 +68,6 @@ export class EditorCommand implements CommandInterface {
         this.#lineHandler = new LineHandler();
         this.#activeEditor = new ActiveEditor();
         this.#activeEditor.setLineHandler(this.#lineHandler);
-        const config = vscode.workspace.getConfiguration(packageInfo.name);  
-        const enableAutoLength = config.get<boolean>('enableAutoLength', true);
-
     }
 
     // =============================================================================
@@ -196,14 +194,14 @@ export class EditorCommand implements CommandInterface {
         };
     };
 
-    public insertEmptyBlockCommentLineOnEnd = (): LT.LineEditDefintion => {
-        return {
+    public insertEmptyBlockCommentLineOnEnd = (): LT.LineEditDefintion | undefined => {
+        return addExtraLineAtEndOnBlockComment ? {
             func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
             type: LT.LineEditType.APPEND,
             block: {
                 priority: LT.LineEditBlockPriority.LOW
             }
-        };
+        } : undefined;
     };
     
     public blockCommentWordCountJustifyAlign = (): LT.LineEditDefintion | undefined => {

@@ -36,7 +36,7 @@ __export(extension_exports, {
 module.exports = __toCommonJS(extension_exports);
 
 // src/register.ts
-var vscode7 = __toESM(require("vscode"));
+var vscode6 = __toESM(require("vscode"));
 
 // package.json
 var package_default = {
@@ -159,10 +159,15 @@ var package_default = {
     configuration: {
       title: "Landle Settings",
       properties: {
+        "landle.addExtraLineAtEndOnBlockComment": {
+          type: "boolean",
+          default: true,
+          description: "set true to add extra empty block comment line at the block ends"
+        },
         "landle.enableAutoLength": {
           type: "boolean",
           default: true,
-          description: "enable enableAutoLength on block comments"
+          description: "enable auto length adjust on block comment"
         },
         "landle.blockCommentCharacterBoundaryBaseLength": {
           type: "number",
@@ -205,9 +210,6 @@ var package_default = {
     "@vscode/test-electron": "^2.4.1"
   }
 };
-
-// src/editor/EditorCommand.ts
-var vscode6 = __toESM(require("vscode"));
 
 // src/editor/ActiveEditor.ts
 var vscode2 = __toESM(require("vscode"));
@@ -770,6 +772,7 @@ var LineUtil = class {
 var vscode4 = __toESM(require("vscode"));
 var config = vscode4.workspace.getConfiguration(package_default.name);
 var enableAutoLength = config.get("enableAutoLength", true);
+var addExtraLineAtEndOnBlockComment = config.get("addExtraLineAtEndOnBlockComment", true);
 var BaseLength = config.get("blockCommentCharacterBoundaryBaseLength", 70);
 var ToleanceLength = config.get("blockCommentCharacterBoundaryTolanceLength", 10);
 
@@ -1148,8 +1151,6 @@ var EditorCommand = class {
     this.#lineHandler = new LineHandler();
     this.#activeEditor = new ActiveEditor();
     this.#activeEditor.setLineHandler(this.#lineHandler);
-    const config2 = vscode6.workspace.getConfiguration(packageInfo.name);
-    const enableAutoLength2 = config2.get("enableAutoLength", true);
   }
   // =============================================================================
   // > PUBLIC FUNCTIONS:
@@ -1265,13 +1266,13 @@ var EditorCommand = class {
     };
   };
   insertEmptyBlockCommentLineOnEnd = () => {
-    return {
+    return addExtraLineAtEndOnBlockComment ? {
       func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
       type: LineType.LineEditType.APPEND,
       block: {
         priority: LineType.LineEditBlockPriority.LOW
       }
-    };
+    } : void 0;
   };
   blockCommentWordCountJustifyAlign = () => {
     return enableAutoLength ? {
@@ -1345,7 +1346,7 @@ var bindEditorCommands = () => {
   return filterMapIds(EditorCommandId, (key) => {
     const editorCommand = new EditorCommand();
     if (key in editorCommand) {
-      return vscode7.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+      return vscode6.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
         const args = {
           lineEditFlag: EditorCommandId[key]
         };
@@ -1360,7 +1361,7 @@ var bindEditorCommandGroups = () => {
   const editorCommandGroup = new EditorCommandGroup();
   return filterMapIds(EditorCommandGroupId, (key) => {
     if (key in editorCommandGroup) {
-      return vscode7.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+      return vscode6.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
         const args = {
           lineEditFlag: EditorCommandGroupId[key]
         };
@@ -1378,7 +1379,7 @@ var Register = (context, handleLocal = true) => {
   const disposable = [];
   disposable.push(...bindEditorCommands());
   disposable.push(...bindEditorCommandGroups());
-  disposable.push(vscode7.window.onDidChangeActiveTextEditor((editor) => {
+  disposable.push(vscode6.window.onDidChangeActiveTextEditor((editor) => {
     if (editor) {
       bindEditorCommands();
       bindEditorCommandGroups();

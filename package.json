@@ -118,10 +118,15 @@
         "configuration": {
             "title": "Landle Settings",
             "properties": {
+                "landle.addExtraLineAtEndOnBlockComment": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "set true to add extra empty block comment line at the block ends"
+                },
                 "landle.enableAutoLength": {
                     "type": "boolean",
                     "default": true,
-                    "description": "enable enableAutoLength on block comments"
+                    "description": "enable auto length adjust on block comment"
                 },
                 "landle.blockCommentCharacterBoundaryBaseLength": {
                     "type": "number",
