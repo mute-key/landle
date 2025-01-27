@@ -3,7 +3,7 @@
     "publisher": "mutekey",
     "displayName": "landle",
     "description": "landle",
-    "version": "0.9.204",
+    "version": "0.9.205",
     "repository": {
         "type": "git",
         "url": "https://github.com/mute-key/landle"
@@ -22,6 +22,7 @@
         "onStartupFinished"
     ],
     "main": "./dist/extension.js",
+    "extensionKind": ["ui", "workspace"],
     "contributes": {
         "commands": [
             {
