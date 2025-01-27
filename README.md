@@ -12,7 +12,7 @@ I did not aim to make a funciton which formatter can do already.
 
 Each command call has its functions as a class member functions. no functionality call overlap even it would seeems to.
 
-#### > __removeDocumentStartingEmptyLine__<br>
+> Command -> __removeDocumentStartingEmptyLine__<br>
 
 Shortcut key : `not assigned`<br>
 
@@ -20,7 +20,7 @@ Shortcut key : `not assigned`<br>
 
 <br><br>
 
-#### > __removeTrailingWhitespaceFromSelection__<br>
+> Command -> __removeTrailingWhitespaceFromSelection__<br>
 
 Shortcut key : `ctrl + alt + w`<br>
 
@@ -30,7 +30,7 @@ Shortcut key : `ctrl + alt + w`<br>
 
 <br><br>
 
-#### > __removeMulitpleEmptyLinesFromSelection__<br>
+> Command -> __removeMulitpleEmptyLinesFromSelection__<br>
 
 Shortcut key : `ctrl + alt + m`<br>
 
@@ -40,7 +40,7 @@ Shortcut key : `ctrl + alt + m`<br>
 
 <br><br>
 
-#### > __removeEmptyLinesFromSelection__<br>
+> Command -> __removeEmptyLinesFromSelection__<br>
 
 Shortcut key : `ctrl + alt + e`<br>
 
@@ -50,7 +50,7 @@ Shortcut key : `ctrl + alt + e`<br>
 
 <br><br>
 
-#### > __removeMultipleWhitespaceFromSelection__<br>
+> Command -> __removeMultipleWhitespaceFromSelection__<br>
 
 Shortcut key : `ctrl + alt + space`<br>
 
@@ -61,7 +61,7 @@ this command ignores indentation.
 
 <br><br>
 
-#### > __removeCommentedTextFromSelection__<br>
+> Command -> __removeCommentedTextFromSelection__<br>
 
 Shortcut key : `ctrl + alt + /`<br>
 
@@ -69,7 +69,7 @@ Shortcut key : `ctrl + alt + /`<br>
 
 <br><br>
 
-#### > __removeEmptyBlockCommentLineOnStart__<br>
+> Command -> __removeEmptyBlockCommentLineOnStart__<br>
 
 Shortcut key : `not assigned`<br>
 
@@ -77,7 +77,7 @@ Shortcut key : `not assigned`<br>
 
 <br><br>
 
-#### > __removeMultipleEmptyBlockCommentLine__<br>
+> Command -> __removeMultipleEmptyBlockCommentLine__<br>
 
 Shortcut key : `not assigned`<br>
 
@@ -85,7 +85,7 @@ Shortcut key : `not assigned`<br>
 
 <br><br>
 
-#### > __insertEmptyBlockCommentLineOnEnd__<br>
+> Command -> __insertEmptyBlockCommentLineOnEnd__<br>
 
 Shortcut key : `not assigned`<br>
 
@@ -93,7 +93,7 @@ Shortcut key : `not assigned`<br>
 
 <br><br>
 
-#### > __removeEmptyLinesBetweenBlockCommantAndCode__<br>
+> Command -> __removeEmptyLinesBetweenBlockCommantAndCode__<br>
 
 Shortcut key : `not assigned`<br>
 
@@ -101,7 +101,21 @@ Shortcut key : `not assigned`<br>
 
 <br><br>
 
-#### > __printNowDateTimeOnSelection__<br>
+> Command -> __blockCommentWordCountAutoLengthAlign__<br>
+
+Shortcut key : `ctrl + alt + a`
+- Auto adjust block-comment line length.
+
+Related Configurations
+  - blockCommentCharacterBoundaryBaseLength (default 70) : Minimum Line length of block comment.
+  - blockCommentCharacterBoundaryTolanceLength (default 10) : Character count margin for the line.
+
+
+<br><br>
+
+
+
+> Command -> __printNowDateTimeOnSelection__<br>
 
 Shortcut key : `ctrl + alt + n`<br>
 
@@ -113,7 +127,7 @@ Shortcut key : `ctrl + alt + n`<br>
 
 Here are the list of commands that combined multiple commands.
 
-#### > __cleanUBlockCommentCommand__<br>
+> Command ->  __cleanUBlockCommentCommand__<br>
 
 Shortcut key : `ctrl + alt + b`<br>
 
@@ -123,8 +137,9 @@ Shortcut key : `ctrl + alt + b`<br>
 - Insert empty-block-comment-lines before block-comment-ending-lines and non-empty-block-comment-lines.
 
 <img src="./demo/cleanUpBlockCommentFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="270">
+<br><br><br>
 
-#### > __cleanUpCodeCommand__<br>
+> Command ->  __cleanUpCodeCommand__<br>
 
 Shortcut key : `ctrl + alt + x`<br>
 
@@ -135,11 +150,9 @@ Shortcut key : `ctrl + alt + x`<br>
 
 <br>
 <img src="./demo/cleanUpCodeCommand.gif" alt ="GIF" style="border: solid 3px black" height ="330">
-<br><br>
+<br><br><br>
 
-<br><br>
-
-#### > __cleanUpDocumentCommand__<br>
+> Command -> __cleanUpDocumentCommand__<br>
 
 Shortcut key : `ctrl + alt + c`<br>
 
@@ -154,11 +167,9 @@ Shortcut key : `ctrl + alt + c`<br>
 
 <img src="./demo/cleanUpWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="330">
 
-<br><br>
 
 ## Future Features
 
-- Auto justify align line length. 
 - Digest linter and perform audo correction based on lint config.
 
 

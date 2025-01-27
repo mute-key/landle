@@ -7,7 +7,8 @@ import {
 import { LineUtil } from "../common/LineUtil";
 import { 
     BaseLength, 
-    ToleanceLength 
+    ToleanceLength,
+    deleteCommentAlsoDeleteBlockComment
 } from "../common/config";
 
 export interface Edithandler {
@@ -142,6 +143,11 @@ export class LineHandler extends Line {
     public removeCommentedLine = (range: vscode.Range) : LineType.LineEditInfo | undefined => {
         const lineText = this.getText(range);
         const commentIndex = LineUtil.getlineCommentIndex(lineText);
+
+        if (deleteCommentAlsoDeleteBlockComment) {
+                
+        }
+
         if (LineUtil.isLineCommented(lineText)) {
             return {
                 range: this.lineFullRangeWithEOL(range)

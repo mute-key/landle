@@ -99,7 +99,7 @@ var package_default = {
         title: "clean-up Block Comment From Selection"
       },
       {
-        command: "landle.blockCommentWordCountJustifyAlign",
+        command: "landle.blockCommentWordCountAutoLengthAlign",
         title: "clean-up Block Comment From Selection"
       },
       {
@@ -141,8 +141,8 @@ var package_default = {
         key: "ctrl+alt+n"
       },
       {
-        command: "landle.blockCommentWordCountJustifyAlign",
-        key: "ctrl+alt+j"
+        command: "landle.blockCommentWordCountAutoLengthAlign",
+        key: "ctrl+alt+a"
       },
       {
         command: "landle.cleanUBlockCommentCommand",
@@ -169,6 +169,11 @@ var package_default = {
           type: "boolean",
           default: true,
           description: "Enable auto length adjust on block comment"
+        },
+        "landle.deleteCommentAlsoDeleteBlockComment": {
+          type: "boolean",
+          default: false,
+          description: "Enable delete comment command also delete block-comments"
         },
         "landle.blockCommentCharacterBoundaryBaseLength": {
           type: "number",
@@ -769,6 +774,7 @@ var vscode4 = __toESM(require("vscode"));
 var config = vscode4.workspace.getConfiguration(package_default.name);
 var enableAutoLength = config.get("enableAutoLength", true);
 var addExtraLineAtEndOnBlockComment = config.get("addExtraLineAtEndOnBlockComment", true);
+var deleteCommentAlsoDeleteBlockComment = config.get("deleteCommentAlsoDeleteBlockComment", true);
 var BaseLength = config.get("blockCommentCharacterBoundaryBaseLength", 70);
 var ToleanceLength = config.get("blockCommentCharacterBoundaryTolanceLength", 10);
 
@@ -887,6 +893,8 @@ var LineHandler = class extends Line {
   removeCommentedLine = (range) => {
     const lineText = this.getText(range);
     const commentIndex = LineUtil.getlineCommentIndex(lineText);
+    if (deleteCommentAlsoDeleteBlockComment) {
+    }
     if (LineUtil.isLineCommented(lineText)) {
       return {
         range: this.lineFullRangeWithEOL(range)
