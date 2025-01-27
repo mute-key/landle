@@ -19,8 +19,7 @@
         "Other"
     ],
     "activationEvents": [
-        "onStartupFinished",
-        "onCommand:yourExtension.command"
+        "onStartupFinished"
     ],
     "main": "./dist/extension.js",
     "contributes": {
