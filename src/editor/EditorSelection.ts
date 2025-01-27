@@ -1,5 +1,3 @@
-
-
 import * as vscode from "vscode";
 
 import { LineUtil } from "../common/LineUtil";

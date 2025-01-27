@@ -3,11 +3,11 @@ import * as vscode from "vscode";
 export namespace LineType {
  
     /**
-     * bitmask to check multiple edit.type. if, it comes down to 
-     * editor need to perform multiple edits with single callback, 
-     * this will be very useful and ActiveEditor.#editSwitch 
-     * need be rewriten other than switch. 
-     *   
+     * bitmask to check multiple edit.type. if, it comes down to
+     * editor need to perform multiple edits with single callback,
+     * this will be very useful and ActiveEditor.#editSwitch
+     * need be rewriten other than switch.
+     * 
      */
     export const enum LineEditType {
         APPEND = 1 << 0,
@@ -110,16 +110,16 @@ export abstract class Line {
 
     /**
      * this private function is a wrap and shape the return object for
-     * each callback for a line. the function will take current range with 
-     * callback and execute to get the information how to edit the line, 
-     * which described in object with type of LineEditInfo. this is where 
-     * the default blocking value will be set to block additional edit on 
-     * line; default for blocking the edit is true, and it is false if it 
-     * is not defined in callback object. 
-     *     
-     * this means that only a function with block:true will be executed 
-     * and every other callbacks will be drop for the further. 
-     *    
+     * each callback for a line. the function will take current range with
+     * callback and execute to get the information how to edit the line,
+     * which described in object with type of LineEditInfo. this is where
+     * the default blocking value will be set to block additional edit on
+     * line; default for blocking the edit is true, and it is false if it
+     * is not defined in callback object.
+     * 
+     * this means that only a function with block:true will be executed
+     * and every other callbacks will be drop for the further.
+     * 
      * @param currntRange
      * @param fn
      * @param _lineEdit_
@@ -186,25 +186,25 @@ export abstract class Line {
     };
 
     /**
-     * this funciton will iterate each line and stack the line edit object. 
-     * iteration will continue unitl the current line number is less than 
-     * less than line number of the each selection. the range at this 
-     * point of will represent a single range and not entire document. 
-     * callback will be a list of callbacks to check/apply to each line. 
-     * _lineEdit_ variable are being used as a references so no direct 
-     * assignement becuase the is what this function will return upon 
-     * the end of the iteration. 
-     *   
-     * there is a for loop that will iterate each every callback. the 
-     * problem with js array api is it lacks handling the undefined value 
-     * being in api functions rather, you have to chain them. using array 
-     * api in object (becuase it is what it needs to iterate on), the 
-     * type-mismatch forces to return either a typed object or undefined 
-     * becasuse the will have a return type. this means the reseult of 
-     * the iteration will contain undefiend item if callback returns undefined; 
-     * and it makes to iterate twice to filter them for each every line. 
-     * further explanation continues 
-     *   
+     * this funciton will iterate each line and stack the line edit object.
+     * iteration will continue unitl the current line number is less than
+     * less than line number of the each selection. the range at this
+     * point of will represent a single range and not entire document.
+     * callback will be a list of callbacks to check/apply to each line.
+     * _lineEdit_ variable are being used as a references so no direct
+     * assignement becuase the is what this function will return upon
+     * the end of the iteration.
+     * 
+     * there is a for loop that will iterate each every callback. the
+     * problem with js array api is it lacks handling the undefined value
+     * being in api functions rather, you have to chain them. using array
+     * api in object (becuase it is what it needs to iterate on), the
+     * type-mismatch forces to return either a typed object or undefined
+     * becasuse the will have a return type. this means the reseult of
+     * the iteration will contain undefiend item if callback returns undefined;
+     * and it makes to iterate twice to filter them for each every line.
+     * further explanation continues
+     * 
      * @param range
      * @param callback
      * @param currentLineNumber
@@ -331,13 +331,13 @@ export abstract class Line {
     };
 
     /**
-     * take range as a single selection that could be a single line, empty 
-     * (cursor only) or mulitple lines. the callback will be defined in 
-     * Command.ts. this function will return either a single LineEditInfo 
-     * or array of them to schedule the document edit. if the selection 
-     * is either of empty (whitespaces only) or a single line, the range 
-     * should be the whole line. 
-     *   
+     * take range as a single selection that could be a single line, empty
+     * (cursor only) or mulitple lines. the callback will be defined in
+     * Command.ts. this function will return either a single LineEditInfo
+     * or array of them to schedule the document edit. if the selection
+     * is either of empty (whitespaces only) or a single line, the range
+     * should be the whole line.
+     * 
      * @param range
      * @param callback
      * @returns

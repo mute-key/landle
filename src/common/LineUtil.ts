@@ -28,7 +28,7 @@ export class LineUtil {
 
     public static isLineCommented = (line: string): boolean => line.search(/^\s*\/\//g) !== -1;
     
-    public static isEmptyBlockComment = (line: string)  : boolean => line.search(/^\s*\*\s*$/s) !== -1;
+    public static isEmptyBlockComment = (line: string) : boolean => line.search(/^\s*\*\s*$/s) !== -1;
 
     public static isBlockComment = (line: string) : boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
     

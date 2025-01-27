@@ -1,5 +1,5 @@
 /**
- * this class handles the editor itself and selections. 
+ * this class handles the editor itself and selections.
  * 
  */
 import * as vscode from "vscode";
@@ -28,7 +28,7 @@ export class ActiveEditor {
 
     /**
      * get current active text editor
-     * @returns 
+     * @returns
      * 
      */
     #setActiveEditor = () : void => {
@@ -40,7 +40,7 @@ export class ActiveEditor {
     };
 
     /**
-     * reset cursor position as well as the selection. 
+     * reset cursor position as well as the selection.
      * 
      */
     #selectionReset = () : void => {
@@ -76,7 +76,7 @@ export class ActiveEditor {
      * @returns boolean
      * - true when no argument supplied indicate the editor has been cached.
      * - true when argument supplied indicate document has not been modified.
-     * - false when arguement supplied indiciate document has been modified. 
+     * - false when arguement supplied indiciate document has been modified.
      * 
      */
     #documentSnapshot = (editorText: string | undefined = undefined): boolean => {
@@ -91,7 +91,7 @@ export class ActiveEditor {
             }
         }
         return false;
-    }; 
+    };
 
     /**
      * this function will perform edit with it's given range with string.
@@ -100,7 +100,7 @@ export class ActiveEditor {
      * - range
      * - type
      * - string
-     * @param editBuilder as it's type. 
+     * @param editBuilder as it's type.
      * 
      */
     #editSwitch = (edit: LineType.LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
@@ -176,7 +176,7 @@ export class ActiveEditor {
     /**
      * performes aysnc edit and aplit it all at once they are complete.
      * 
-     * @param lineCallback collecion of edits for the document how and where to edit. 
+     * @param lineCallback collecion of edits for the document how and where to edit.
      * 
      */
     public editInRange = async (lineCallback: LineType.LineEditInfo[]) : Promise<void> => {

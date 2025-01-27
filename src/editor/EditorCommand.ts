@@ -5,7 +5,7 @@
  * even more to specific use-case.
  * 
  */
-import * as vscode from "vscode";
+
 import { ActiveEditor } from "./ActiveEditor";
 import { LineType as LT } from "./Line";
 import {

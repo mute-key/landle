@@ -1,5 +1,5 @@
 /**
- * this is the main module to bind functions with commands. 
+ * this is the main module to bind functions with commands.
  * 
  */
 import * as vscode from 'vscode';
@@ -69,7 +69,7 @@ export const Register = (
     context: vscode.ExtensionContext,
     handleLocal: boolean = true) => {
     
-    const disposable: vscode.Disposable[] = [];    
+    const disposable: vscode.Disposable[] = [];
     disposable.push(...bindEditorCommands());
     disposable.push(...bindEditorCommandGroups());
 
