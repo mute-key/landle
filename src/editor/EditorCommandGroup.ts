@@ -30,7 +30,7 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
-        ];
+        ].filter((fn) => fn !== undefined);
     };
 
     public cleanUpCodeCommand = () : LT.LineEditDefintion[] => {
@@ -52,7 +52,7 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
-        ];
+        ].filter((fn) => fn !== undefined);
     };
     
     

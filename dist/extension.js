@@ -1317,7 +1317,7 @@ var EditorCommandGroup = class extends EditorCommand {
       this.removeMultipleEmptyBlockCommentLine(),
       this.insertEmptyBlockCommentLineOnEnd(),
       this.removeEmptyLinesBetweenBlockCommantAndCode()
-    ];
+    ].filter((fn) => fn !== void 0);
   };
   cleanUpCodeCommand = () => {
     return [
@@ -1337,7 +1337,7 @@ var EditorCommandGroup = class extends EditorCommand {
       this.removeMultipleEmptyBlockCommentLine(),
       this.insertEmptyBlockCommentLineOnEnd(),
       this.removeEmptyLinesBetweenBlockCommantAndCode()
-    ];
+    ].filter((fn) => fn !== void 0);
   };
 };
 
