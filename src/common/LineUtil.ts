@@ -1,15 +1,7 @@
 import * as vscode from "vscode";
+import { Line } from "../editor/Line";
 
 export class LineUtil {
-    
-    // #rmTrailingWhiteSpaceString = /[ \t]+$/;
-    // #ifTrailingWhiteSpaceString = /\s(?=\s*$)/g;
-    // #ifNonWhitespaceIndex = /\S/g;
-    // #ifNonWhitespaceIndexReverse = /\S(?=\s*$)/g;
-    // #rmMultipleWhiteSpaceString = /\s\s+/g;
-    // #ifMultipleWhiteSpaceString = /(?<=\S)\s+(?=\S)/g;
-    // #isCommented = /^\s*\/\//g;
-
     private constructor() {
         // this is static class
     }
@@ -39,6 +31,10 @@ export class LineUtil {
     public static isJSdocTag = (line: string) : boolean => line.search(/^\s*\*?\s*\@.*/s) !== -1;
 
     public static cleanBlockComment = (line: string) : string => line.replace(/(?<=\*).*/, "");
+
+    public static getlineCommentIndex = (line : string) : number => line.indexOf("//");
+
+    public static removeLineComment = (line : string) : string => line.substring(0, line.indexOf("//"));
 
     public static pushMessage = (message: string): vscode.ProviderResult<typeof message> => {
         return vscode.window.showInformationMessage(message);

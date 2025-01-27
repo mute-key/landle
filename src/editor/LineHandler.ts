@@ -70,7 +70,6 @@ export class LineHandler extends Line {
      * 
      */
     public removeTrailingWhiteSpace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
-        // const textString = this.getText(range);
         const textline = this.getTextLineFromRange(range);
         let whitespacePos: number = LineUtil.findTrailingWhiteSpaceString(textline.text);
         if (LineUtil.isEmptyBlockComment(textline.text)) {
@@ -142,9 +141,14 @@ export class LineHandler extends Line {
      */
     public removeCommentedLine = (range: vscode.Range) : LineType.LineEditInfo | undefined => {
         const lineText = this.getText(range);
+        const commentIndex = LineUtil.getlineCommentIndex(lineText);
         if (LineUtil.isLineCommented(lineText)) {
             return {
                 range: this.lineFullRangeWithEOL(range)
+            };
+        } else if (commentIndex !== -1) {
+            return {
+                range: this.newRangeZeroBased(range.start.line, commentIndex-1, lineText.length)
             };
         }
         return;

@@ -122,22 +122,22 @@
                 "landle.addExtraLineAtEndOnBlockComment": {
                     "type": "boolean",
                     "default": true,
-                    "description": "set true to add extra empty block comment line at the block ends"
+                    "description": "To add extra empty block comment line at the block ends"
                 },
                 "landle.enableAutoLength": {
                     "type": "boolean",
                     "default": true,
-                    "description": "enable auto length adjust on block comment"
+                    "description": "Enable auto length adjust on block comment"
                 },
                 "landle.blockCommentCharacterBoundaryBaseLength": {
                     "type": "number",
                     "default": 70,
-                    "description": "block comment auto length configuration for base length"
+                    "description": "Block-comment auto length configuration for base length"
                 },
                 "landle.blockCommentCharacterBoundaryTolanceLength": {
                     "type": "number",
                     "default": 10,
-                    "description": "block comment auto length configurations for tolance length"
+                    "description": "Block-comment auto length configurations for tolance length"
                 }
             }
         }
