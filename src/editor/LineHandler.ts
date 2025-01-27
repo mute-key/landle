@@ -5,6 +5,10 @@ import {
 } from "./Line";
 
 import { LineUtil } from "../common/LineUtil";
+import { 
+    BaseLength, 
+    ToleanceLength 
+} from "../common/config";
 
 export interface Edithandler {
     removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined,
@@ -304,6 +308,75 @@ export class LineHandler extends Line {
                     priority: LineType.LineEditBlockPriority.HIGH
                 }
             };
+        }
+        return;
+    };
+
+    /**
+     * this function needs to do 2 edit, 1 is to add new string at position 0,0
+     * and delete rest of the un-justified strings. 
+     * 
+     * @param range 
+     * @returns 
+     */
+    public blockCommentWordCountJustifyAlign = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+        
+        const currentTextLine : vscode.TextLine = this.getTextLineFromRange(range);
+        let lineTextInArray : string[] = [];
+
+        if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
+            const indentIndex = currentTextLine.text.indexOf("*");
+            const indentString = currentTextLine.text.substring(0, indentIndex + 1);
+        
+            if (currentTextLine.text.length < (BaseLength - ToleanceLength) || currentTextLine.text.length > (BaseLength + ToleanceLength)) {
+                
+                let lineNumber: number = range.start.line;
+                let newTextLine : vscode.TextLine;
+                const lineSkip : number[] = [];
+
+                while(lineNumber < this.doc.lineCount) {
+                    newTextLine = this.getTextLineFromRange(lineNumber);
+                    if (LineUtil.isJSdocTag(newTextLine.text)) {
+                        break;
+                    }
+
+                    if (LineUtil.isBlockComment(newTextLine.text)) {
+                        lineTextInArray.push(...newTextLine.text.trim().replaceAll("*", "").split(/\s+/));
+                        lineSkip.push(lineNumber);
+                        lineNumber++;
+                    } else {
+                        lineTextInArray.push(this.getEndofLine() + indentString);
+                        break;
+                    }
+                }
+
+                let newString : string = " ";
+                let lineCharacterCount = 0;
+
+                for (const str of lineTextInArray) {
+                    if (str.length > 0) {
+                        newString += str + " "; 
+                        lineCharacterCount += str.length + 1;
+                        if (lineCharacterCount > (BaseLength - indentString.length)) {
+                            newString += this.getEndofLine() + indentString + " ";
+                            lineCharacterCount = 0;
+                        }
+                    }
+                }
+
+                return {
+                    range: new vscode.Range(
+                        new vscode.Position(range.start.line, indentString.length),
+                        new vscode.Position(lineNumber, indentString.length)
+                    ),
+                    type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
+                    string: newString,
+                    block: {
+                        lineSkip: lineSkip,
+                        priority: LineType.LineEditBlockPriority.HIGH
+                    }
+                };
+            } 
         }
         return;
     };

@@ -1,9 +1,9 @@
 {
     "name": "landle",
-    "publisher": "mutekey", 
+    "publisher": "mutekey",
     "displayName": "landle",
     "description": "landle",
-    "version": "0.9.202",
+    "version": "0.9.203",
     "repository": {
         "type": "git",
         "url": "https://github.com/mute-key/landle"
@@ -57,6 +57,10 @@
                 "title": "clean-up Block Comment From Selection"
             },
             {
+                "command": "landle.blockCommentWordCountJustifyAlign",
+                "title": "clean-up Block Comment From Selection"
+            },
+            {
                 "command": "landle.cleanUpDocumentCommand",
                 "title": "Clean-up Whitespace From Selection"
             },
@@ -95,14 +99,42 @@
                 "key": "ctrl+alt+n"
             },
             {
+                "command": "landle.blockCommentWordCountJustifyAlign",
+                "key": "ctrl+alt+j"
+            },
+            {
                 "command": "landle.cleanUBlockCommentCommand",
                 "key": "ctrl+alt+b"
+            },
+            {
+                "command": "landle.cleanUpDocumentCommand",
+                "key": "ctrl+alt+c"
             },
             {
                 "command": "landle.cleanUpCodeCommand",
                 "key": "ctrl+alt+x"
             }
-        ]
+        ],
+        "configuration": {
+            "title": "Landle Settings",
+            "properties": {
+                "landle.enableAutoLength": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "enable enableAutoLength on block comments"
+                },
+                "landle.blockCommentCharacterBoundaryBaseLength": {
+                    "type": "number",
+                    "default": 70,
+                    "description": "block comment auto length configuration for base length"
+                },
+                "landle.blockCommentCharacterBoundaryTolanceLength": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "block comment auto length configurations for tolance length"
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "pnpm run package",

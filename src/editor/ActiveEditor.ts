@@ -76,7 +76,7 @@ export class ActiveEditor {
      * @returns boolean
      * - true when no argument supplied indicate the editor has been cached.
      * - true when argument supplied indicate document has not been modified.
-     *  - false when arguement supplied indiciate document has been modified. 
+     * - false when arguement supplied indiciate document has been modified. 
      * 
      */
     #documentSnapshot = (editorText: string | undefined = undefined): boolean => {
@@ -104,23 +104,21 @@ export class ActiveEditor {
      * 
      */
     #editSwitch = (edit: LineType.LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
-        if (edit) {
-            switch (edit.type) {
-                case LineType.LineEditType.APPEND:
-                    editBuilder.insert(edit.range.start, edit.string ?? "");
-                    break;
-                case LineType.LineEditType.CLEAR:
-                    editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
-                    break;
-                case LineType.LineEditType.DELETE:
-                    editBuilder.delete(edit.range);
-                    break;
-                case LineType.LineEditType.REPLACE:
-                    editBuilder.replace(edit.range, edit.string ?? "");
-                    break;
-                case LineType.LineEditType.PREPEND:
-                    break;
-                default:
+        if (edit.type) {
+            if (edit.type & LineType.LineEditType.DELETE) {
+                editBuilder.delete(edit.range);
+            }
+            if (edit.type & LineType.LineEditType.CLEAR) {
+                editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
+            }
+            if (edit.type & LineType.LineEditType.APPEND) {
+                editBuilder.insert(edit.range.start, edit.string ?? "");
+            }
+            if (edit.type & LineType.LineEditType.REPLACE) {
+                editBuilder.replace(edit.range, edit.string ?? "");
+            }
+            if (edit.type & LineType.LineEditType.PREPEND) {
+                
             }
         };
     };

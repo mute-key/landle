@@ -36,7 +36,7 @@ __export(extension_exports, {
 module.exports = __toCommonJS(extension_exports);
 
 // src/register.ts
-var vscode5 = __toESM(require("vscode"));
+var vscode7 = __toESM(require("vscode"));
 
 // package.json
 var package_default = {
@@ -44,7 +44,7 @@ var package_default = {
   publisher: "mutekey",
   displayName: "landle",
   description: "landle",
-  version: "0.9.202",
+  version: "0.9.203",
   repository: {
     type: "git",
     url: "https://github.com/mute-key/landle"
@@ -98,6 +98,10 @@ var package_default = {
         title: "clean-up Block Comment From Selection"
       },
       {
+        command: "landle.blockCommentWordCountJustifyAlign",
+        title: "clean-up Block Comment From Selection"
+      },
+      {
         command: "landle.cleanUpDocumentCommand",
         title: "Clean-up Whitespace From Selection"
       },
@@ -136,14 +140,42 @@ var package_default = {
         key: "ctrl+alt+n"
       },
       {
+        command: "landle.blockCommentWordCountJustifyAlign",
+        key: "ctrl+alt+j"
+      },
+      {
         command: "landle.cleanUBlockCommentCommand",
         key: "ctrl+alt+b"
+      },
+      {
+        command: "landle.cleanUpDocumentCommand",
+        key: "ctrl+alt+c"
       },
       {
         command: "landle.cleanUpCodeCommand",
         key: "ctrl+alt+x"
       }
-    ]
+    ],
+    configuration: {
+      title: "Landle Settings",
+      properties: {
+        "landle.enableAutoLength": {
+          type: "boolean",
+          default: true,
+          description: "enable enableAutoLength on block comments"
+        },
+        "landle.blockCommentCharacterBoundaryBaseLength": {
+          type: "number",
+          default: 70,
+          description: "block comment auto length configuration for base length"
+        },
+        "landle.blockCommentCharacterBoundaryTolanceLength": {
+          type: "number",
+          default: 10,
+          description: "block comment auto length configurations for tolance length"
+        }
+      }
+    }
   },
   scripts: {
     "vscode:prepublish": "pnpm run package",
@@ -173,6 +205,9 @@ var package_default = {
     "@vscode/test-electron": "^2.4.1"
   }
 };
+
+// src/editor/EditorCommand.ts
+var vscode6 = __toESM(require("vscode"));
 
 // src/editor/ActiveEditor.ts
 var vscode2 = __toESM(require("vscode"));
@@ -237,14 +272,17 @@ var Line = class {
     } : void 0;
   };
   /**
-   * this private function is a wrap and shape the return object for each callback for a line.
-   * the function will take current range with callback and execute to get the information
-   * how to edit the line, which described in object with type of LineEditInfo.
-   * this is where the default blocking value will be set to block additional edit on line;
-   * default for blocking the edit is true, and it is false if it is not defined in callback object.
-   * this means that only a function with block:true will be executed and every other callbacks
-   * will be drop for the further.
-   *
+   * this private function is a wrap and shape the return object for
+   * each callback for a line. the function will take current range with 
+   * callback and execute to get the information how to edit the line, 
+   * which described in object with type of LineEditInfo. this is where 
+   * the default blocking value will be set to block additional edit on 
+   * line; default for blocking the edit is true, and it is false if it 
+   * is not defined in callback object. 
+   *     
+   * this means that only a function with block:true will be executed 
+   * and every other callbacks will be drop for the further. 
+   *    
    * @param currntRange
    * @param fn
    * @param _lineEdit_
@@ -273,14 +311,14 @@ var Line = class {
     }
   };
   /**
-   * this is the mian loop to iterate the callbacks that are defined from command class.
-   * there is a object key named block. when the property block is true, it will drop all the
-   * added edit, and assign itself and stops further iteration to prevent no more changes to be
-   * applied to that line. when the for loop is finished, it will be stacked into _line_edit_ refernce
-   * and goes into next iteration.
+   * this is the mian loop to iterate the callbacks that are defined from
+   * command class. there is a object key named block. when the property
+   * block is true, it will drop all the added edit, and assign itself
+   * and stops further iteration to prevent no more changes to be applied
+   * to when the for loop is finished, it will be stacked into _line_edit_
    * 
-   * this iteration could well have been done in array.reduce but it does unnecessary exection in the iteartion.
-   * so thats why it is for loop.
+   * this iteration could well have been done in array.reduce but it does
+   * unnecessary exection in the iteartion. so thats why it is for loop.
    * 
    * @param range
    * @param callback
@@ -308,21 +346,25 @@ var Line = class {
     return currentLineEdit;
   };
   /**
-   * this funciton will iterate each line and stack the line edit object.
-   * iteration will continue unitl the current line number is less than less than line number of
-   * the each selection. the range at this point of execution will represent a single range and
-   * not entire document. callback will be a list of callbacks to check/apply to each line.
-   * _lineEdit_ variable are being used as a references so no direct assignement becuase
-   * the variable is what this function will return upon the end of the iteration.
-   * 
-   * there is a for loop that will iterate each every callback. the problem with js array api is
-   * it lacks handling the undefined value being returned in single api functions rather,
-   * you have to chain them. using array api in callback object (becuase it is what it needs to
-   * iterate on), the type-mismatch forces to return either a typed object or undefined becasuse
-   * the callback will have a return type. this means the reseult of the iteration will contain undefiend
-   * item if callback returns undefined; and it makes to iterate twice to filter them for each every line.
-   * further explanation continues in function #editedLineInfo.
-   * 
+   * this funciton will iterate each line and stack the line edit object. 
+   * iteration will continue unitl the current line number is less than 
+   * less than line number of the each selection. the range at this 
+   * point of will represent a single range and not entire document. 
+   * callback will be a list of callbacks to check/apply to each line. 
+   * _lineEdit_ variable are being used as a references so no direct 
+   * assignement becuase the is what this function will return upon 
+   * the end of the iteration. 
+   *   
+   * there is a for loop that will iterate each every callback. the 
+   * problem with js array api is it lacks handling the undefined value 
+   * being in api functions rather, you have to chain them. using array 
+   * api in object (becuase it is what it needs to iterate on), the 
+   * type-mismatch forces to return either a typed object or undefined 
+   * becasuse the will have a return type. this means the reseult of 
+   * the iteration will contain undefiend item if callback returns undefined; 
+   * and it makes to iterate twice to filter them for each every line. 
+   * further explanation continues 
+   *   
    * @param range
    * @param callback
    * @param currentLineNumber
@@ -434,12 +476,13 @@ var Line = class {
     return this.doc?.lineAt(range.start.line).range;
   };
   /**
-   * take range as a single selection that could be a single line, empty (cursor only)
-   * or mulitple lines. the callback will be defined in Command.ts. this function will return
-   * either a single LineEditInfo or array of them to schedule the document edit.
-   * if the selection is either of empty (whitespaces only) or a single line, the
-   * range should be the whole line.
-   *
+   * take range as a single selection that could be a single line, empty 
+   * (cursor only) or mulitple lines. the callback will be defined in 
+   * Command.ts. this function will return either a single LineEditInfo 
+   * or array of them to schedule the document edit. if the selection 
+   * is either of empty (whitespaces only) or a single line, the range 
+   * should be the whole line. 
+   *   
    * @param range
    * @param callback
    * @returns
@@ -526,7 +569,7 @@ var ActiveEditor = class {
    * @returns boolean
    * - true when no argument supplied indicate the editor has been cached.
    * - true when argument supplied indicate document has not been modified.
-   *  - false when arguement supplied indiciate document has been modified. 
+   * - false when arguement supplied indiciate document has been modified. 
    * 
    */
   #documentSnapshot = (editorText = void 0) => {
@@ -553,23 +596,20 @@ var ActiveEditor = class {
    * 
    */
   #editSwitch = (edit, editBuilder) => {
-    if (edit) {
-      switch (edit.type) {
-        case LineType.LineEditType.APPEND:
-          editBuilder.insert(edit.range.start, edit.string ?? "");
-          break;
-        case LineType.LineEditType.CLEAR:
-          editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
-          break;
-        case LineType.LineEditType.DELETE:
-          editBuilder.delete(edit.range);
-          break;
-        case LineType.LineEditType.REPLACE:
-          editBuilder.replace(edit.range, edit.string ?? "");
-          break;
-        case LineType.LineEditType.PREPEND:
-          break;
-        default:
+    if (edit.type) {
+      if (edit.type & LineType.LineEditType.DELETE) {
+        editBuilder.delete(edit.range);
+      }
+      if (edit.type & LineType.LineEditType.CLEAR) {
+        editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
+      }
+      if (edit.type & LineType.LineEditType.APPEND) {
+        editBuilder.insert(edit.range.start, edit.string ?? "");
+      }
+      if (edit.type & LineType.LineEditType.REPLACE) {
+        editBuilder.replace(edit.range, edit.string ?? "");
+      }
+      if (edit.type & LineType.LineEditType.PREPEND) {
       }
     }
     ;
@@ -646,7 +686,7 @@ var ActiveEditor = class {
 };
 
 // src/editor/LineHandler.ts
-var vscode4 = __toESM(require("vscode"));
+var vscode5 = __toESM(require("vscode"));
 
 // src/common/LineUtil.ts
 var vscode3 = __toESM(require("vscode"));
@@ -671,6 +711,7 @@ var LineUtil = class {
   static isBlockComment = (line) => line.search(/^\s*\*+\s+\S+/s) !== -1;
   static isBlockCommentStartingLine = (line) => line.search(/^\s*\/.*\s*$/) !== -1;
   static isBlockCommentEndingLine = (line) => line.search(/^\s*\*\//) !== -1;
+  static isJSdocTag = (line) => line.search(/^\s*\*?\s*\@.*/s) !== -1;
   static cleanBlockComment = (line) => line.replace(/(?<=\*).*/, "");
   static pushMessage = (message) => {
     return vscode3.window.showInformationMessage(message);
@@ -725,6 +766,13 @@ var LineUtil = class {
   }))();
 };
 
+// src/common/config.ts
+var vscode4 = __toESM(require("vscode"));
+var config = vscode4.workspace.getConfiguration(package_default.name);
+var enableAutoLength = config.get("enableAutoLength", true);
+var BaseLength = config.get("blockCommentCharacterBoundaryBaseLength", 70);
+var ToleanceLength = config.get("blockCommentCharacterBoundaryTolanceLength", 10);
+
 // src/editor/LineHandler.ts
 var LineHandler = class extends Line {
   constructor() {
@@ -754,9 +802,9 @@ var LineHandler = class extends Line {
         }
       }
       return {
-        range: new vscode4.Range(
-          new vscode4.Position(0, 0),
-          new vscode4.Position(lineNumber, 0)
+        range: new vscode5.Range(
+          new vscode5.Position(0, 0),
+          new vscode5.Position(lineNumber, 0)
         ),
         block: {
           lineSkip,
@@ -908,9 +956,9 @@ var LineHandler = class extends Line {
       }
       if (newRange) {
         return {
-          range: new vscode4.Range(
-            new vscode4.Position(range.start.line, 0),
-            new vscode4.Position(lineNumber, 0)
+          range: new vscode5.Range(
+            new vscode5.Position(range.start.line, 0),
+            new vscode5.Position(lineNumber, 0)
           ),
           block: {
             priority: LineType.LineEditBlockPriority.MID,
@@ -987,15 +1035,74 @@ var LineHandler = class extends Line {
         }
       }
       return {
-        range: new vscode4.Range(
-          new vscode4.Position(range.start.line, 0),
-          new vscode4.Position(lineNumber, 0)
+        range: new vscode5.Range(
+          new vscode5.Position(range.start.line, 0),
+          new vscode5.Position(lineNumber, 0)
         ),
         block: {
           lineSkip,
           priority: LineType.LineEditBlockPriority.HIGH
         }
       };
+    }
+    return;
+  };
+  /**
+   * this function needs to do 2 edit, 1 is to add new string at position 0,0
+   * and delete rest of the un-justified strings. 
+   * 
+   * @param range 
+   * @returns 
+   */
+  blockCommentWordCountJustifyAlign = (range) => {
+    const currentTextLine = this.getTextLineFromRange(range);
+    let lineTextInArray = [];
+    if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
+      const indentIndex = currentTextLine.text.indexOf("*");
+      const indentString = currentTextLine.text.substring(0, indentIndex + 1);
+      if (currentTextLine.text.length < BaseLength - ToleanceLength || currentTextLine.text.length > BaseLength + ToleanceLength) {
+        let lineNumber = range.start.line;
+        let newTextLine;
+        const lineSkip = [];
+        while (lineNumber < this.doc.lineCount) {
+          newTextLine = this.getTextLineFromRange(lineNumber);
+          if (LineUtil.isJSdocTag(newTextLine.text)) {
+            break;
+          }
+          if (LineUtil.isBlockComment(newTextLine.text)) {
+            lineTextInArray.push(...newTextLine.text.trim().replaceAll("*", "").split(/\s+/));
+            lineSkip.push(lineNumber);
+            lineNumber++;
+          } else {
+            lineTextInArray.push(this.getEndofLine() + indentString);
+            break;
+          }
+        }
+        let newString = " ";
+        let lineCharacterCount = 0;
+        for (const str of lineTextInArray) {
+          if (str.length > 0) {
+            newString += str + " ";
+            lineCharacterCount += str.length + 1;
+            if (lineCharacterCount > BaseLength - indentString.length) {
+              newString += this.getEndofLine() + indentString + " ";
+              lineCharacterCount = 0;
+            }
+          }
+        }
+        return {
+          range: new vscode5.Range(
+            new vscode5.Position(range.start.line, indentString.length),
+            new vscode5.Position(lineNumber, indentString.length)
+          ),
+          type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
+          string: newString,
+          block: {
+            lineSkip,
+            priority: LineType.LineEditBlockPriority.HIGH
+          }
+        };
+      }
     }
     return;
   };
@@ -1031,6 +1138,7 @@ var EditorCommandId = /* @__PURE__ */ ((EditorCommandId2) => {
   EditorCommandId2[EditorCommandId2["insertEmptyBlockCommentLineOnEnd"] = 9] = "insertEmptyBlockCommentLineOnEnd";
   EditorCommandId2[EditorCommandId2["removeEmptyLinesBetweenBlockCommantAndCode"] = 10] = "removeEmptyLinesBetweenBlockCommantAndCode";
   EditorCommandId2[EditorCommandId2["printNowDateTimeOnSelection"] = 11] = "printNowDateTimeOnSelection";
+  EditorCommandId2[EditorCommandId2["blockCommentWordCountJustifyAlign"] = 12] = "blockCommentWordCountJustifyAlign";
   return EditorCommandId2;
 })(EditorCommandId || {});
 var EditorCommand = class {
@@ -1040,6 +1148,8 @@ var EditorCommand = class {
     this.#lineHandler = new LineHandler();
     this.#activeEditor = new ActiveEditor();
     this.#activeEditor.setLineHandler(this.#lineHandler);
+    const config2 = vscode6.workspace.getConfiguration(packageInfo.name);
+    const enableAutoLength2 = config2.get("enableAutoLength", true);
   }
   // =============================================================================
   // > PUBLIC FUNCTIONS:
@@ -1163,6 +1273,15 @@ var EditorCommand = class {
       }
     };
   };
+  blockCommentWordCountJustifyAlign = () => {
+    return enableAutoLength ? {
+      func: this.#lineHandler.blockCommentWordCountJustifyAlign,
+      type: LineType.LineEditType.REPLACE,
+      block: {
+        priority: LineType.LineEditBlockPriority.HIGH
+      }
+    } : void 0;
+  };
   removeEmptyLinesBetweenBlockCommantAndCode = () => {
     return {
       func: this.#lineHandler.removeEmptyLinesBetweenBlockCommantAndCode,
@@ -1226,7 +1345,7 @@ var bindEditorCommands = () => {
   return filterMapIds(EditorCommandId, (key) => {
     const editorCommand = new EditorCommand();
     if (key in editorCommand) {
-      return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+      return vscode7.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
         const args = {
           lineEditFlag: EditorCommandId[key]
         };
@@ -1241,7 +1360,7 @@ var bindEditorCommandGroups = () => {
   const editorCommandGroup = new EditorCommandGroup();
   return filterMapIds(EditorCommandGroupId, (key) => {
     if (key in editorCommandGroup) {
-      return vscode5.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
+      return vscode7.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit) => {
         const args = {
           lineEditFlag: EditorCommandGroupId[key]
         };
@@ -1259,7 +1378,7 @@ var Register = (context, handleLocal = true) => {
   const disposable = [];
   disposable.push(...bindEditorCommands());
   disposable.push(...bindEditorCommandGroups());
-  disposable.push(vscode5.window.onDidChangeActiveTextEditor((editor) => {
+  disposable.push(vscode7.window.onDidChangeActiveTextEditor((editor) => {
     if (editor) {
       bindEditorCommands();
       bindEditorCommandGroups();

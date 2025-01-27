@@ -28,15 +28,17 @@ export class LineUtil {
 
     public static isLineCommented = (line: string): boolean => line.search(/^\s*\/\//g) !== -1;
     
-    public static isEmptyBlockComment = (line: string) => line.search(/^\s*\*\s*$/s) !== -1;
+    public static isEmptyBlockComment = (line: string)  : boolean => line.search(/^\s*\*\s*$/s) !== -1;
 
-    public static isBlockComment = (line: string) => line.search(/^\s*\*+\s+\S+/s) !== -1;
+    public static isBlockComment = (line: string) : boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
     
-    public static isBlockCommentStartingLine = (line: string) => line.search(/^\s*\/.*\s*$/) !== -1;
+    public static isBlockCommentStartingLine = (line: string) : boolean => line.search(/^\s*\/.*\s*$/) !== -1;
 
-    public static isBlockCommentEndingLine = (line: string) => line.search(/^\s*\*\//) !== -1;
+    public static isBlockCommentEndingLine = (line: string) : boolean => line.search(/^\s*\*\//) !== -1;
 
-    public static cleanBlockComment = (line: string) => line.replace(/(?<=\*).*/, "");
+    public static isJSdocTag = (line: string) : boolean => line.search(/^\s*\*?\s*\@.*/s) !== -1;
+
+    public static cleanBlockComment = (line: string) : string => line.replace(/(?<=\*).*/, "");
 
     public static pushMessage = (message: string): vscode.ProviderResult<typeof message> => {
         return vscode.window.showInformationMessage(message);

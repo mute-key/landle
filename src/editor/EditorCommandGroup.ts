@@ -33,7 +33,6 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
         ];
     };
 
-    
     public cleanUpCodeCommand = () : LT.LineEditDefintion[] => {
         return [
             this.removeDocumentStartingEmptyLine(),

@@ -11,6 +11,9 @@ import { LineType as LT } from "./Line";
 import {
     LineHandler
 } from "./LineHandler";
+import { 
+    enableAutoLength
+} from "../common/config";
 
 /**
  * thsese command ids should match the commands names in package.json.
@@ -32,6 +35,7 @@ export enum EditorCommandId {
     insertEmptyBlockCommentLineOnEnd,
     removeEmptyLinesBetweenBlockCommantAndCode,
     printNowDateTimeOnSelection,
+    blockCommentWordCountJustifyAlign
 };
 
 /**
@@ -63,6 +67,9 @@ export class EditorCommand implements CommandInterface {
         this.#lineHandler = new LineHandler();
         this.#activeEditor = new ActiveEditor();
         this.#activeEditor.setLineHandler(this.#lineHandler);
+        const config = vscode.workspace.getConfiguration(packageInfo.name);  
+        const enableAutoLength = config.get<boolean>('enableAutoLength', true);
+
     }
 
     // =============================================================================
@@ -197,6 +204,16 @@ export class EditorCommand implements CommandInterface {
                 priority: LT.LineEditBlockPriority.LOW
             }
         };
+    };
+    
+    public blockCommentWordCountJustifyAlign = (): LT.LineEditDefintion | undefined => {
+        return enableAutoLength ? {
+            func: this.#lineHandler.blockCommentWordCountJustifyAlign,
+            type: LT.LineEditType.REPLACE,
+            block: {
+                priority: LT.LineEditBlockPriority.HIGH
+            }
+        } : undefined;
     };
 
     public removeEmptyLinesBetweenBlockCommantAndCode = () : LT.LineEditDefintion => {
