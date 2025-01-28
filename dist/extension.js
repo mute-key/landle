@@ -44,7 +44,7 @@ var package_default = {
   publisher: "mutekey",
   displayName: "landle",
   description: "landle",
-  version: "0.9.2051",
+  version: "0.9.206",
   repository: {
     type: "git",
     url: "https://github.com/mute-key/landle"
@@ -365,15 +365,15 @@ var Line = class {
    * becuase the is what this function will return upon the end of the 
    * iteration. 
    *       
-   * there is a for loop that will iterate each every callback. the
-   * problem with js array api is it lacks handling the undefined value
-   * being in api functions rather, you have to chain them. using array
-   * api in object (becuase it is what it needs to iterate on), the
-   * type-mismatch forces to return either a typed object or undefined
-   * becasuse the will have a return type. this means the reseult of the 
-   * iteration will contain undefiend item if callback returns undefined 
-   * and it makes to iterate twice to filter them for each every line. 
-   * further explanation continues 
+   * there is a for loop that will iterate each every callback. the problem 
+   * with js array api is it lacks handling the undefined value being 
+   * in api functions rather, you have to chain them. using array api 
+   * in object (becuase it is what it needs to iterate on), the type 
+   * mismatch forces to return either a typed object or undefined becasuse 
+   * the will have a return type. this means the reseult of the iteration 
+   * will contain undefiend item if callback returns undefined and it 
+   * makes to iterate twice to filter them for each every line. further 
+   * explanation continues 
    *         
    * @param range
    * @param callback
@@ -1066,14 +1066,15 @@ var LineHandler = class extends Line {
   };
   /**
    * this function needs to do 2 edit, 1 is to add new string at position 0,0
-   * and delete rest of the un-justified strings. 
+   * and delete rest of the un-justified strings.
    * 
-   * @param range 
-   * @returns 
+   * @param range
+   * @returns
+   * 
    */
   blockCommentWordCountJustifyAlign = (range) => {
     const currentTextLine = this.getTextLineFromRange(range);
-    let lineTextInArray = [];
+    const lineTextInArray = [];
     if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
       const indentIndex = currentTextLine.text.indexOf("*");
       const indentString = currentTextLine.text.substring(0, indentIndex + 1);

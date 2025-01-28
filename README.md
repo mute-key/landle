@@ -176,7 +176,17 @@ Shortcut key : `ctrl + alt + c`<br>
 
 
 
+## backlog 
+
+ - removeCommentedLine improvement for trailing both previous line and next line. 
+ - removeCommentedLine improvement to be ablet to delete block comment if it is in selection.
+
 ## changelog 
+
+version 0.9.206
+ - code split on lineHandler.ts 
+ - function improvement on blockCommentWordCountJustifyAlign
+ - blockCommentCharacterBoundaryTolanceLength default value to 5
 
 version 0.9.2051
  - readme improvement

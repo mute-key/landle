@@ -197,15 +197,15 @@ export abstract class Line {
      * becuase the is what this function will return upon the end of the 
      * iteration. 
      *       
-     * there is a for loop that will iterate each every callback. the
-     * problem with js array api is it lacks handling the undefined value
-     * being in api functions rather, you have to chain them. using array
-     * api in object (becuase it is what it needs to iterate on), the
-     * type-mismatch forces to return either a typed object or undefined
-     * becasuse the will have a return type. this means the reseult of the 
-     * iteration will contain undefiend item if callback returns undefined 
-     * and it makes to iterate twice to filter them for each every line. 
-     * further explanation continues 
+     * there is a for loop that will iterate each every callback. the problem 
+     * with js array api is it lacks handling the undefined value being 
+     * in api functions rather, you have to chain them. using array api 
+     * in object (becuase it is what it needs to iterate on), the type 
+     * mismatch forces to return either a typed object or undefined becasuse 
+     * the will have a return type. this means the reseult of the iteration 
+     * will contain undefiend item if callback returns undefined and it 
+     * makes to iterate twice to filter them for each every line. further 
+     * explanation continues 
      *         
      * @param range
      * @param callback

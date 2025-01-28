@@ -5,8 +5,8 @@ import {
 } from "./Line";
 
 import { LineUtil } from "../common/LineUtil";
-import { 
-    BaseLength, 
+import {
+    BaseLength,
     ToleanceLength,
     deleteCommentAlsoDeleteBlockComment
 } from "../common/config";
@@ -135,17 +135,17 @@ export class LineHandler extends Line {
         const commentIndex = LineUtil.getlineCommentIndex(lineText);
 
         // if (deleteCommentAlsoDeleteBlockComment) {
-        //     if (LineUtil.isBlockCommentStartingLine(lineText)) {
+        // if (LineUtil.isBlockCommentStartingLine(lineText)) {
                 
-        //     }
+        // }
 
-        //     if (LineUtil.isBlockComment(lineText)) {
+        // if (LineUtil.isBlockComment(lineText)) {
 
-        //     }
+        // }
 
-        //     if (LineUtil.isBlockCommentEndingLine(lineText)) {
+        // if (LineUtil.isBlockCommentEndingLine(lineText)) {
 
-        //     }
+        // }
         // }
 
         if (LineUtil.isLineCommented(lineText)) {
@@ -302,18 +302,15 @@ export class LineHandler extends Line {
 
     /**
      * this function needs to do 2 edit, 1 is to add new string at position 0,0
-     * and delete rest of the un-justified strings. 
+     * and delete rest of the un-justified strings.
      * 
-     * @param range 
-     * @returns 
+     * @param range
+     * @returns
+     * 
      */
     public blockCommentWordCountJustifyAlign = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
-        
-
-        
         const currentTextLine : vscode.TextLine = this.getTextLineFromRange(range);
-        let lineTextInArray : string[] = [];
-
+        const lineTextInArray : string[] = [];
         if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
             const indentIndex = currentTextLine.text.indexOf("*");
             const indentString = currentTextLine.text.substring(0, indentIndex + 1);
@@ -323,16 +320,16 @@ export class LineHandler extends Line {
                     lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/));
                 };
 
-                const lineIteration = this.iterateNextLine(range, 
-                                                            LineUtil.isBlockComment, 
-                                                            LineUtil.isJSdocTag, 
+                const lineIteration = this.iterateNextLine(range,
+                                                            LineUtil.isBlockComment,
+                                                            LineUtil.isJSdocTag,
                                                             trueConditionCallback);
 
                 let newString : string = "";
                 let newLine = indentString + " ";
                 for (const [index, str] of lineTextInArray.entries()) {
                     if (str.length > 0) {
-                        newLine += str + " "; 
+                        newLine += str + " ";
                         if (newLine.length > BaseLength) {
                             newString += newLine + this.getEndofLine();
                             newLine = indentString + " ";
@@ -357,7 +354,7 @@ export class LineHandler extends Line {
                         }
                     };
                 }
-            } 
+            }
         }
         return;
     };
