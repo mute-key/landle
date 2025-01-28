@@ -173,3 +173,11 @@ Shortcut key : `ctrl + alt + c`<br>
 - Digest linter and perform audo correction based on lint config.
 
 
+
+
+
+## changelog 
+
+version 0.9.2051
+ - readme improvement
+ - added new extension configuration `deleteCommentAlsoDeleteBlockComment`

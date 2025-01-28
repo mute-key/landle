@@ -12,7 +12,7 @@ import {
     LineHandler
 } from "./LineHandler";
 import { 
-    enableAutoLength,
+    blockCommentWordCountAutoLengthAlign,
     addExtraLineAtEndOnBlockComment
 } from "../common/config";
 
@@ -205,7 +205,7 @@ export class EditorCommand implements CommandInterface {
     };
     
     public blockCommentWordCountJustifyAlign = (): LT.LineEditDefintion | undefined => {
-        return enableAutoLength ? {
+        return blockCommentWordCountAutoLengthAlign ? {
             func: this.#lineHandler.blockCommentWordCountJustifyAlign,
             type: LT.LineEditType.REPLACE,
             block: {

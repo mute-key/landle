@@ -36,29 +36,19 @@ export class LineHandler extends Line {
     public removeDocumentStartingEmptyLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         let lineNumber: number = range.start.line;
         if (lineNumber === 0) {
-            let newTextLine : vscode.TextLine;
-            let newRange : vscode.Range;
-            const lineSkip : number[] = [];
-            while(lineNumber < this.doc.lineCount) {
-                newTextLine = this.getTextLineFromRange(lineNumber);
-                if (newTextLine.isEmptyOrWhitespace) {
-                    newRange = newTextLine.range;
-                    lineSkip.push(lineNumber);
-                    lineNumber++;
-                } else {
-                    break;
-                }
+            const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
+            if (lineIteration) {
+                return {
+                    range: new vscode.Range(
+                        new vscode.Position(0, 0),
+                        new vscode.Position(lineIteration.lineNumber, 0)
+                    ),
+                    block: {
+                        lineSkip: lineIteration.lineSkip,
+                        priority: LineType.LineEditBlockPriority.HIGH
+                    }
+                };
             }
-            return {
-                range: new vscode.Range(
-                    new vscode.Position(0, 0),
-                    new vscode.Position(lineNumber, 0)
-                ),
-                block: {
-                    lineSkip: lineSkip,
-                    priority: LineType.LineEditBlockPriority.HIGH
-                }
-            };
         }
         return;
     };
@@ -144,9 +134,19 @@ export class LineHandler extends Line {
         const lineText = this.getText(range);
         const commentIndex = LineUtil.getlineCommentIndex(lineText);
 
-        if (deleteCommentAlsoDeleteBlockComment) {
+        // if (deleteCommentAlsoDeleteBlockComment) {
+        //     if (LineUtil.isBlockCommentStartingLine(lineText)) {
                 
-        }
+        //     }
+
+        //     if (LineUtil.isBlockComment(lineText)) {
+
+        //     }
+
+        //     if (LineUtil.isBlockCommentEndingLine(lineText)) {
+
+        //     }
+        // }
 
         if (LineUtil.isLineCommented(lineText)) {
             return {
@@ -209,29 +209,16 @@ export class LineHandler extends Line {
         const blockCommentStart : boolean = LineUtil.isBlockCommentStartingLine(beforeLine.text);
 
         if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
-            let lineNumber : number = range.start.line;
-            let newRange : vscode.Range | undefined = undefined;
-            let newTextLine : vscode.TextLine;
-            const lineSkip : number[] = [];
-            while(lineNumber) {
-                newTextLine = this.getTextLineFromRange(lineNumber);
-                if (LineUtil.isEmptyBlockComment(newTextLine.text)) {
-                    newRange = newTextLine.range;
-                    lineSkip.push(lineNumber);
-                    lineNumber++;
-                } else {
-                    break;
-                }
-            }
-            if (newRange) {
+            const lineIteration = this.iterateNextLine(range, LineUtil.isEmptyBlockComment);
+            if (lineIteration) {
                 return {
                     range: new vscode.Range(
                         new vscode.Position(range.start.line, 0),
-                        new vscode.Position(lineNumber, 0)
+                        new vscode.Position(lineIteration.lineNumber, 0)
                     ),
                     block : {
                         priority: LineType.LineEditBlockPriority.MID,
-                        lineSkip: lineSkip
+                        lineSkip: lineIteration.lineSkip
                     }
                 };
             }
@@ -296,28 +283,19 @@ export class LineHandler extends Line {
         const currentTextLine = this.getTextLineFromRange(range);
         const previousTextLine = this.getTextLineFromRange(range, -1);
         if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
-            let lineNumber: number = range.start.line;
-            let newTextLine : vscode.TextLine;
-            const lineSkip : number[] = [];
-            while(lineNumber < this.doc.lineCount) {
-                newTextLine = this.getTextLineFromRange(lineNumber);
-                if (newTextLine.isEmptyOrWhitespace) {
-                    lineSkip.push(lineNumber);
-                    lineNumber++;
-                } else {
-                    break;
-                }
+            const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
+            if (lineIteration) {
+                return {
+                    range: new vscode.Range(
+                        new vscode.Position(range.start.line, 0),
+                        new vscode.Position(lineIteration.lineNumber, 0)
+                    ),
+                    block: {
+                        lineSkip: lineIteration.lineSkip,
+                        priority: LineType.LineEditBlockPriority.HIGH
+                    }
+                };
             }
-            return {
-                range: new vscode.Range(
-                    new vscode.Position(range.start.line, 0),
-                    new vscode.Position(lineNumber, 0)
-                ),
-                block: {
-                    lineSkip: lineSkip,
-                    priority: LineType.LineEditBlockPriority.HIGH
-                }
-            };
         }
         return;
     };
@@ -331,6 +309,8 @@ export class LineHandler extends Line {
      */
     public blockCommentWordCountJustifyAlign = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         
+
+        
         const currentTextLine : vscode.TextLine = this.getTextLineFromRange(range);
         let lineTextInArray : string[] = [];
 
@@ -338,54 +318,45 @@ export class LineHandler extends Line {
             const indentIndex = currentTextLine.text.indexOf("*");
             const indentString = currentTextLine.text.substring(0, indentIndex + 1);
         
-            if (currentTextLine.text.length < (BaseLength - ToleanceLength) || currentTextLine.text.length > (BaseLength + ToleanceLength)) {
-                
-                let lineNumber: number = range.start.line;
-                let newTextLine : vscode.TextLine;
-                const lineSkip : number[] = [];
+            if (currentTextLine.text.length < (BaseLength) || currentTextLine.text.length > (BaseLength + ToleanceLength)) {
+                const trueConditionCallback = (line: vscode.TextLine) => {
+                    lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/));
+                };
 
-                while(lineNumber < this.doc.lineCount) {
-                    newTextLine = this.getTextLineFromRange(lineNumber);
-                    if (LineUtil.isJSdocTag(newTextLine.text)) {
-                        break;
-                    }
+                const lineIteration = this.iterateNextLine(range, 
+                                                            LineUtil.isBlockComment, 
+                                                            LineUtil.isJSdocTag, 
+                                                            trueConditionCallback);
 
-                    if (LineUtil.isBlockComment(newTextLine.text)) {
-                        lineTextInArray.push(...newTextLine.text.trim().replaceAll("*", "").split(/\s+/));
-                        lineSkip.push(lineNumber);
-                        lineNumber++;
-                    } else {
-                        lineTextInArray.push(this.getEndofLine() + indentString);
-                        break;
-                    }
-                }
-
-                let newString : string = " ";
-                let lineCharacterCount = 0;
-
-                for (const str of lineTextInArray) {
+                let newString : string = "";
+                let newLine = indentString + " ";
+                for (const [index, str] of lineTextInArray.entries()) {
                     if (str.length > 0) {
-                        newString += str + " "; 
-                        lineCharacterCount += str.length + 1;
-                        if (lineCharacterCount > (BaseLength - indentString.length)) {
-                            newString += this.getEndofLine() + indentString + " ";
-                            lineCharacterCount = 0;
+                        newLine += str + " "; 
+                        if (newLine.length > BaseLength) {
+                            newString += newLine + this.getEndofLine();
+                            newLine = indentString + " ";
                         }
                     }
-                }
-
-                return {
-                    range: new vscode.Range(
-                        new vscode.Position(range.start.line, indentString.length),
-                        new vscode.Position(lineNumber, indentString.length)
-                    ),
-                    type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
-                    string: newString,
-                    block: {
-                        lineSkip: lineSkip,
-                        priority: LineType.LineEditBlockPriority.HIGH
+                    if (index === lineTextInArray.length - 1) {
+                        newString += newLine + this.getEndofLine();
                     }
-                };
+                }
+                
+                if (lineIteration) {
+                    return {
+                        range: new vscode.Range(
+                            new vscode.Position(range.start.line, 0),
+                            new vscode.Position(lineIteration.lineNumber, 0)
+                        ),
+                        type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
+                        string: newString,
+                        block: {
+                            lineSkip: lineIteration.lineSkip,
+                            priority: LineType.LineEditBlockPriority.HIGH
+                        }
+                    };
+                }
             } 
         }
         return;

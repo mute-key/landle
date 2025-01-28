@@ -29,6 +29,7 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
+            this.blockCommentWordCountJustifyAlign(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };
@@ -51,9 +52,18 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
+            this.blockCommentWordCountJustifyAlign(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };
     
-    
+    public cleanUpComments = () : LT.LineEditDefintion[] => {
+        return [
+            this.removeDocumentStartingEmptyLine(),
+            this.removeTrailingWhitespaceFromSelection(),
+            this.removeMulitpleEmptyLinesFromSelection(),
+            this.removeMultipleWhitespaceFromSelection(),
+            this.removeCommentedTextFromSelection()
+        ].filter((fn) => fn !== undefined);
+    };
 }
