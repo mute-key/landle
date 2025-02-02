@@ -22,7 +22,6 @@ import {
 } from './editor/EditorCommandGroup';
 
 const defaultParam : EditorCommandParameterType = {
-    directCall: true,
     includeEveryLine: false,
     autoSaveAfterEdit: config.autoSaveAfterEdit
 };
@@ -32,14 +31,10 @@ const bindEditorCommands = (context) : vscode.Disposable[] => {
         const editorCommand = new EditorCommand();
         if (key in editorCommand) {
             return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit, params: EditorCommandParameterType = defaultParam) => {
-                console.log(params)
-                const args = {
-                    lineEditFlag: EditorCommandId[key]
-                };
+                // const args = {
+                //     lineEditFlag: EditorCommandId[key]
+                // };
                 editorCommand.execute([editorCommand[key]()], params);
-                if (!params.includeEveryLine && params.autoSaveAfterEdit && params.directCall) {                    
-                    // editor.document.save();
-                }
             });
         } else {
             console.log('command ', key, 'has no implementation');
@@ -52,14 +47,10 @@ const bindEditorCommandGroups = (context) : vscode.Disposable[] => {
     return filterMapIds(EditorCommandGroupId, (key => {
         if (key in editorCommandGroup) {
             return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit, params: EditorCommandParameterType = defaultParam) => {
-                console.log(params)
-                const args = {
-                    lineEditFlag: EditorCommandGroupId[key]
-                };
+                // const args = {
+                //     lineEditFlag: EditorCommandGroupId[key]
+                // };
                 editorCommandGroup.execute(editorCommandGroup[key](), params);
-                if (!params.includeEveryLine && params.autoSaveAfterEdit && params.directCall) {
-                    // editor.document.save();
-                }
             });
         } else {
             console.log('command ', key, 'has no implementation');
@@ -101,6 +92,7 @@ export const Register = (
             bindEditorCommandGroups(context);
         }
     }));
+    
     event.isDirectCall();
     disposable.push(event.autoTriggerOnSaveEvent());
     disposable.push(event.autoTriggerOnSaveResetEvent());

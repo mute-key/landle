@@ -14,7 +14,6 @@ import {
 import config from "../common/config";
 
 export type EditorCommandParameterType = {
-    directCall: boolean,
     includeEveryLine: boolean,
     autoSaveAfterEdit : boolean
 }

@@ -1,7 +1,6 @@
 # Introduction
 
 ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mutekey.landle) <br>
-[Check it on VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mutekey.landle)
 
 This is my rehab code.
 I did not aim to make a funciton which formatter can do already.
@@ -9,16 +8,16 @@ I did not aim to make a funciton which formatter can do already.
 <br>
 
 ## Configurations
- - autoSaveAfterEdit
- - autoTriggerOnSave
- - addExtraLineAtEndOnBlockComment
- - deleteCommentAlsoDeleteBlockComment
- - blockCommentWordCountJustifyAlign
- - blockCommentCharacterBoundaryBaseLength
- - blockCommentCharacterBoundaryTolanceLength
+ - autoSaveAfterEdit: enum[commandList:string] (default = "disabled")
+ - autoTriggerOnSave: default true boolean (default = true) 
+ - addExtraLineAtEndOnBlockComment: boolean (default = true)
+ - deleteCommentAlsoDeleteBlockComment: boolean (default = true)
+ - blockCommentWordCountJustifyAlign: boolean  (default = true)
+ - blockCommentCharacterBoundaryBaseLength: number (default = 70) 
+ - blockCommentCharacterBoundaryTolanceLength: number (default = 5) 
 <br><br>
 
-## Individual commnads
+## Commands
 
 Each command call has its functions as a class member functions. no functionality call overlap even it would seeems to.
 
@@ -28,7 +27,10 @@ Shortcut key : `not assigned`<br>
 
 - Removes doucment starting empty-lines if document starting line is in selection.
 
-<br>
+
+<img src="./demo/removeDocumentStartingEmptyLine.gif" alt ="GIF" height ="280" style="border: solid 3px black">
+
+************************************************************************************************************************************
 
 > Command -> __removeTrailingWhitespaceFromSelection__<br>
 
@@ -38,7 +40,7 @@ Shortcut key : `ctrl + alt + w`<br>
 
 <img src="./demo/removeTrailingWhitespaceFromSelection.gif" alt ="GIF" height ="240" style="border: solid 3px black">
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeMulitpleEmptyLinesFromSelection__<br>
 
@@ -48,7 +50,7 @@ Shortcut key : `ctrl + alt + m`<br>
 
 <img src="./demo/removeMulitpleEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeEmptyLinesFromSelection__<br>
 
@@ -58,7 +60,7 @@ Shortcut key : `ctrl + alt + e`<br>
 
 <img src="./demo/removeEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeMultipleWhitespaceFromSelection__<br>
 
@@ -69,7 +71,7 @@ this command ignores indentation.
 
 <img src="./demo/removeMultipleWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeCommentedTextFromSelection__<br>
 
@@ -77,7 +79,7 @@ Shortcut key : `ctrl + alt + /`<br>
 
 - Removes all comment only lines.
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeEmptyBlockCommentLineOnStart__<br>
 
@@ -85,7 +87,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes empty-block-comment-lines between block-comment-starting-line and non-empty-block-comment lines.
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeMultipleEmptyBlockCommentLine__<br>
 
@@ -93,7 +95,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes continuos empty-block-comment-lines.
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __insertEmptyBlockCommentLineOnEnd__<br>
 
@@ -101,7 +103,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes empty-whitespace-lines after block-comment-ending-line and non-empty whitespace-lines.
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __removeEmptyLinesBetweenBlockCommantAndCode__<br>
 
@@ -109,7 +111,7 @@ Shortcut key : `not assigned`<br>
 
 - Insert empty-block-comment-lines before block-comment-ending-lines and non-empty-block-comment-lines.
 
-<br>
+************************************************************************************************************************************
 
 > Command -> __blockCommentWordCountAutoLengthAlign__<br>
 
@@ -121,7 +123,7 @@ Related Configurations
   - blockCommentCharacterBoundaryTolanceLength (default 10) : Character count margin for the line.
 
 
-<br>
+************************************************************************************************************************************
 
 
 
@@ -130,6 +132,17 @@ Related Configurations
 Shortcut key : `ctrl + alt + n`<br>
 
 - Print DateTime string on current position of the selection.
+
+************************************************************************************************************************************
+
+
+> Command ->  __blockCommentWordCountJustifyAlign__<br>
+
+Shortcut key : `ctrl + alt + a`<br>
+
+- Read the line and count the length, trigger funciton if the character count is bigger than `config.blockCommentCharacterBoundaryBaseLength` + `config.blockCommentCharacterBoundaryTolanceLength`. if the character count is less, the function will concatinate next line words until it is bigger than `config.blockCommentCharacterBoundaryBaseLength` and will continue unitl the line is not empty-block-comment line. 
+
+<img src="./demo/blockCommentWordCountJustifyAlig.gif" alt ="GIF" style="border: solid 3px black" height ="280">
 
 <br>
 
@@ -145,6 +158,7 @@ Shortcut key : `ctrl + alt + b`<br>
 - Removes continuos empty-block-comment-lines.
 - Removes empty-whitespace-lines after block-comment-ending-line and non-empty whitespace-lines.
 - Insert empty-block-comment-lines before block-comment-ending-lines and non-empty-block-comment-lines.
+- blockCommentWordCountJustifyAlign
 
 <img src="./demo/cleanUpBlockCommentFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="270">
 <br><br><br>
@@ -157,6 +171,7 @@ Shortcut key : `ctrl + alt + x`<br>
 - Removes trailing whitespaces from selection.
 - Removes Multiple whitespace-characters that are longer than length of 1.
 - Removes multiple whitespace-lines that are more than 1 but keeping 1.
+- blockCommentWordCountJustifyAlign
 
 <br>
 <img src="./demo/cleanUpCodeCommand.gif" alt ="GIF" style="border: solid 3px black" height ="330">
@@ -174,13 +189,15 @@ Shortcut key : `ctrl + alt + c`<br>
 - Removes trailing whitespaces from selection.
 - Removes Multiple whitespace-characters that are longer than length of 1.
 - Removes multiple whitespace-lines that are more than 1 but keeping 1.
+- blockCommentWordCountJustifyAlign
 
 <img src="./demo/cleanUpWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="330">
 
 ## backlog 
 
- - need better readme
- - Digest linter and perform audo correction based on lint config.
+ - need better readme and relace old gif.
+ - should notify the user when the keybinding is already taken.
+ - Digest linter and perform auto correction based on lint config.
  - removeCommentedLine improvement for trailing both previous line and next line. 
  - removeCommentedLine improvement to be ablet to delete block comment if it is in selection.
 

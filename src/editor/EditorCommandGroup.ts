@@ -40,8 +40,9 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),
             this.removeMulitpleEmptyLinesFromSelection(),
+            this.blockCommentWordCountJustifyAlign(),
             this.removeMultipleWhitespaceFromSelection()
-        ];
+        ].filter((fn) => fn !== undefined);;
     };
 
     public cleanUpDocumentCommand = (args) : LT.LineEditDefintion[] => {

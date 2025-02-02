@@ -43,7 +43,7 @@ var package_default = {
   name: "landle",
   publisher: "mutekey",
   displayName: "landle",
-  description: "landle",
+  description: "generic code clean up extension",
   version: "0.9.2061",
   icon: "./misc/icon.png",
   repository: {
@@ -963,13 +963,13 @@ var LineHandler = class extends Line {
     return;
   };
   /**
-   * remove continous whitespaces that are longer than 1 from line when
+   * remove continous whitespaces that are longer than 1 from line when 
    * there is non-whitespace -character present in line. this will ignore 
    * indentation and edtiing range will start from fisrt non whitespace 
    * character in the line. this funciton will keep the pre-edit range 
    * to overwrite with whitespaces otherwise pre-edit characters will 
    * be left in the line otherwise this callback would need to perform 
-   * 2 edit to achieve removing the whitespaces in delta bigger than 
+   * two edit to achieve removing the whitespaces in delta bigger than 
    * 1. resizing range will only affact to target range but not out or 
    * range. 
    * 
@@ -1436,8 +1436,10 @@ var EditorCommandGroup = class extends EditorCommand {
       this.removeDocumentStartingEmptyLine(),
       this.removeTrailingWhitespaceFromSelection(),
       this.removeMulitpleEmptyLinesFromSelection(),
+      this.blockCommentWordCountJustifyAlign(),
       this.removeMultipleWhitespaceFromSelection()
-    ];
+    ].filter((fn) => fn !== void 0);
+    ;
   };
   cleanUpDocumentCommand = (args) => {
     return [
@@ -1465,7 +1467,6 @@ var EditorCommandGroup = class extends EditorCommand {
 
 // src/register.ts
 var defaultParam = {
-  directCall: true,
   includeEveryLine: false,
   autoSaveAfterEdit: config_default.autoSaveAfterEdit
 };
@@ -1474,13 +1475,7 @@ var bindEditorCommands = (context) => {
     const editorCommand = new EditorCommand();
     if (key in editorCommand) {
       return vscode7.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit, params = defaultParam) => {
-        console.log(params);
-        const args = {
-          lineEditFlag: EditorCommandId[key]
-        };
         editorCommand.execute([editorCommand[key]()], params);
-        if (!params.includeEveryLine && params.autoSaveAfterEdit && params.directCall) {
-        }
       });
     } else {
       console.log("command ", key, "has no implementation");
@@ -1492,13 +1487,7 @@ var bindEditorCommandGroups = (context) => {
   return filterMapIds(EditorCommandGroupId, (key) => {
     if (key in editorCommandGroup) {
       return vscode7.commands.registerTextEditorCommand(package_default.name + "." + key, (editor, edit, params = defaultParam) => {
-        console.log(params);
-        const args = {
-          lineEditFlag: EditorCommandGroupId[key]
-        };
         editorCommandGroup.execute(editorCommandGroup[key](), params);
-        if (!params.includeEveryLine && params.autoSaveAfterEdit && params.directCall) {
-        }
       });
     } else {
       console.log("command ", key, "has no implementation");

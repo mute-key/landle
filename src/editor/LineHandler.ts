@@ -74,13 +74,13 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove continous whitespaces that are longer than 1 from line when
+     * remove continous whitespaces that are longer than 1 from line when 
      * there is non-whitespace -character present in line. this will ignore 
      * indentation and edtiing range will start from fisrt non whitespace 
      * character in the line. this funciton will keep the pre-edit range 
      * to overwrite with whitespaces otherwise pre-edit characters will 
      * be left in the line otherwise this callback would need to perform 
-     * 2 edit to achieve removing the whitespaces in delta bigger than 
+     * two edit to achieve removing the whitespaces in delta bigger than 
      * 1. resizing range will only affact to target range but not out or 
      * range. 
      * 
