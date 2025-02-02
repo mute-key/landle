@@ -1,14 +1,16 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import packageInfo from '../../package.json' assert { type: 'json' };
 
-const config = vscode.workspace.getConfiguration(packageInfo.name);
+const configuration = vscode.workspace.getConfiguration(packageInfo.name);
 
-export const addExtraLineAtEndOnBlockComment = config.get<boolean>('addExtraLineAtEndOnBlockComment', true);
+const config = {
+    addExtraLineAtEndOnBlockComment: configuration.get<boolean>('addExtraLineAtEndOnBlockComment', true),
+    deleteCommentAlsoDeleteBlockComment: configuration.get<boolean>('deleteCommentAlsoDeleteBlockComment', true),
+    blockCommentWordCountAutoLengthAlign: configuration.get<boolean>('blockCommentWordCountAutoLengthAlign', true),
+    autoTriggerOnSave: configuration.get<string>('blockCommentWordCountAutoLengthAlign', 'cleanUpDocumentCommand'),
+    autoSaveAfterEdit: configuration.get<boolean>('autoSaveAfterEdit', true),
+    BaseLength: configuration.get<number>('blockCommentCharacterBoundaryBaseLength', 70),
+    ToleanceLength: configuration.get<number>('blockCommentCharacterBoundaryTolanceLength', 5),
+};
 
-export const deleteCommentAlsoDeleteBlockComment = config.get<boolean>('deleteCommentAlsoDeleteBlockComment', true);
-
-export const blockCommentWordCountAutoLengthAlign = config.get<boolean>('blockCommentWordCountAutoLengthAlign', true);
-
-export const BaseLength = config.get<number>('blockCommentCharacterBoundaryBaseLength', 70);
-
-export const ToleanceLength = config.get<number>('blockCommentCharacterBoundaryTolanceLength', 5);
+export default config;

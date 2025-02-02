@@ -1,26 +1,29 @@
 /**
- * this is kind of generic command class but for editor.
- * it might need to be refactored if to be used other than just editor edit.
- * probably will need to revise to make it either even more generic or
- * even more to specific use-case.
+ * this is kind of generic command class but for editor. it might need
+ * to be refactored if to be used other than just editor edit. probably
+ * will need to revise to make it either even more generic or even more
+ * to specific use-case. 
  * 
  */
-
 import { ActiveEditor } from "./ActiveEditor";
 import { LineType as LT } from "./Line";
 import {
     LineHandler
 } from "./LineHandler";
-import { 
-    blockCommentWordCountAutoLengthAlign,
-    addExtraLineAtEndOnBlockComment
-} from "../common/config";
+
+import config from "../common/config";
+
+export type EditorCommandParameterType = {
+    directCall: boolean,
+    includeEveryLine: boolean,
+    autoSaveAfterEdit : boolean
+}
 
 /**
  * thsese command ids should match the commands names in package.json.
- * the values of these enums are to see if they allow or block certain conditions
- * when the callbacks collide when they try to edit the overlapping range
- * which i will lead to runtime error when that happes.
+ * the values of these enums are to see if they allow or block certain
+ * conditions when the callbacks collide when they try to edit the overlapping 
+ * range which i will lead to runtime error when that happes. 
  * 
  */
 export enum EditorCommandId {
@@ -40,12 +43,10 @@ export enum EditorCommandId {
 };
 
 /**
- * implementations of the functions with same name as key.
- * this is to keep the integrity and simplify if the commands have
- * implementaion and does exist and prevent mismatch of the funciton names.
- * and becuase the command id is enum.
- * 
- * if this
+ * implementations of the functions with same name as key. this is to keep
+ * the integrity and simplify if the commands have implementaion and does
+ * exist and prevent mismatch of the funciton names. and becuase the command 
+ * id is enum. 
  * 
  */
 type CommandInterface = {
@@ -55,9 +56,9 @@ type CommandInterface = {
 /**
  * this class handles information about the editor comamnds to be bound.
  * because this class might be used to other than just editor comnand,
- * i wanted to explicitily control the editor related command
- * so it is probably the best not to inherit from other classes and use them
- * as composition.
+ * i wanted to explicitily control the editor related command so it is
+ * probably the best not to inherit from other classes and use them as
+ * composition. 
  * 
  */
 export class EditorCommand implements CommandInterface {
@@ -74,8 +75,8 @@ export class EditorCommand implements CommandInterface {
     // > PUBLIC FUNCTIONS:
     // =============================================================================
 
-    public execute = (command : LT.LineEditDefintion[], includeFullEdiotr: boolean) : void => {
-        this.#activeEditor.prepareEdit(command, includeFullEdiotr);
+    public execute = (command : LT.LineEditDefintion[], commandOption: EditorCommandParameterType) : void => {
+        this.#activeEditor.prepareEdit(command, commandOption);
     };
 
     /**
@@ -90,7 +91,7 @@ export class EditorCommand implements CommandInterface {
     };
 
     /**
-     * removes trailing whitespace from the line.
+     * removes trailing whitespace from the line. 
      *
      * @param editor unused, future reference
      * @param edit unused, future reference
@@ -105,10 +106,10 @@ export class EditorCommand implements CommandInterface {
     };
 
     /**
-     * removes multiple empty lines with EOL.
-     * this function will check if the currnt range and next range are
-     * both whitespace lines and if true, delete current range with EOL.
-     * function type is; line.delete.
+     * removes multiple empty lines with EOL. this function will check
+     * if the currnt range and next range are both whitespace lines and
+     * if true, delete current range with EOL. function type is; line.delete. 
+     * 
      * 
      */
     public removeMulitpleEmptyLinesFromSelection = () : LT.LineEditDefintion => {
@@ -122,8 +123,8 @@ export class EditorCommand implements CommandInterface {
     };
     
     /**
-     * removes whitespaces that are longer than 1.
-     * this function will ignore indentation and keep the indent.
+     * removes whitespaces that are longer than 1. this function will ignore 
+     * indentation and keep the indent. 
      * 
      */
     public removeMultipleWhitespaceFromSelection = () : LT.LineEditDefintion => {
@@ -134,8 +135,8 @@ export class EditorCommand implements CommandInterface {
     };
 
     /**
-     * remove all empty whitespace lines from selection
-     * function type is line.delete.
+     * remove all empty whitespace lines from selection function type is
+     * line.delete. 
      * 
      */
     public removeEmptyLinesFromSelection = (): LT.LineEditDefintion => {
@@ -149,8 +150,8 @@ export class EditorCommand implements CommandInterface {
     };
 
     /**
-     * remove all commented lines from selection
-     * function type is line.delete with EOL.
+     * remove all commented lines from selection function type is line.delete 
+     * with EOL. 
      * 
      */
     public removeCommentedTextFromSelection = (): LT.LineEditDefintion => {
@@ -161,7 +162,8 @@ export class EditorCommand implements CommandInterface {
     };
 
     /**
-     * remove the current line if next line is identical as the current one.
+     * remove the current line if next line is identical as the current
+     * one. 
      * 
      */
     public removeDuplicateLineFromSelection = (): LT.LineEditDefintion => {
@@ -195,7 +197,7 @@ export class EditorCommand implements CommandInterface {
     };
 
     public insertEmptyBlockCommentLineOnEnd = (): LT.LineEditDefintion | undefined => {
-        return addExtraLineAtEndOnBlockComment ? {
+        return config.addExtraLineAtEndOnBlockComment ? {
             func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
             type: LT.LineEditType.APPEND,
             block: {
@@ -203,9 +205,9 @@ export class EditorCommand implements CommandInterface {
             }
         } : undefined;
     };
-    
+
     public blockCommentWordCountJustifyAlign = (): LT.LineEditDefintion | undefined => {
-        return blockCommentWordCountAutoLengthAlign ? {
+        return config.blockCommentWordCountAutoLengthAlign ? {
             func: this.#lineHandler.blockCommentWordCountJustifyAlign,
             type: LT.LineEditType.REPLACE,
             block: {

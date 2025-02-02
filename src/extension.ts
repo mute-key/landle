@@ -6,4 +6,6 @@ export function activate(context: vscode.ExtensionContext) {
 	Register(context);
 }
 
-export function deactivate() {}
+export function deactivate() {
+
+}

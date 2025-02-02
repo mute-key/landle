@@ -8,6 +8,16 @@ I did not aim to make a funciton which formatter can do already.
 
 <br>
 
+## Configurations
+ - autoSaveAfterEdit
+ - autoTriggerOnSave
+ - addExtraLineAtEndOnBlockComment
+ - deleteCommentAlsoDeleteBlockComment
+ - blockCommentWordCountJustifyAlign
+ - blockCommentCharacterBoundaryBaseLength
+ - blockCommentCharacterBoundaryTolanceLength
+<br><br>
+
 ## Individual commnads
 
 Each command call has its functions as a class member functions. no functionality call overlap even it would seeems to.
@@ -18,7 +28,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes doucment starting empty-lines if document starting line is in selection.
 
-<br><br>
+<br>
 
 > Command -> __removeTrailingWhitespaceFromSelection__<br>
 
@@ -28,7 +38,7 @@ Shortcut key : `ctrl + alt + w`<br>
 
 <img src="./demo/removeTrailingWhitespaceFromSelection.gif" alt ="GIF" height ="240" style="border: solid 3px black">
 
-<br><br>
+<br>
 
 > Command -> __removeMulitpleEmptyLinesFromSelection__<br>
 
@@ -38,7 +48,7 @@ Shortcut key : `ctrl + alt + m`<br>
 
 <img src="./demo/removeMulitpleEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
-<br><br>
+<br>
 
 > Command -> __removeEmptyLinesFromSelection__<br>
 
@@ -48,7 +58,7 @@ Shortcut key : `ctrl + alt + e`<br>
 
 <img src="./demo/removeEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
-<br><br>
+<br>
 
 > Command -> __removeMultipleWhitespaceFromSelection__<br>
 
@@ -59,7 +69,7 @@ this command ignores indentation.
 
 <img src="./demo/removeMultipleWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
-<br><br>
+<br>
 
 > Command -> __removeCommentedTextFromSelection__<br>
 
@@ -67,7 +77,7 @@ Shortcut key : `ctrl + alt + /`<br>
 
 - Removes all comment only lines.
 
-<br><br>
+<br>
 
 > Command -> __removeEmptyBlockCommentLineOnStart__<br>
 
@@ -75,7 +85,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes empty-block-comment-lines between block-comment-starting-line and non-empty-block-comment lines.
 
-<br><br>
+<br>
 
 > Command -> __removeMultipleEmptyBlockCommentLine__<br>
 
@@ -83,7 +93,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes continuos empty-block-comment-lines.
 
-<br><br>
+<br>
 
 > Command -> __insertEmptyBlockCommentLineOnEnd__<br>
 
@@ -91,7 +101,7 @@ Shortcut key : `not assigned`<br>
 
 - Removes empty-whitespace-lines after block-comment-ending-line and non-empty whitespace-lines.
 
-<br><br>
+<br>
 
 > Command -> __removeEmptyLinesBetweenBlockCommantAndCode__<br>
 
@@ -99,7 +109,7 @@ Shortcut key : `not assigned`<br>
 
 - Insert empty-block-comment-lines before block-comment-ending-lines and non-empty-block-comment-lines.
 
-<br><br>
+<br>
 
 > Command -> __blockCommentWordCountAutoLengthAlign__<br>
 
@@ -111,7 +121,7 @@ Related Configurations
   - blockCommentCharacterBoundaryTolanceLength (default 10) : Character count margin for the line.
 
 
-<br><br>
+<br>
 
 
 
@@ -121,7 +131,7 @@ Shortcut key : `ctrl + alt + n`<br>
 
 - Print DateTime string on current position of the selection.
 
-<br><br>
+<br>
 
 ## Commands group
 
@@ -167,21 +177,23 @@ Shortcut key : `ctrl + alt + c`<br>
 
 <img src="./demo/cleanUpWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="330">
 
-
-## Future Features
-
-- Digest linter and perform audo correction based on lint config.
-
-
-
-
-
 ## backlog 
 
+ - need better readme
+ - Digest linter and perform audo correction based on lint config.
  - removeCommentedLine improvement for trailing both previous line and next line. 
  - removeCommentedLine improvement to be ablet to delete block comment if it is in selection.
 
 ## changelog 
+
+version 0.9.2061
+
+ - auto save trigger has been added for after command call with it's configuration.
+ - auto trigger command call before command call with it's configuration. 
+ - new event class has been added.
+ - removeMultipleWhitespace function no longer remove multiple whitespaces on inline comment. 
+ - extension icon added.
+
 
 version 0.9.206
  - code split on lineHandler.ts 

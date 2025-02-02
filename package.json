@@ -3,7 +3,8 @@
     "publisher": "mutekey",
     "displayName": "landle",
     "description": "landle",
-    "version": "0.9.206",
+    "version": "0.9.2061",
+    "icon": "./misc/icon.png",
     "repository": {
         "type": "git",
         "url": "https://github.com/mute-key/landle"
@@ -15,14 +16,27 @@
     "engines": {
         "vscode": "^1.96.0"
     },
+    "keywords": [
+        "formatter",
+        "comments",
+        "jsdoc",
+        "empty line",
+        "whitespace"
+    ],
     "categories": [
+        "Snippets",
+        "Formatters",
+        "Keymaps",
         "Other"
     ],
     "activationEvents": [
-        "onStartupFinished"
+        "onStartupFinished", "onDebug"
     ],
     "main": "./dist/extension.js",
-    "extensionKind": ["ui", "workspace"],
+    "extensionKind": [
+        "ui", 
+        "workspace"
+    ],
     "contributes": {
         "commands": [
             {
@@ -54,11 +68,11 @@
                 "title": "Print Now DateTime On Selection"
             },
             {
-                "command": "landle.cleanUBlockCommentCommand",
+                "command": "landle.blockCommentWordCountJustifyAlign",
                 "title": "clean-up Block Comment From Selection"
             },
             {
-                "command": "landle.blockCommentWordCountJustifyAlign",
+                "command": "landle.cleanUBlockCommentCommand",
                 "title": "clean-up Block Comment From Selection"
             },
             {
@@ -119,6 +133,30 @@
         "configuration": {
             "title": "Landle Settings",
             "properties": {
+                "landle.autoSaveAfterEdit": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Trigger document save after extension formatting is complete"
+                },
+                "landle.autoTriggerOnSave": {
+                    "description": "Commands group to execute on editor save. Selecting one of the commands will automatically select entire document. Recommand to turn off vscode's autosave feature if you are using this feature. ",
+                    "type": "string",
+                    "enum": [
+                        "disabled",
+                        "blockCommentWordCountJustifyAlign",
+                        "cleanUBlockCommentCommand",
+                        "cleanUpDocumentCommand",
+                        "cleanUpCodeCommand"
+                    ],
+                    "enumDescriptions": [
+                        "disabled",
+                        "blockCommentWordCountJustifyAlign",
+                        "cleanUBlockCommentCommand",
+                        "cleanUpDocumentCommand",
+                        "cleanUpCodeCommand"
+                    ],
+                    "default": "cleanUpDocumentCommand"
+                },
                 "landle.addExtraLineAtEndOnBlockComment": {
                     "type": "boolean",
                     "default": true,

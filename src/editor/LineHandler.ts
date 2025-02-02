@@ -3,13 +3,8 @@ import {
     Line,
     LineType
 } from "./Line";
-
 import { LineUtil } from "../common/LineUtil";
-import {
-    BaseLength,
-    ToleanceLength,
-    deleteCommentAlsoDeleteBlockComment
-} from "../common/config";
+import config from "../common/config";
 
 export interface Edithandler {
     removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined,
@@ -27,7 +22,7 @@ export class LineHandler extends Line {
     }
 
     /**
-     * check if the document is starting
+     * check if the document is starting with empty line and removes them.
      * 
      * @param range
      * @returns
@@ -54,7 +49,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove trailing whitespace lines from range if there is non-whitespace-character present.
+     * remove trailing whitespace lines from range if there is non-whitespace-character 
+     * present. 
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -78,24 +74,39 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove continous whitespaces that are longer than 1 from line when there is non-whitespace
-     * -character present in line. this will ignore indentation and edtiing range will start from
-     * fisrt non whitespace character in the line. this funciton will keep the pre-edit range
-     * to overwrite with whitespaces otherwise pre-edit characters will be left in the line
-     * otherwise this callback would need to perform 2 edit to achieve removing the whitespaces in
-     * delta bigger than 1. resizing range will only affact to target range but not out or range.
+     * remove continous whitespaces that are longer than 1 from line when
+     * there is non-whitespace -character present in line. this will ignore 
+     * indentation and edtiing range will start from fisrt non whitespace 
+     * character in the line. this funciton will keep the pre-edit range 
+     * to overwrite with whitespaces otherwise pre-edit characters will 
+     * be left in the line otherwise this callback would need to perform 
+     * 2 edit to achieve removing the whitespaces in delta bigger than 
+     * 1. resizing range will only affact to target range but not out or 
+     * range. 
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
      * 
      */
     public removeMultipleWhitespace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
-        const lineText = this.getText(range);
-        if (LineUtil.findMultipleWhiteSpaceString(lineText) && !this.getTextLineFromRange(range).isEmptyOrWhitespace) {
-            const newLineText = LineUtil.removeMultipleWhiteSpaceString(lineText);
-            // also need to check if the line has indent
+        const textLine = this.getTextLineFromRange(range);
+
+        if (LineUtil.findMultipleWhiteSpaceString(textLine.text) && !textLine.isEmptyOrWhitespace) {
+            if (LineUtil.isLineInlineComment(textLine.text)) {
+                return;
+                // const w = LineUtil.getInlineCommentFirstWhitespaces(textLine.text);
+                // if (w) {
+                //     const tabSize = this.editor?.options.tabSize;
+                //     const insertSpaces = this.editor?.options.insertSpaces; 
+                //     console.log("insertSpaces", insertSpaces)
+                //     if ((w[0].length % <number>tabSize) === 1 || !insertSpaces) {
+                //     }
+                // }
+            }
+            // console.log(LineUtil.getInlineCommentFirstWhitespaces(textLine.text)[0])
+            const newLineText = LineUtil.removeMultipleWhiteSpaceString(textLine.text);
             const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
-            const endPos = LineUtil.findReverseNonWhitespaceIndex(lineText);
+            const endPos = LineUtil.findReverseNonWhitespaceIndex(textLine.text);
             return {
                 range: this.newRangeZeroBased(range.start.line, startPos, endPos + 1),
                 string: newLineText.padEnd(endPos, " ").trim()
@@ -105,8 +116,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * check if the current cursor or selected range is empty line and next.
-     * if both current and next is emtpy, remove current line.
+     * check if the current cursor or selected range is empty line and
+     * next. if both current and next is emtpy, remove current line. 
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -124,7 +135,7 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove line if the line is commented
+     * remove line if the line is commented 
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -161,7 +172,7 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove line if the line is empty without characters.
+     * remove line if the line is empty without characters. 
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -178,8 +189,8 @@ export class LineHandler extends Line {
     };
     
     /**
-     * check if the current cursor or selected range is empty line and next.
-     * if both current and next is emtpy, remove current line.
+     * check if the current cursor or selected range is empty line and
+     * next. if both current and next is emtpy, remove current line. 
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -197,7 +208,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove empty block comment line if the previous line is block comment start
+     * remove empty block comment line if the previous line is block comment 
+     * start 
      * 
      * @param range
      * @returns
@@ -227,8 +239,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove current empty block comment line if next line is also
-     * empty block comment line.
+     * remove current empty block comment line if next line is also empty
+     * block comment line. 
      * 
      * @param range
      * @returns
@@ -273,7 +285,7 @@ export class LineHandler extends Line {
     };
 
     /**
-     * funciton removes empty-lines next block-comment lines.
+     * funciton removes empty-lines next block-comment lines. 
      * 
      * @param range range of the line.
      * @returns LineEditInfo or undefined
@@ -301,8 +313,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * this function needs to do 2 edit, 1 is to add new string at position 0,0
-     * and delete rest of the un-justified strings.
+     * this function needs to do 2 edit, 1 is to add new string at position 
+     * 0,0 and delete rest of the un-justified strings. 
      * 
      * @param range
      * @returns
@@ -314,8 +326,7 @@ export class LineHandler extends Line {
         if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
             const indentIndex = currentTextLine.text.indexOf("*");
             const indentString = currentTextLine.text.substring(0, indentIndex + 1);
-        
-            if (currentTextLine.text.length < (BaseLength) || currentTextLine.text.length > (BaseLength + ToleanceLength)) {
+            if (currentTextLine.text.length < (config.BaseLength) || currentTextLine.text.length > (config.BaseLength + config.ToleanceLength)) {
                 const trueConditionCallback = (line: vscode.TextLine) => {
                     lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/));
                 };
@@ -330,7 +341,7 @@ export class LineHandler extends Line {
                 for (const [index, str] of lineTextInArray.entries()) {
                     if (str.length > 0) {
                         newLine += str + " ";
-                        if (newLine.length > BaseLength) {
+                        if (newLine.length > config.BaseLength) {
                             newString += newLine + this.getEndofLine();
                             newLine = indentString + " ";
                         }
@@ -360,10 +371,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * funciton to print current datetime where the cursor is.
-     * - locale
-     * - iso
-     * - custom
+     * funciton to print current datetime where the cursor is. - locale
+     * - iso - custom 
      * 
      * @param range target range, whichi will be the very starting of line.
      * @returns object descripting where/how to edit the line or undefined if no condition is met.

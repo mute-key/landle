@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
              
 export namespace LineType {
- 
+
     /**
-     * bitmask to check multiple edit.type. if, it comes down to
-     * editor need to perform multiple edits with single callback,
-     * this will be very useful and ActiveEditor.#editSwitch
-     * need be rewriten other than switch.
+     * bitmask to check multiple edit.type. if, it comes down to editor
+     * need to perform multiple edits with single callback, this will be
+     * very useful and ActiveEditor.#editSwitch need be rewriten other
+     * than switch. 
      * 
      */
     export const enum LineEditType {
@@ -19,7 +19,8 @@ export namespace LineType {
 
     /**
      * this is to check if more than one edit is trying to perform the edit
-     * on overlapping range which will throw runtime error. but this is not.
+     * on overlapping range which will throw runtime error. but this is
+     * not. 
      * 
      */
     export const enum LineEditBlockPriority {
@@ -32,7 +33,7 @@ export namespace LineType {
 
     /**
      * type of to check the priority of which edit to perform as well as
-     * if the block requires to skip lines.
+     * if the block requires to skip lines. 
      * 
      */
     export type lineEditBlockType = {
@@ -41,7 +42,7 @@ export namespace LineType {
     }
 
     /**
-     * detail about line edit, to be performed.
+     * detail about line edit, to be performed. 
      * 
      */
     export type LineEditInfo = {
@@ -52,7 +53,7 @@ export namespace LineType {
     }
  
     /**
-     * detail about line edit, to check on each line.
+     * detail about line edit, to check on each line. 
      * 
      */
     export type LineEditDefintion = {
@@ -60,10 +61,15 @@ export namespace LineType {
         type: LineEditType,
         block? : lineEditBlockType
     }
+
+    export type IterateNextLineType = {
+        lineNumber: number,
+        lineSkip: number[]
+    }
 }
 
 /**
- * class handles the lines and range in editor
+ * class handles the lines and range in editor 
  * 
  */
 export abstract class Line {
@@ -82,7 +88,7 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * unused. for future reference.
+     * unused. for future reference. 
      *
      * @param range unused
      * @returns unused
@@ -95,7 +101,7 @@ export abstract class Line {
     };
 
     /**
-     * unused. staple for future reference.
+     * unused. staple for future reference. 
      * 
      * @param range unused
      * @returns unused
@@ -109,14 +115,14 @@ export abstract class Line {
     };
 
     /**
-     * this private function is a wrap and shape the return object for 
-     * each callback for a line. the function will take current range with 
-     * callback and execute to get the information how to edit the line, 
-     * which described in object with type of LineEditInfo. this is where 
-     * the default blocking value will be set to block additional edit 
-     * on line; default for blocking the edit is true, and it is false 
+     * this private function is a wrap and shape the return object for
+     * each callback for a line. the function will take current range with
+     * callback and execute to get the information how to edit the line,
+     * which described in object with type of LineEditInfo. this is where
+     * the default blocking value will be set to block additional edit
+     * on line; default for blocking the edit is true, and it is false
      * if it is not defined in callback object. 
-     *        
+     * 
      * this means that only a function with block:true will be executed
      * and every other callbacks will be drop for the further. 
      * 
@@ -150,17 +156,17 @@ export abstract class Line {
     };
  
     /**
-     * this is the mian loop to iterate the callbacks that are defined 
-     * from command class. there is a object key named block. when the 
+     * this is the mian loop to iterate the callbacks that are defined
+     * from command class. there is a object key named block. when the
      * property block is true, it will drop all the added edit, and assign
-     * itself and stops further iteration to prevent no more changes to 
-     * be applied to when the for loop is finished, it will be stacked 
+     * itself and stops further iteration to prevent no more changes to
+     * be applied to when the for loop is finished, it will be stacked
      * into _line_edit_ 
      * 
-     * this iteration could well have been done in array.reduce but it 
-     * does unnecessary exection in the iteartion. so thats why it is for 
+     * this iteration could well have been done in array.reduce but it
+     * does unnecessary exection in the iteartion. so thats why it is for
      * loop. 
-     *  
+     * 
      * @param range
      * @param callback
      * @returns
@@ -189,14 +195,14 @@ export abstract class Line {
 
     /**
      * this funciton will iterate each line and stack the line edit object.
-     * iteration will continue unitl the current line number is less than 
-     * less than line number of the each selection. the range at this point 
-     * of will represent a single range and not entire document. callback 
-     * will be a list of callbacks to check/apply to each line. _lineEdit_ 
-     * variable are being used as a references so no direct assignement 
-     * becuase the is what this function will return upon the end of the 
+     * iteration will continue unitl the current line number is less than
+     * less than line number of the each selection. the range at this point
+     * of will represent a single range and not entire document. callback
+     * will be a list of callbacks to check/apply to each line. _lineEdit_
+     * variable are being used as a references so no direct assignement
+     * becuase the is what this function will return upon the end of the
      * iteration. 
-     *       
+     * 
      * there is a for loop that will iterate each every callback. the problem 
      * with js array api is it lacks handling the undefined value being 
      * in api functions rather, you have to chain them. using array api 
@@ -206,7 +212,7 @@ export abstract class Line {
      * will contain undefiend item if callback returns undefined and it 
      * makes to iterate twice to filter them for each every line. further 
      * explanation continues 
-     *         
+     * 
      * @param range
      * @param callback
      * @param currentLineNumber
@@ -243,7 +249,7 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * get EOL of current document set
+     * get EOL of current document set 
      *
      * @returns
      * 
@@ -251,7 +257,7 @@ export abstract class Line {
     protected getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
 
     /**
-     * get text as string from range
+     * get text as string from range 
      *
      * @param range target range
      * @returns text as string
@@ -262,7 +268,7 @@ export abstract class Line {
     };
 
     /**
-     * get TextLine object from range or from line number.
+     * get TextLine object from range or from line number. 
      * 
      * @param range target range
      * @returns TextLine object of range or line.
@@ -288,7 +294,7 @@ export abstract class Line {
     };
 
     /**
-     * get the range of entire line including EOL.
+     * get the range of entire line including EOL. 
      *
      * @param range target range
      * @returns
@@ -299,7 +305,8 @@ export abstract class Line {
     };
 
     /**
-     * create new range with line number, starting position and end position
+     * create new range with line number, starting position and end position 
+     * 
      *
      * @param lineNuber line number of new range object
      * @param startPosition starting position of range
@@ -314,17 +321,18 @@ export abstract class Line {
         );
     };
 
-    protected iterateNextLine = (range : vscode.Range, 
-                                    lineCondition : ((text : string) => boolean) | string, 
-                                    extraBreakCallback? : (line: string) => boolean, 
-                                    trueConditionCallback? : (line: vscode.TextLine) => void) => {
+    protected iterateNextLine = (range : vscode.Range,
+                                lineCondition : ((text : string) => boolean) | string,
+                                extraBreakCallback? : (line: string) => boolean,
+                                trueConditionCallback? : (line: vscode.TextLine) => void
+                                ) : LineType.IterateNextLineType | undefined => {
 
         let lineNumber : number = range.start.line;
         let newRange : vscode.Range | undefined = undefined;
         let newTextLine : vscode.TextLine;
         let condition : boolean = true;
         const lineSkip : number[] = [];
-        while(lineNumber  < this.doc.lineCount) {
+        while(lineNumber < this.doc.lineCount) {
             newTextLine = this.getTextLineFromRange(lineNumber);
             if (typeof lineCondition === "function") {
                 condition = lineCondition(newTextLine.text);
@@ -382,7 +390,7 @@ export abstract class Line {
      * Command.ts. this function will return either a single LineEditInfo
      * or array of them to schedule the document edit. if the selection
      * is either of empty (whitespaces only) or a single line, the range
-     * should be the whole line.
+     * should be the whole line. 
      * 
      * @param range
      * @param callback

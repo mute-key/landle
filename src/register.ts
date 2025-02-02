@@ -1,11 +1,17 @@
 /**
- * this is the main module to bind functions with commands.
+ * this is the main module to bind functions with commands. 
  * 
  */
 import * as vscode from 'vscode';
 import packageInfo from '../package.json' assert { type: 'json' };
+import config from "./common/config";
 
 import {
+    event
+} from './editor/event';
+
+import {
+    EditorCommandParameterType,
     EditorCommand,
     EditorCommandId
 } from './editor/EditorCommand';
@@ -15,32 +21,45 @@ import {
     EditorCommandGroupId
 } from './editor/EditorCommandGroup';
 
-const bindEditorCommands = () : vscode.Disposable[] => {
+const defaultParam : EditorCommandParameterType = {
+    directCall: true,
+    includeEveryLine: false,
+    autoSaveAfterEdit: config.autoSaveAfterEdit
+};
+
+const bindEditorCommands = (context) : vscode.Disposable[] => {
     return filterMapIds(EditorCommandId, (key => {
         const editorCommand = new EditorCommand();
         if (key in editorCommand) {
-            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit, params: EditorCommandParameterType = defaultParam) => {
+                console.log(params)
                 const args = {
                     lineEditFlag: EditorCommandId[key]
                 };
-                editorCommand.execute([editorCommand[key]()], false);
+                editorCommand.execute([editorCommand[key]()], params);
+                if (!params.includeEveryLine && params.autoSaveAfterEdit && params.directCall) {                    
+                    // editor.document.save();
+                }
             });
         } else {
             console.log('command ', key, 'has no implementation');
         }
     }));
-    
 };
 
-const bindEditorCommandGroups = () : vscode.Disposable[] => {
+const bindEditorCommandGroups = (context) : vscode.Disposable[] => {
     const editorCommandGroup = new EditorCommandGroup();
     return filterMapIds(EditorCommandGroupId, (key => {
         if (key in editorCommandGroup) {
-            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit) => {
+            return vscode.commands.registerTextEditorCommand(packageInfo.name + '.' + key, (editor, edit, params: EditorCommandParameterType = defaultParam) => {
+                console.log(params)
                 const args = {
                     lineEditFlag: EditorCommandGroupId[key]
                 };
-                editorCommandGroup.execute(editorCommandGroup[key](), false);
+                editorCommandGroup.execute(editorCommandGroup[key](), params);
+                if (!params.includeEveryLine && params.autoSaveAfterEdit && params.directCall) {
+                    // editor.document.save();
+                }
             });
         } else {
             console.log('command ', key, 'has no implementation');
@@ -49,14 +68,13 @@ const bindEditorCommandGroups = () : vscode.Disposable[] => {
 };
 
 /**
- * the function will iterate the commandID enum and bind the class function from class Command.
+ * the function will iterate the commandID enum and bind the class function 
+ * from class Command. 
  * 
  * @param context extesion context.
  * @param handleLocal unused.
  * 
- * TODO:
- * now that im thinking, maybe the commandID enums can be an interface for stronger integrity.
- * it is something to check
+ * for stronger integrity. it is something to check 
  * 
  */
 const filterMapIds = (ids, mapCallback) => {
@@ -65,28 +83,27 @@ const filterMapIds = (ids, mapCallback) => {
         .map(mapCallback) as vscode.Disposable[];
 };
 
+const registerEvent = (context, disposable) => {
+    context.subscriptions.push(disposable);
+};
+
 export const Register = (
     context: vscode.ExtensionContext,
     handleLocal: boolean = true) => {
-    
+
     const disposable: vscode.Disposable[] = [];
-    disposable.push(...bindEditorCommands());
-    disposable.push(...bindEditorCommandGroups());
 
-    // =============================================================================
-    // > EDITOR EVENTS:
-    // =============================================================================
-
-    // disposable.push(vscode.window.onDidChangeWindowState((editor) => {
-    // }));
-    // vscode.commands.
-
+    disposable.push(...bindEditorCommands(context));
+    disposable.push(...bindEditorCommandGroups(context));
     disposable.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {
-            bindEditorCommands();
-            bindEditorCommandGroups();
+            bindEditorCommands(context);
+            bindEditorCommandGroups(context);
         }
     }));
+    event.isDirectCall();
+    disposable.push(event.autoTriggerOnSaveEvent());
+    disposable.push(event.autoTriggerOnSaveResetEvent());
 
     context.subscriptions.push(...disposable);
 };
