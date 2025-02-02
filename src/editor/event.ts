@@ -15,7 +15,7 @@ class Event extends EventEmitter {
     };
 
     // public AutoSaveEvent = () => {
-    // this.on('autoTriggerOnSaveEvent', (directCallStatus: boolean) => {
+    //     this.on('autoTriggerOnSaveEvent', (directCallStatus: boolean) => {
     //         this.#directCall = directCallStatus;
     //     });
     // };

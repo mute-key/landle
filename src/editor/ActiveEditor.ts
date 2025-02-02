@@ -55,10 +55,10 @@ export class ActiveEditor {
     };
 
     /**
-     * Originally, this function used vscode.Selection to select entire 
-     * document but the issue is that creating new selection flashes on 
-     * when the function is triggered. instead, this function will go 
-     * through every line in the document instead. 
+     * Originally, this function used vscode.Selection to select entire
+     * document but the issue is that creating new selection flashes on
+     * when the function is triggered. instead, this function will go through 
+     * every line in the document instead. 
      * 
      */
     #selectionEntireDocument = () : vscode.Range | undefined => {
@@ -70,7 +70,6 @@ export class ActiveEditor {
         }
         return;
     };
-
 
     /**
      * function that store current document if no arugment is supplied.
@@ -103,8 +102,7 @@ export class ActiveEditor {
     /**
      * this function will perform edit with it's given range with string.
      * 
-     * @param edit :LineType.LineEditType will have the;
-     * - range - type - string 
+     * @param edit :LineType.LineEditType will have the; range, type, string
      * @param editBuilder as it's type.
      * 
      */
@@ -141,19 +139,17 @@ export class ActiveEditor {
         this.#lineHandler = lineHandler;
     };
 
-
-
     /**
-     * it picks up current editor then, will iterate for each selection 
-     * range in the curernt open editor, and stack the callback function 
-     * references. each selection could be either; empty or singleline 
+     * it picks up current editor then, will iterate for each selection
+     * range in the curernt open editor, and stack the callback function
+     * references. each selection could be either; empty or singleline
      * or multiple lines but they will be handled in the Line class. 
      * 
-     * it could have not started to ieterate if the selection is not a 
-     * multiple line, however then it more conditions need to be checked 
-     * in this class function. beside, if choose not to iterate, means, 
-     * will not use array, the arugment and it's type will not be an array 
-     * or either explicitly use array with a single entry. that will end 
+     * it could have not started to ieterate if the selection is not a
+     * multiple line, however then it more conditions need to be checked
+     * in this class function. beside, if choose not to iterate, means,
+     * will not use array, the arugment and it's type will not be an array
+     * or either explicitly use array with a single entry. that will end
      * up line handling to either recieve array or an single callback object 
      * which is inconsistance. plus, it is better to handle at one execution 
      * point and that would be not here. 
@@ -173,7 +169,7 @@ export class ActiveEditor {
                 selections.forEach((range : vscode.Range) => {
                     editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
                 });
-            }    
+            }
             this.editInRange(editSchedule);
         }
     };

@@ -15,8 +15,8 @@ export type CommandInterface = {
 /**
  * this class handles information about the editor comamnds to be bound.
  * because this class might be used to other than just editor comnand,
- * i wanted to explicitily control the editor related command so it is 
- * probably the best not to inherit from other classes and use them as 
+ * i wanted to explicitily control the editor related command so it is
+ * probably the best not to inherit from other classes and use them as
  * composition. 
  * 
  */

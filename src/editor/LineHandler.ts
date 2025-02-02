@@ -74,7 +74,7 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove continous whitespaces that are longer than 1 from line when 
+     * remove continous whitespaces that are longer than 1 from line when
      * there is non-whitespace -character present in line. this will ignore 
      * indentation and edtiing range will start from fisrt non whitespace 
      * character in the line. this funciton will keep the pre-edit range 
@@ -97,7 +97,7 @@ export class LineHandler extends Line {
                 // const w = LineUtil.getInlineCommentFirstWhitespaces(textLine.text);
                 // if (w) {
                 //     const tabSize = this.editor?.options.tabSize;
-                //     const insertSpaces = this.editor?.options.insertSpaces; 
+                //     const insertSpaces = this.editor?.options.insertSpaces;
                 //     console.log("insertSpaces", insertSpaces)
                 //     if ((w[0].length % <number>tabSize) === 1 || !insertSpaces) {
                 //     }
