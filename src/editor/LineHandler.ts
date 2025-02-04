@@ -4,7 +4,7 @@ import {
     LineType
 } from "./Line";
 import { LineUtil } from "../common/LineUtil";
-import config from "../common/config";
+import { config } from "../common/config";
 
 export interface Edithandler {
     removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined,

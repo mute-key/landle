@@ -1,17 +1,6 @@
 import { EditorCommand } from "./EditorCommand";
 import { LineType as LT } from "./Line";
 
-export enum EditorCommandGroupId {
-    cleanUBlockCommentCommand,
-    cleanUpCodeCommand,
-    cleanUpDocumentCommand,
-    cleanUpComments
-};
-
-export type CommandInterface = {
-    [K in Exclude<keyof typeof EditorCommandGroupId, number>]: (...args: any[]) => void;
-};
-
 /**
  * this class handles information about the editor comamnds to be bound.
  * because this class might be used to other than just editor comnand,
@@ -20,12 +9,12 @@ export type CommandInterface = {
  * composition. 
  * 
  */
-export class EditorCommandGroup extends EditorCommand implements CommandInterface {
+export class EditorCommandGroup extends EditorCommand {
     constructor() {
         super();
     }
 
-    public cleanUBlockCommentCommand = () : LT.LineEditDefintion[] => {
+    public cleanUpBlockCommentCommand = () : LT.LineEditDefintion[] => {
         return [
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
@@ -42,10 +31,10 @@ export class EditorCommandGroup extends EditorCommand implements CommandInterfac
             this.removeMulitpleEmptyLinesFromSelection(),
             this.blockCommentWordCountJustifyAlign(),
             this.removeMultipleWhitespaceFromSelection()
-        ].filter((fn) => fn !== undefined);;
+        ].filter((fn) => fn !== undefined);
     };
 
-    public cleanUpDocumentCommand = (args) : LT.LineEditDefintion[] => {
+    public cleanUpDocumentCommand = () : LT.LineEditDefintion[] => {
         return [
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),

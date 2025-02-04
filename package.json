@@ -3,7 +3,7 @@
     "publisher": "mutekey",
     "displayName": "landle",
     "description": "Generic code clean up extension",
-    "version": "0.9.2063",
+    "version": "0.9.2064",
     "icon": "./misc/icon.png",
     "repository": {
         "type": "git",
@@ -19,7 +19,6 @@
     "keywords": [
         "formatter",
         "comments",
-        "jsdoc",
         "empty line",
         "whitespace"
     ],
@@ -30,7 +29,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onStartupFinished", "onDebug"
+        "onStartupFinished",
+        "onDebug"
     ],
     "main": "./dist/extension.js",
     "extensionKind": [
@@ -40,6 +40,10 @@
     "contributes": {
         "commands": [
             {
+                "command": "landle.removeDocumentStartingEmptyLine",
+                "title": "__"
+            },
+            {
                 "command": "landle.removeTrailingWhitespaceFromSelection",
                 "title": "Remove Trailing Whitespace From Selection"
             },
@@ -48,12 +52,12 @@
                 "title": "Remove Mulitple Empty Lines From Selection"
             },
             {
-                "command": "landle.removeEmptyLinesFromSelection",
-                "title": "Remove Empty Lines From Selection"
-            },
-            {
                 "command": "landle.removeMultipleWhitespaceFromSelection",
                 "title": "Remove Multiple Whitespace From Selection"
+            },
+            {
+                "command": "landle.removeEmptyLinesFromSelection",
+                "title": "Remove Empty Lines From Selection"
             },
             {
                 "command": "landle.removeCommentedTextFromSelection",
@@ -61,18 +65,38 @@
             },
             {
                 "command": "landle.removeDuplicateLineFromSelection",
-                "title": "Remove Duplicate Line From Selection"
+                "title": "__"
+            },
+            {
+                "command": "landle.removeEmptyBlockCommentLineOnStart",
+                "title": "__"
+            },
+            {
+                "command": "landle.removeMultipleEmptyBlockCommentLine",
+                "title": "__"
+            },
+            {
+                "command": "landle.insertEmptyBlockCommentLineOnEnd",
+                "title": "__"
+            },
+            {
+                "command": "landle.blockCommentWordCountJustifyAlign",
+                "title": "__"
+            },
+            {
+                "command": "landle.removeEmptyLinesBetweenBlockCommantAndCode",
+                "title": "__"
             },
             {
                 "command": "landle.printNowDateTimeOnSelection",
                 "title": "Print Now DateTime On Selection"
             },
             {
-                "command": "landle.blockCommentWordCountJustifyAlign",
+                "command": "landle.cleanUpBlockCommentCommand",
                 "title": "clean-up Block Comment From Selection"
             },
             {
-                "command": "landle.cleanUBlockCommentCommand",
+                "command": "landle.cleanUpCodeCommand",
                 "title": "clean-up Block Comment From Selection"
             },
             {
@@ -80,7 +104,7 @@
                 "title": "Clean-up Whitespace From Selection"
             },
             {
-                "command": "landle.cleanUpCodeCommand",
+                "command": "landle.cleanUpComments",
                 "title": "Clean-up Code From Selection"
             }
         ],
@@ -118,7 +142,7 @@
                 "key": "ctrl+alt+a"
             },
             {
-                "command": "landle.cleanUBlockCommentCommand",
+                "command": "landle.cleanUpBlockCommentCommand",
                 "key": "ctrl+alt+b"
             },
             {
@@ -133,6 +157,11 @@
         "configuration": {
             "title": "Landle Settings",
             "properties": {
+                "landle.editAsync": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Perform edit in async"
+                },
                 "landle.autoSaveAfterEdit": {
                     "type": "boolean",
                     "default": true,

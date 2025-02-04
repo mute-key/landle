@@ -3,21 +3,20 @@
  * 
  */
 import * as vscode from 'vscode';
-import config from "../common/config";
+import { config } from "../common/config";
 import { LineType } from './Line';
 import { LineHandler } from './LineHandler';
 import { EditorCommandParameterType } from './EditorCommand';
-import { event } from '../editor/event';
+import { eventInstance, EventKind } from '../editor/Event';
 
 export class ActiveEditor {
-    
     // unused. for future reference.
-    #editorText: string | undefined;
-    #editor: vscode.TextEditor | undefined;
-    #lineHandler : InstanceType<typeof LineHandler>;
+    #editorText: string;
+    #editor: vscode.TextEditor;
+    #lineHandler: InstanceType<typeof LineHandler>;
 
     constructor() {
-        this.#editor = vscode.window.activeTextEditor;
+        this.#setActiveEditor();
         this.#documentSnapshot();
     }
 
@@ -26,17 +25,13 @@ export class ActiveEditor {
      * @returns
      * 
      */
-    #setActiveEditor = () : void => {
-        this.#editor = vscode.window.activeTextEditor;
-        this.#lineHandler.setCurrentDocument();
-        if (!this.#editor) {
+    #setActiveEditor = (): void => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            this.#editor = activeEditor;
+            // this.#lineHandler.setCurrentDocument();
+        } else {
             return;
-        }
-    };
-
-    #autoSaveAfterEdit = () : void => {
-        if (this.#editor) {
-            this.#editor.document.save();
         }
     };
 
@@ -44,31 +39,12 @@ export class ActiveEditor {
      * reset cursor position as well as the selection. 
      * 
      */
-    #selectionReset = () : void => {
-        if (this.#editor) {
-            const range : vscode.Range = this.#editor.selections[0];
-            this.#editor.selection = new vscode.Selection(
-                new vscode.Position(range.start.line, 0),
-                new vscode.Position(range.start.line, 0)
-            );
-        }
-    };
-
-    /**
-     * Originally, this function used vscode.Selection to select entire
-     * document but the issue is that creating new selection flashes on
-     * when the function is triggered. instead, this function will go through 
-     * every line in the document instead. 
-     * 
-     */
-    #selectionEntireDocument = () : vscode.Range | undefined => {
-        if (this.#editor) {
-            return new vscode.Range(
-                new vscode.Position(0, 0),
-                new vscode.Position(this.#editor.document.lineCount-1, 0)
-            );
-        }
-        return;
+    #selectionReset = (): void => {
+        const range: vscode.Range = this.#editor.selections[0];
+        this.#editor.selection = new vscode.Selection(
+            new vscode.Position(range.start.line, 0),
+            new vscode.Position(range.start.line, 0)
+        );
     };
 
     /**
@@ -86,17 +62,14 @@ export class ActiveEditor {
      * 
      */
     #documentSnapshot = (editorText: string | undefined = undefined): boolean => {
-        if (this.#editor) {
-            if (editorText === undefined) {
-                if (editorText !== this.#editorText) {
-                    this.#editorText = this.#editor.document.getText();
-                }
-                return true;
-            } else {
-                return editorText === this.#editorText;
+        if (editorText === undefined) {
+            if (editorText !== this.#editorText) {
+                this.#editorText = this.#editor.document.getText();
             }
+            return true;
+        } else {
+            return editorText === this.#editorText;
         }
-        return false;
     };
 
     /**
@@ -106,7 +79,7 @@ export class ActiveEditor {
      * @param editBuilder as it's type.
      * 
      */
-    #editSwitch = (edit: LineType.LineEditInfo, editBuilder : vscode.TextEditorEdit) : void => {
+    #editSwitch = (edit: LineType.LineEditInfo, editBuilder: vscode.TextEditorEdit): void => {
         if (edit.type) {
             if (edit.type & LineType.LineEditType.DELETE) {
                 editBuilder.delete(edit.range);
@@ -121,11 +94,11 @@ export class ActiveEditor {
                 editBuilder.replace(edit.range, edit.string ?? '');
             }
             if (edit.type & LineType.LineEditType.PREPEND) {
-                
+
             }
         };
     };
-    
+
     // =============================================================================
     // > PUBLIC FUNCTIONS:
     // =============================================================================
@@ -135,7 +108,7 @@ export class ActiveEditor {
      * @return private instance of lineHandler
      * 
      */
-    public setLineHandler = (lineHandler: LineHandler) : void => {
+    public setLineHandler = (lineHandler: LineHandler): void => {
         this.#lineHandler = lineHandler;
     };
 
@@ -159,19 +132,29 @@ export class ActiveEditor {
      * 
      */
     public prepareEdit = (callback: LineType.LineEditDefintion[], commandOption: EditorCommandParameterType): void => {
+
+        if (commandOption.editAsync) {
+
+        } else {
+            
+        }
+        
         this.#setActiveEditor();
         const editSchedule: LineType.LineEditInfo[] = [];
-        if (this.#editor) {
-            if (commandOption.includeEveryLine) {
-                editSchedule.push(...this.#lineHandler.prepareLines(<vscode.Range>this.#selectionEntireDocument(), callback));
-            } else {
-                const selections = this.#editor.selections;
-                selections.forEach((range : vscode.Range) => {
-                    editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
-                });
-            }
-            this.editInRange(editSchedule);
+        if (commandOption.includeEveryLine) {
+            const range = new vscode.Selection(
+                new vscode.Position(0, 0),
+                new vscode.Position(this.#editor.document.lineCount - 1, 0)
+            );
+            this.#editor.selection = range;
+            editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+        } else {
+            const selections = this.#editor.selections;
+            selections.forEach((range: vscode.Range) => {
+                editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+            });
         }
+        this.editInRange(editSchedule);
     };
 
     /**
@@ -180,29 +163,17 @@ export class ActiveEditor {
      * @param lineCallback collecion of edits for the document how and where to edit.
      * 
      */
-    public editInRange = async (lineCallback: LineType.LineEditInfo[]) : Promise<void> => {
+    public editInRange = async (lineCallback: LineType.LineEditInfo[]): Promise<void> => {
         try {
-            if (!this.#documentSnapshot(vscode.window.activeTextEditor?.document.getText())) {
-                const success = await this.#editor?.edit((editBuilder: vscode.TextEditorEdit) => {
-                    lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit ,editBuilder));
-                });
-    
-                if (success) {
-                    this.#selectionReset();
-                    this.#documentSnapshot();
-                    console.log('Edit applied successfully!');
-                    if (config.autoSaveAfterEdit) {
-                        event.isNotDirectCall();
-                        this.#editor?.document.save();
+            if (!this.#documentSnapshot(this.#editor.document.getText()) && this.#editor) {
+                const success = await this.#editor.edit(async (editBuilder: vscode.TextEditorEdit) => {
+                    for (const edit of lineCallback) {
+                        await this.#editSwitch(edit, editBuilder);
                     }
-                } else {
-                    console.log('Failed to apply edit.');
-                }
-            } else {
-                console.log('Duplicate edit entry');
+                });
             }
-        } catch (err) {
-            console.log('Error applying edit:', err);
+        } catch (error) {
+            console.error('Edit failed:', error);
         }
     };
 }
