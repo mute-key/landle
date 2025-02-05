@@ -2,13 +2,14 @@
  * this is kind of generic command class but for editor. it might need
  * to be refactored if to be used other than just editor edit. probably
  * will need to revise to make it either even more generic or even more
- * to specific use-case. 
+ * to specific use-case.
  * 
  */
 import { ActiveEditor } from "./ActiveEditor";
 import { LineType } from "./Line";
 import { LineHandler } from "./LineHandler";
 import { config } from "../common/config";
+import packageInfo from '../../package.json' assert { type: 'json' };
 
 export type EditorCommandParameterType = {
     editAsync: boolean,
@@ -16,12 +17,19 @@ export type EditorCommandParameterType = {
     autoSaveAfterEdit: boolean
 }
 
+export const editorCommandId : string[]= (() => {
+    return packageInfo.contributes.commands.map(c => {
+        const cArray = c.command.split('.');
+        return cArray[1];
+    });
+})();
+
 /**
  * this class handles information about the editor comamnds to be bound.
  * because this class might be used to other than just editor comnand,
  * i wanted to explicitily control the editor related command so it is
  * probably the best not to inherit from other classes and use them as
- * composition. 
+ * composition.
  * 
  */
 export class EditorCommand {
@@ -54,7 +62,7 @@ export class EditorCommand {
     };
 
     /**
-     * removes trailing whitespace from the line. 
+     * removes trailing whitespace from the line.
      *
      * @param editor unused, future reference
      * @param edit unused, future reference
@@ -71,8 +79,7 @@ export class EditorCommand {
     /**
      * removes multiple empty lines with EOL. this function will check
      * if the currnt range and next range are both whitespace lines and
-     * if true, delete current range with EOL. function type is; line.delete. 
-     * 
+     * if true, delete current range with EOL. function type is; line.de.
      * 
      */
     public removeMulitpleEmptyLinesFromSelection = (): LineType.LineEditDefintion => {
@@ -86,8 +93,8 @@ export class EditorCommand {
     };
 
     /**
-     * removes whitespaces that are longer than 1. this function will ignore 
-     * indentation and keep the indent. 
+     * removes whitespaces that are longer than 1. this function will ignore
+     * indentation and keep the indent.
      * 
      */
     public removeMultipleWhitespaceFromSelection = (): LineType.LineEditDefintion => {
@@ -99,7 +106,7 @@ export class EditorCommand {
 
     /**
      * remove all empty whitespace lines from selection function type is
-     * line.delete. 
+     * line.delete.
      * 
      */
     public removeEmptyLinesFromSelection = (): LineType.LineEditDefintion => {
@@ -113,8 +120,8 @@ export class EditorCommand {
     };
 
     /**
-     * remove all commented lines from selection function type is line.delete 
-     * with EOL. 
+     * remove all commented lines from selection function type is line.delete
+     * with EOL.
      * 
      */
     public removeCommentedTextFromSelection = (): LineType.LineEditDefintion => {
@@ -126,7 +133,7 @@ export class EditorCommand {
 
     /**
      * remove the current line if next line is identical as the current
-     * one. 
+     * one.
      * 
      */
     public removeDuplicateLineFromSelection = (): LineType.LineEditDefintion => {
@@ -160,7 +167,7 @@ export class EditorCommand {
     };
 
     public insertEmptyBlockCommentLineOnEnd = (): LineType.LineEditDefintion | undefined => {
-        return config.addExtraLineAtEndOnBlockComment ? {
+        return config.of.addExtraLineAtEndOnBlockComment ? {
             func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
             type: LineType.LineEditType.APPEND,
             block: {
@@ -170,7 +177,7 @@ export class EditorCommand {
     };
 
     public blockCommentWordCountJustifyAlign = (): LineType.LineEditDefintion | undefined => {
-        return config.blockCommentWordCountAutoLengthAlign ? {
+        return config.of.blockCommentWordCountAutoLengthAlign ? {
             func: this.#lineHandler.blockCommentWordCountJustifyAlign,
             type: LineType.LineEditType.REPLACE,
             block: {

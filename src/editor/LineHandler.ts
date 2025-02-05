@@ -34,6 +34,7 @@ export class LineHandler extends Line {
             const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
             if (lineIteration) {
                 return {
+                    name: 'removeDocumentStartingEmptyLine',
                     range: new vscode.Range(
                         new vscode.Position(0, 0),
                         new vscode.Position(lineIteration.lineNumber, 0)
@@ -63,9 +64,10 @@ export class LineHandler extends Line {
             whitespacePos += 1;
         }
 
-        if (whitespacePos > 0) {
+        if ((whitespacePos > 0 && textline.text.length >= whitespacePos + 1) && textline.text.length > 0 && !textline.isEmptyOrWhitespace) {
             const textLineLength = (textline.text.length);
             return {
+                name: 'removeTrailingWhiteSpace',
                 range: this.newRangeZeroBased(range.start.line, whitespacePos, textLineLength)
             };
         }
@@ -75,13 +77,13 @@ export class LineHandler extends Line {
 
     /**
      * remove continous whitespaces that are longer than 1 from line when
-     * there is non-whitespace -character present in line. this will ignore 
-     * indentation and edtiing range will start from fisrt non whitespace 
-     * character in the line. this funciton will keep the pre-edit range 
-     * to overwrite with whitespaces otherwise pre-edit characters will 
-     * be left in the line otherwise this callback would need to perform 
-     * two edit to achieve removing the whitespaces in delta bigger than 
-     * 1. resizing range will only affact to target range but not out or 
+     * there is non-whitespace -character present in line. this will ignore
+     * indentation and edtiing range will start from fisrt non whitespace
+     * character in the line. this funciton will keep the pre-edit range
+     * to overwrite with whitespaces otherwise pre-edit characters will
+     * be left in the line otherwise this callback would need to perform
+     * two edit to achieve removing the whitespaces in delta bigger than
+     * 1. resizing range will only affact to target range but not out or
      * range. 
      * 
      * @param range target range
@@ -90,8 +92,8 @@ export class LineHandler extends Line {
      */
     public removeMultipleWhitespace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const textLine = this.getTextLineFromRange(range);
-
-        if (LineUtil.findMultipleWhiteSpaceString(textLine.text) && !textLine.isEmptyOrWhitespace) {
+        
+        if (LineUtil.findMultipleWhiteSpaceString(textLine.text) && !textLine.isEmptyOrWhitespace && !LineUtil.isBlockComment(textLine.text)) {
             if (LineUtil.isLineInlineComment(textLine.text)) {
                 return;
                 // const w = LineUtil.getInlineCommentFirstWhitespaces(textLine.text);
@@ -108,6 +110,7 @@ export class LineHandler extends Line {
             const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
             const endPos = LineUtil.findReverseNonWhitespaceIndex(textLine.text);
             return {
+                name: 'removeMultipleWhitespace',
                 range: this.newRangeZeroBased(range.start.line, startPos, endPos + 1),
                 string: newLineText.padEnd(endPos, " ").trim()
             };
@@ -124,12 +127,19 @@ export class LineHandler extends Line {
      * 
      */
     public removeMulitpleEmptyLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
-        const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
-        const nextLine = this.getTextLineFromRange(range, 1).isEmptyOrWhitespace;
-        if (currentLine && nextLine) {
-            return {
-                range: this.lineFullRangeWithEOL(range)
-            };
+        const previousLine = this.getTextLineFromRange(range, -1);
+        const currentLine = this.getTextLineFromRange(range);
+        if (range.end.line <= this.editor.document.lineCount && range.start.line > 0) {
+            const nextLine = this.getTextLineFromRange(range, 1);
+            if (currentLine.isEmptyOrWhitespace && nextLine.isEmptyOrWhitespace) {
+                return {
+                    name: 'removeMulitpleEmptyLine',
+                    range: new vscode.Range(
+                        new vscode.Position(range.start.line - 1, previousLine.text.length),
+                        new vscode.Position(range.start.line, 0)
+                    )
+                };
+            }
         }
         return;
     };
@@ -161,10 +171,12 @@ export class LineHandler extends Line {
 
         if (LineUtil.isLineCommented(lineText)) {
             return {
+                name: 'removeCommentedLine',
                 range: this.lineFullRangeWithEOL(range)
             };
         } else if (commentIndex !== -1) {
             return {
+                name: 'removeCommentedLine',
                 range: this.newRangeZeroBased(range.start.line, commentIndex-1, lineText.length)
             };
         }
@@ -182,6 +194,7 @@ export class LineHandler extends Line {
         const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
         if (currentLine) {
             return {
+                name: 'removeEmptyLine',
                 range: this.lineFullRangeWithEOL(range)
             };
         }
@@ -201,6 +214,7 @@ export class LineHandler extends Line {
         const nextLine = this.getTextLineFromRange(range, 1);
         if (currentLine.text === nextLine.text) {
             return {
+                name: 'removeDuplicateLine',
                 range: this.lineFullRangeWithEOL(range)
             };
         }
@@ -224,6 +238,7 @@ export class LineHandler extends Line {
             const lineIteration = this.iterateNextLine(range, LineUtil.isEmptyBlockComment);
             if (lineIteration) {
                 return {
+                    name: 'removeEmptyBlockCommentLineOnStart',
                     range: new vscode.Range(
                         new vscode.Position(range.start.line, 0),
                         new vscode.Position(lineIteration.lineNumber, 0)
@@ -256,6 +271,7 @@ export class LineHandler extends Line {
 
         if (LineIsBlockCommend && nextLineIsBlockCommend && !blockCommentStart) {
             return {
+                name: 'removeMultipleEmptyBlockCommentLine',
                 range: this.lineFullRangeWithEOL(range)
             };
         }
@@ -277,6 +293,7 @@ export class LineHandler extends Line {
 
         if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
             return {
+                name: 'insertEmptyBlockCommentLineOnEnd',
                 range: this.newRangeZeroBased(range.start.line, currentLine.text.length, currentLine.text.length),
                 string: EOL + LineUtil.cleanBlockComment(currentLine.text) + " "
             };
@@ -298,6 +315,7 @@ export class LineHandler extends Line {
             const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
             if (lineIteration) {
                 return {
+                    name: 'removeEmptyLinesBetweenBlockCommantAndCode',
                     range: new vscode.Range(
                         new vscode.Position(range.start.line, 0),
                         new vscode.Position(lineIteration.lineNumber, 0)
@@ -313,7 +331,7 @@ export class LineHandler extends Line {
     };
 
     /**
-     * this function needs to do 2 edit, 1 is to add new string at position 
+     * this function needs to do 2 edit, 1 is to add new string at position
      * 0,0 and delete rest of the un-justified strings. 
      * 
      * @param range
@@ -326,7 +344,7 @@ export class LineHandler extends Line {
         if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
             const indentIndex = currentTextLine.text.indexOf("*");
             const indentString = currentTextLine.text.substring(0, indentIndex + 1);
-            if (currentTextLine.text.length < (config.BaseLength) || currentTextLine.text.length > (config.BaseLength + config.ToleanceLength)) {
+            if (currentTextLine.text.length < (config.of.BaseLength) || currentTextLine.text.length > (config.of.BaseLength + config.of.ToleanceLength)) {
                 const trueConditionCallback = (line: vscode.TextLine) => {
                     lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/));
                 };
@@ -341,7 +359,7 @@ export class LineHandler extends Line {
                 for (const [index, str] of lineTextInArray.entries()) {
                     if (str.length > 0) {
                         newLine += str + " ";
-                        if (newLine.length > config.BaseLength) {
+                        if (newLine.length > config.of.BaseLength) {
                             newString += newLine + this.getEndofLine();
                             newLine = indentString + " ";
                         }
@@ -353,6 +371,7 @@ export class LineHandler extends Line {
                 
                 if (lineIteration) {
                     return {
+                        name: 'blockCommentWordCountJustifyAlign',
                         range: new vscode.Range(
                             new vscode.Position(range.start.line, 0),
                             new vscode.Position(lineIteration.lineNumber, 0)
@@ -380,6 +399,7 @@ export class LineHandler extends Line {
      */
     public setNowDateTimeOnLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
         return {
+            name: 'setNowDateTimeOnLine',
             range: range,
             string: LineUtil.getNowDateTimeStamp.custom()
         };

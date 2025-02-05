@@ -8,7 +8,7 @@ export class LineUtil {
     
     public static removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, " ");
 
-    public static findTrailingWhiteSpaceString = (line: string): number => line.search(/\s+$/s);
+    public static findTrailingWhiteSpaceString = (line: string): number => line.search(/\s+$/m);
 
     public static findNonWhitespaceIndex = (line: string): number => line.search(/\S/g);
 

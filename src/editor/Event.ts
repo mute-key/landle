@@ -9,8 +9,8 @@ enum EventKind {
 
 /**
  * EventEmitter is maybe an overkill but to make it expendable in future.
- * thus, this will be a good template to work on for async events in future. 
- * <-- here is bug 
+ * thus, this will be a good template to work on for async events in future.
+ * <-- here is bug
  * 
  */
 class Event extends EventEmitter {
@@ -32,11 +32,8 @@ class Event extends EventEmitter {
         vscode.window.showInformationMessage(message);
     };
 
-    public saveActiveEditor = (): void => {
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            editor.document.save();
-        }
+    public saveActiveEditor = async (editor): Promise<boolean> => {
+        return await editor.document.save();
     };
 
     public checkKeybindCollision = () => {
@@ -47,16 +44,31 @@ class Event extends EventEmitter {
         // WSL_DISTRO_NAME
     };
 
+    public onDidChangeActiveTextEditor = (editorCommandGroup: vscode.Disposable[]): vscode.Disposable => {
+        return vscode.window.onDidChangeActiveTextEditor((editor) => {
+            if (editor) {
+                editorCommandGroup;
+            }
+        });
+    };
+
     public autoTriggerOnSaveEvent = (): vscode.Disposable => {
         return vscode.workspace.onWillSaveTextDocument((event: vscode.TextDocumentWillSaveEvent) => {
-            if (config.autoTriggerOnSave !== "disabled" && this.#directCall) {
-                vscode.commands.executeCommand(packageInfo.name + "." + config.autoTriggerOnSave, { includeEveryLine: true });
+            if (config.of.autoTriggerOnSave !== "disabled" && this.#directCall) {
+                vscode.commands.executeCommand(packageInfo.name + "." + config.of.autoTriggerOnSave, { includeEveryLine: true });
             }
         });
     };
 
     public autoTriggerOnSaveResetEvent = (): vscode.Disposable => {
         return vscode.workspace.onDidSaveTextDocument((event: vscode.TextDocument) => {
+            this.#directCall = true;
+        });
+    };
+
+    public onDidChangeConfiguration = (): vscode.Disposable => {
+        return vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+            config.updateConfig();
             this.#directCall = true;
         });
     };

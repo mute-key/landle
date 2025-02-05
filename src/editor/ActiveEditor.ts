@@ -16,7 +16,6 @@ export class ActiveEditor {
     #lineHandler: InstanceType<typeof LineHandler>;
 
     constructor() {
-        this.#setActiveEditor();
         this.#documentSnapshot();
     }
 
@@ -29,9 +28,7 @@ export class ActiveEditor {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
             this.#editor = activeEditor;
-            // this.#lineHandler.setCurrentDocument();
-        } else {
-            return;
+            this.#lineHandler.setCurrentDocument(this.#editor);
         }
     };
 
@@ -103,6 +100,10 @@ export class ActiveEditor {
     // > PUBLIC FUNCTIONS:
     // =============================================================================
 
+    public setCurrentEditor = (editor) => {
+        this.#editor = editor;
+    };
+
     /**
      * returns object literal of class linHandler with it's method. 
      * @return private instance of lineHandler
@@ -133,28 +134,31 @@ export class ActiveEditor {
      */
     public prepareEdit = (callback: LineType.LineEditDefintion[], commandOption: EditorCommandParameterType): void => {
 
-        if (commandOption.editAsync) {
-
-        } else {
-            
-        }
-        
         this.#setActiveEditor();
-        const editSchedule: LineType.LineEditInfo[] = [];
-        if (commandOption.includeEveryLine) {
-            const range = new vscode.Selection(
-                new vscode.Position(0, 0),
-                new vscode.Position(this.#editor.document.lineCount - 1, 0)
-            );
-            this.#editor.selection = range;
-            editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+
+        if (commandOption.editAsync) {
+            
         } else {
-            const selections = this.#editor.selections;
-            selections.forEach((range: vscode.Range) => {
+            const editSchedule: LineType.LineEditInfo[] = [];
+            if (commandOption.includeEveryLine) {
+                const range = new vscode.Selection(
+                    new vscode.Position(0, 0),
+                    new vscode.Position(this.#editor.document.lineCount - 1, 0)
+                );
+                this.#editor.selection = range;
                 editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+            } else {
+                const selections = this.#editor.selections;
+                selections.forEach((range: vscode.Range) => {
+                    editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+                });
+            }
+            
+            this.editInRange(editSchedule).catch(err => {
+                console.error('Handling rejected promise:', err);
             });
         }
-        this.editInRange(editSchedule);
+        
     };
 
     /**
@@ -165,15 +169,32 @@ export class ActiveEditor {
      */
     public editInRange = async (lineCallback: LineType.LineEditInfo[]): Promise<void> => {
         try {
-            if (!this.#documentSnapshot(this.#editor.document.getText()) && this.#editor) {
-                const success = await this.#editor.edit(async (editBuilder: vscode.TextEditorEdit) => {
-                    for (const edit of lineCallback) {
-                        await this.#editSwitch(edit, editBuilder);
-                    }
-                });
+            console.log(lineCallback);
+
+            const success = await this.#editor.edit((editBuilder: vscode.TextEditorEdit) => {
+                lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit, editBuilder));
+            });
+
+            if (!success) {
+                throw new Error('Failed to apply edit.');
             }
-        } catch (error) {
-            console.error('Edit failed:', error);
+
+            this.#selectionReset();
+            this.#documentSnapshot();
+            console.log('Edit applied successfully!');
+
+            if (config.of.autoSaveAfterEdit) {
+                eventInstance.emit(EventKind.AUTO_TRIGGER_ON_SAVE_SWITCH, false);
+                eventInstance.saveActiveEditor(this.#editor);
+            }
+            if (!this.#documentSnapshot(vscode.window.activeTextEditor?.document.getText())) {
+
+            } else {
+                console.log('Duplicate edit entry');
+            }
+        } catch (err) {
+            console.error('Error applying edit:', err);
+            return Promise.reject(err);
         }
     };
 }

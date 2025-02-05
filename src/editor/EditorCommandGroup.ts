@@ -19,7 +19,7 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
-            this.blockCommentWordCountJustifyAlign(),
+            // this.blockCommentWordCountJustifyAlign(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };
@@ -29,7 +29,7 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),
             this.removeMulitpleEmptyLinesFromSelection(),
-            this.blockCommentWordCountJustifyAlign(),
+            // this.blockCommentWordCountJustifyAlign(),
             this.removeMultipleWhitespaceFromSelection()
         ].filter((fn) => fn !== undefined);
     };
@@ -43,7 +43,7 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
-            this.blockCommentWordCountJustifyAlign(),
+            // this.blockCommentWordCountJustifyAlign(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };

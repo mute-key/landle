@@ -6,8 +6,8 @@ export namespace LineType {
      * bitmask to check multiple edit.type. if, it comes down to editor
      * need to perform multiple edits with single callback, this will be
      * very useful and ActiveEditor.#editSwitch need be rewriten other
-     * than switch. 
-     * 
+     * than switch.
+     *
      */
     export const enum LineEditType {
         APPEND = 1 << 0,
@@ -20,8 +20,8 @@ export namespace LineType {
     /**
      * this is to check if more than one edit is trying to perform the edit
      * on overlapping range which will throw runtime error. but this is
-     * not. 
-     * 
+     * not.
+     *
      */
     export const enum LineEditBlockPriority {
         UNSET = 0,
@@ -33,7 +33,7 @@ export namespace LineType {
 
     /**
      * type of to check the priority of which edit to perform as well as
-     * if the block requires to skip lines. 
+     * if the block requires to skip lines.
      * 
      */
     export type lineEditBlockType = {
@@ -42,7 +42,7 @@ export namespace LineType {
     }
 
     /**
-     * detail about line edit, to be performed. 
+     * detail about line edit, to be performed.
      * 
      */
     export type LineEditInfo = {
@@ -50,10 +50,11 @@ export namespace LineType {
         string?: string,
         type?: LineEditType,
         block?: lineEditBlockType
+        name?: string,
     }
  
     /**
-     * detail about line edit, to check on each line. 
+     * detail about line edit, to check on each line.
      * 
      */
     export type LineEditDefintion = {
@@ -69,17 +70,19 @@ export namespace LineType {
 }
 
 /**
- * class handles the lines and range in editor 
+ * class handles the lines and range in editor
  * 
  */
 export abstract class Line {
     protected doc: vscode.TextDocument;
-    protected editor: vscode.TextEditor | undefined;
+    protected editor: vscode.TextEditor;
 
     constructor() {
-        this.editor = vscode.window.activeTextEditor;
-        if (this.editor) {
-            this.doc = this.editor.document;
+
+        // this.setCurrentDocument()
+        // this.editor = vscode.window.activeTextEditor;
+        if (vscode.window.activeTextEditor) {
+            this.setCurrentDocument(vscode.window.activeTextEditor);
         }
     }
 
@@ -88,7 +91,7 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * unused. for future reference. 
+     * unused. for future reference.
      *
      * @param range unused
      * @returns unused
@@ -101,7 +104,7 @@ export abstract class Line {
     };
 
     /**
-     * unused. staple for future reference. 
+     * unused. staple for future reference.
      * 
      * @param range unused
      * @returns unused
@@ -121,10 +124,10 @@ export abstract class Line {
      * which described in object with type of LineEditInfo. this is where
      * the default blocking value will be set to block additional edit
      * on line; default for blocking the edit is true, and it is false
-     * if it is not defined in callback object. 
+     * if it is not defined in callback object.
      * 
      * this means that only a function with block:true will be executed
-     * and every other callbacks will be drop for the further. 
+     * and every other callbacks will be drop for the further.
      * 
      * @param currntRange
      * @param fn
@@ -138,6 +141,7 @@ export abstract class Line {
             // edit type override if required.
             if (fn.block || editInfo.block) {
                 return <LineType.LineEditInfo>{
+                    name: editInfo.name,
                     range: editInfo.range,
                     string: editInfo?.string,
                     type: editInfo.type ? editInfo.type : fn.type,
@@ -161,11 +165,11 @@ export abstract class Line {
      * property block is true, it will drop all the added edit, and assign
      * itself and stops further iteration to prevent no more changes to
      * be applied to when the for loop is finished, it will be stacked
-     * into _line_edit_ 
+     * into _line_edit_
      * 
      * this iteration could well have been done in array.reduce but it
      * does unnecessary exection in the iteartion. so thats why it is for
-     * loop. 
+     * loop.
      * 
      * @param range
      * @param callback
@@ -201,17 +205,17 @@ export abstract class Line {
      * will be a list of callbacks to check/apply to each line. _lineEdit_
      * variable are being used as a references so no direct assignement
      * becuase the is what this function will return upon the end of the
-     * iteration. 
+     * iteration.
      * 
-     * there is a for loop that will iterate each every callback. the problem 
-     * with js array api is it lacks handling the undefined value being 
-     * in api functions rather, you have to chain them. using array api 
-     * in object (becuase it is what it needs to iterate on), the type 
-     * mismatch forces to return either a typed object or undefined becasuse 
-     * the will have a return type. this means the reseult of the iteration 
-     * will contain undefiend item if callback returns undefined and it 
-     * makes to iterate twice to filter them for each every line. further 
-     * explanation continues 
+     * there is a for loop that will iterate each every callback. the problem
+     * with js array api is it lacks handling the undefined value being
+     * in api functions rather, you have to chain them. using array api
+     * in object (becuase it is what it needs to iterate on), the type
+     * mismatch forces to return either a typed object or undefined becasuse
+     * the will have a return type. this means the reseult of the iteration
+     * will contain undefiend item if callback returns undefined and it
+     * makes to iterate twice to filter them for each every line. further
+     * explanation continues
      * 
      * @param range
      * @param callback
@@ -249,16 +253,16 @@ export abstract class Line {
     // =============================================================================
 
     /**
-     * get EOL of current document set 
-     *
+     * get EOL of current document set
+     * 
      * @returns
      * 
      */
     protected getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
 
     /**
-     * get text as string from range 
-     *
+     * get text as string from range
+     * 
      * @param range target range
      * @returns text as string
      * 
@@ -268,7 +272,7 @@ export abstract class Line {
     };
 
     /**
-     * get TextLine object from range or from line number. 
+     * get TextLine object from range or from line number.
      * 
      * @param range target range
      * @returns TextLine object of range or line.
@@ -294,7 +298,7 @@ export abstract class Line {
     };
 
     /**
-     * get the range of entire line including EOL. 
+     * get the range of entire line including EOL.
      *
      * @param range target range
      * @returns
@@ -305,9 +309,8 @@ export abstract class Line {
     };
 
     /**
-     * create new range with line number, starting position and end position 
+     * create new range with line number, starting position and end position
      * 
-     *
      * @param lineNuber line number of new range object
      * @param startPosition starting position of range
      * @param endPosition end position of range
@@ -390,7 +393,7 @@ export abstract class Line {
      * Command.ts. this function will return either a single LineEditInfo
      * or array of them to schedule the document edit. if the selection
      * is either of empty (whitespaces only) or a single line, the range
-     * should be the whole line. 
+     * should be the whole line.
      * 
      * @param range
      * @param callback
@@ -411,15 +414,13 @@ export abstract class Line {
             targetLine,
             <LineType.LineEditInfo[]>[]);
     };
-
+    
     /**
      * @returns
      * 
      */
-    public setCurrentDocument = () : void => {
-        this.editor = vscode.window.activeTextEditor;
-        if (this.editor) {
-            this.doc = this.editor.document;
-        }
+    public setCurrentDocument = (editor : vscode.TextEditor) : void => {
+        this.editor = editor;
+        this.doc = this.editor.document;
     };
 }
