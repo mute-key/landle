@@ -1,15 +1,19 @@
 import * as vscode from 'vscode';
 import packageInfo from '../../package.json' assert { type: 'json' };
 
+// "editor.insertSpaces": true
+// "files.trimTrailingWhitespace": true
+// "files.trimFinalNewlines": true
+
 type configType = {
     editAsync: boolean,
     addExtraLineAtEndOnBlockComment: boolean,
     deleteCommentAlsoDeleteBlockComment: boolean,
-    blockCommentWordCountAutoLengthAlign: boolean,
     autoTriggerOnSave: string,
     autoSaveAfterEdit: boolean,
+    blockCommentWordCountJustifyAlign: boolean
     BaseLength: number,
-    ToleanceLength: number
+    ToleanceLength: number,
 }
 
 class Config {
@@ -22,12 +26,12 @@ class Config {
     #readConfiguration(): configType {
         const configuration = vscode.workspace.getConfiguration(packageInfo.name);
         return {
-            editAsync: configuration.get<boolean>('editAsync', true),
-            addExtraLineAtEndOnBlockComment: configuration.get<boolean>('addExtraLineAtEndOnBlockComment', true),
-            deleteCommentAlsoDeleteBlockComment: configuration.get<boolean>('deleteCommentAlsoDeleteBlockComment', true),
-            blockCommentWordCountAutoLengthAlign: configuration.get<boolean>('blockCommentWordCountAutoLengthAlign', true),
-            autoTriggerOnSave: configuration.get<string>('blockCommentWordCountAutoLengthAlign', 'cleanUpDocumentCommand'),
+            editAsync: configuration.get<boolean>('editAsync', false),
             autoSaveAfterEdit: configuration.get<boolean>('autoSaveAfterEdit', true),
+            autoTriggerOnSave: configuration.get<string>('autoTriggerOnSave', 'disabled'),
+            addExtraLineAtEndOnBlockComment: configuration.get<boolean>('addExtraLineAtEndOnBlockComment', false),
+            deleteCommentAlsoDeleteBlockComment: configuration.get<boolean>('deleteCommentAlsoDeleteBlockComment', false),
+            blockCommentWordCountJustifyAlign: configuration.get<boolean>('blockCommentWordCountJustifyAlign', true),
             BaseLength: configuration.get<number>('blockCommentCharacterBoundaryBaseLength', 70),
             ToleanceLength: configuration.get<number>('blockCommentCharacterBoundaryTolanceLength', 5),
         };
@@ -38,7 +42,7 @@ class Config {
     }
 
     public updateConfig = () => {
-        this.#currentConfig = this.#readConfiguration();  // re-read the configuration when needed
+        this.#currentConfig = this.#readConfiguration(); // re-read the configuration when needed
     };
 }
 

@@ -3,8 +3,8 @@
     "publisher": "mutekey",
     "displayName": "landle",
     "description": "Generic code clean up extension",
-    "version": "0.9.2065",
-    "icon": "./misc/icon.png",
+    "version": "0.9.2075",
+    "icon": "./misc/icon2.png",
     "repository": {
         "type": "git",
         "url": "https://github.com/mute-key/landle"
@@ -111,47 +111,58 @@
         "keybindings": [
             {
                 "command": "landle.removeTrailingWhitespaceFromSelection",
-                "key": "ctrl+alt+w"
+                "key": "ctrl+alt+w",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.removeMulitpleEmptyLinesFromSelection",
-                "key": "ctrl+alt+m"
+                "key": "ctrl+alt+m",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.removeEmptyLinesFromSelection",
-                "key": "ctrl+alt+e"
+                "key": "ctrl+alt+e",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.removeMultipleWhitespaceFromSelection",
-                "key": "ctrl+alt+space"
+                "key": "ctrl+alt+space",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.removeCommentedTextFromSelection",
-                "key": "ctrl+alt+/"
+                "key": "ctrl+alt+/",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.removeDuplicateLineFromSelection",
-                "key": "ctrl+alt+d"
+                "key": "ctrl+alt+d",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.printNowDateTimeOnSelection",
-                "key": "ctrl+alt+n"
+                "key": "ctrl+alt+n",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.blockCommentWordCountJustifyAlign",
-                "key": "ctrl+alt+a"
+                "key": "ctrl+alt+a",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.cleanUpBlockCommentCommand",
-                "key": "ctrl+alt+b"
+                "key": "ctrl+alt+b",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.cleanUpDocumentCommand",
-                "key": "ctrl+alt+c"
+                "key": "ctrl+alt+c",
+                "when": "editorTextFocus || editorFocus"
             },
             {
                 "command": "landle.cleanUpCodeCommand",
-                "key": "ctrl+alt+x"
+                "key": "ctrl+alt+x",
+                "when": "editorTextFocus || editorFocus"
             }
         ],
         "configuration": {
@@ -184,16 +195,16 @@
                         "cleanUpDocumentCommand",
                         "cleanUpCodeCommand"
                     ],
-                    "default": "cleanUpDocumentCommand"
+                    "default": "disabled"
                 },
                 "landle.addExtraLineAtEndOnBlockComment": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "description": "To add extra empty block comment line at the block ends"
                 },
                 "landle.deleteCommentAlsoDeleteBlockComment": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "description": "Enable delete comment command also delete block-comments"
                 },
                 "landle.blockCommentWordCountJustifyAlign": {

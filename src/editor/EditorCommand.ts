@@ -25,8 +25,7 @@ export const editorCommandId : string[]= (() => {
 })();
 
 /**
- * this class handles information about the editor comamnds to be bound.
- * because this class might be used to other than just editor comnand,
+ * this class handles information about the editor comamnds to be bound. because this class might be used to other than just editor comnand,
  * i wanted to explicitily control the editor related command so it is
  * probably the best not to inherit from other classes and use them as
  * composition.
@@ -177,7 +176,7 @@ export class EditorCommand {
     };
 
     public blockCommentWordCountJustifyAlign = (): LineType.LineEditDefintion | undefined => {
-        return config.of.blockCommentWordCountAutoLengthAlign ? {
+        return config.of.blockCommentWordCountJustifyAlign ? {
             func: this.#lineHandler.blockCommentWordCountJustifyAlign,
             type: LineType.LineEditType.REPLACE,
             block: {

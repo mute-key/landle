@@ -28,7 +28,7 @@ export class LineHandler extends Line {
      * @returns
      * 
      */
-    public removeDocumentStartingEmptyLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+    public removeDocumentStartingEmptyLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         let lineNumber: number = range.start.line;
         if (lineNumber === 0) {
             const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
@@ -50,8 +50,8 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove trailing whitespace lines from range if there is non-whitespace-character 
-     * present. 
+     * remove trailing whitespace lines from range if there is non-whitespace-character
+     * present.
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -84,7 +84,7 @@ export class LineHandler extends Line {
      * be left in the line otherwise this callback would need to perform
      * two edit to achieve removing the whitespaces in delta bigger than
      * 1. resizing range will only affact to target range but not out or
-     * range. 
+     * range.
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -92,7 +92,7 @@ export class LineHandler extends Line {
      */
     public removeMultipleWhitespace = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const textLine = this.getTextLineFromRange(range);
-        
+
         if (LineUtil.findMultipleWhiteSpaceString(textLine.text) && !textLine.isEmptyOrWhitespace && !LineUtil.isBlockComment(textLine.text)) {
             if (LineUtil.isLineInlineComment(textLine.text)) {
                 return;
@@ -106,6 +106,7 @@ export class LineHandler extends Line {
                 // }
             }
             // console.log(LineUtil.getInlineCommentFirstWhitespaces(textLine.text)[0])
+
             const newLineText = LineUtil.removeMultipleWhiteSpaceString(textLine.text);
             const startPos = this.getTextLineFromRange(range).firstNonWhitespaceCharacterIndex;
             const endPos = LineUtil.findReverseNonWhitespaceIndex(textLine.text);
@@ -120,7 +121,7 @@ export class LineHandler extends Line {
 
     /**
      * check if the current cursor or selected range is empty line and
-     * next. if both current and next is emtpy, remove current line. 
+     * next. if both current and next is emtpy, remove current line.
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -145,19 +146,19 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove line if the line is commented 
+     * remove line if the line is commented
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
      * 
      */
-    public removeCommentedLine = (range: vscode.Range) : LineType.LineEditInfo | undefined => {
+    public removeCommentedLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const lineText = this.getText(range);
         const commentIndex = LineUtil.getlineCommentIndex(lineText);
 
         // if (deleteCommentAlsoDeleteBlockComment) {
         // if (LineUtil.isBlockCommentStartingLine(lineText)) {
-                
+
         // }
 
         // if (LineUtil.isBlockComment(lineText)) {
@@ -177,20 +178,20 @@ export class LineHandler extends Line {
         } else if (commentIndex !== -1) {
             return {
                 name: 'removeCommentedLine',
-                range: this.newRangeZeroBased(range.start.line, commentIndex-1, lineText.length)
+                range: this.newRangeZeroBased(range.start.line, commentIndex - 1, lineText.length)
             };
         }
         return;
     };
 
     /**
-     * remove line if the line is empty without characters. 
+     * remove line if the line is empty without characters.
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
      * 
      */
-    public removeEmptyLine = (range: vscode.Range) : LineType.LineEditInfo | undefined => {
+    public removeEmptyLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const currentLine = this.getTextLineFromRange(range).isEmptyOrWhitespace;
         if (currentLine) {
             return {
@@ -200,10 +201,10 @@ export class LineHandler extends Line {
         }
         return;
     };
-    
+
     /**
      * check if the current cursor or selected range is empty line and
-     * next. if both current and next is emtpy, remove current line. 
+     * next. if both current and next is emtpy, remove current line.
      * 
      * @param range target range
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
@@ -222,17 +223,17 @@ export class LineHandler extends Line {
     };
 
     /**
-     * remove empty block comment line if the previous line is block comment 
-     * start 
+     * remove empty block comment line if the previous line is block comment
+     * start
      * 
      * @param range
      * @returns
      * 
      */
-    public removeEmptyBlockCommentLineOnStart = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
-        const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
-        const beforeLine : vscode.TextLine = this.getTextLineFromRange(range, -1);
-        const blockCommentStart : boolean = LineUtil.isBlockCommentStartingLine(beforeLine.text);
+    public removeEmptyBlockCommentLineOnStart = (range: vscode.Range): LineType.LineEditInfo | undefined => {
+        const currentLine: vscode.TextLine = this.getTextLineFromRange(range);
+        const beforeLine: vscode.TextLine = this.getTextLineFromRange(range, -1);
+        const blockCommentStart: boolean = LineUtil.isBlockCommentStartingLine(beforeLine.text);
 
         if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
             const lineIteration = this.iterateNextLine(range, LineUtil.isEmptyBlockComment);
@@ -243,7 +244,7 @@ export class LineHandler extends Line {
                         new vscode.Position(range.start.line, 0),
                         new vscode.Position(lineIteration.lineNumber, 0)
                     ),
-                    block : {
+                    block: {
                         priority: LineType.LineEditBlockPriority.MID,
                         lineSkip: lineIteration.lineSkip
                     }
@@ -255,19 +256,19 @@ export class LineHandler extends Line {
 
     /**
      * remove current empty block comment line if next line is also empty
-     * block comment line. 
+     * block comment line.
      * 
      * @param range
      * @returns
      * 
      */
-    public removeMultipleEmptyBlockCommentLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
-        const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
-        const nextLine : vscode.TextLine = this.getTextLineFromRange(range, 1);
-        const nextLineIsBlockCommend : boolean = LineUtil.isEmptyBlockComment(nextLine.text);
-        const LineIsBlockCommend : boolean = LineUtil.isEmptyBlockComment(currentLine.text);
-        const beforeLine : vscode.TextLine = this.getTextLineFromRange(range, -1);
-        const blockCommentStart : boolean = LineUtil.isBlockCommentStartingLine(beforeLine.text);
+    public removeMultipleEmptyBlockCommentLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
+        const currentLine: vscode.TextLine = this.getTextLineFromRange(range);
+        const nextLine: vscode.TextLine = this.getTextLineFromRange(range, 1);
+        const nextLineIsBlockCommend: boolean = LineUtil.isEmptyBlockComment(nextLine.text);
+        const LineIsBlockCommend: boolean = LineUtil.isEmptyBlockComment(currentLine.text);
+        const beforeLine: vscode.TextLine = this.getTextLineFromRange(range, -1);
+        const blockCommentStart: boolean = LineUtil.isBlockCommentStartingLine(beforeLine.text);
 
         if (LineIsBlockCommend && nextLineIsBlockCommend && !blockCommentStart) {
             return {
@@ -285,11 +286,11 @@ export class LineHandler extends Line {
      * @returns
      * 
      */
-    public insertEmptyBlockCommentLineOnEnd = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+    public insertEmptyBlockCommentLineOnEnd = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const EOL = this.getEndofLine();
-        const currentLine : vscode.TextLine = this.getTextLineFromRange(range);
-        const nextLine : vscode.TextLine = this.getTextLineFromRange(range, 1);
-        const NextLineblockCommentEnd : boolean = LineUtil.isBlockCommentEndingLine(nextLine.text);
+        const currentLine: vscode.TextLine = this.getTextLineFromRange(range);
+        const nextLine: vscode.TextLine = this.getTextLineFromRange(range, 1);
+        const NextLineblockCommentEnd: boolean = LineUtil.isBlockCommentEndingLine(nextLine.text);
 
         if (NextLineblockCommentEnd && LineUtil.isBlockComment(currentLine.text)) {
             return {
@@ -302,13 +303,13 @@ export class LineHandler extends Line {
     };
 
     /**
-     * funciton removes empty-lines next block-comment lines. 
+     * funciton removes empty-lines next block-comment lines.
      * 
      * @param range range of the line.
      * @returns LineEditInfo or undefined
      * 
      */
-    public removeEmptyLinesBetweenBlockCommantAndCode = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+    public removeEmptyLinesBetweenBlockCommantAndCode = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const currentTextLine = this.getTextLineFromRange(range);
         const previousTextLine = this.getTextLineFromRange(range, -1);
         if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
@@ -320,6 +321,7 @@ export class LineHandler extends Line {
                         new vscode.Position(range.start.line, 0),
                         new vscode.Position(lineIteration.lineNumber, 0)
                     ),
+                    type: LineType.LineEditType.DELETE,
                     block: {
                         lineSkip: lineIteration.lineSkip,
                         priority: LineType.LineEditBlockPriority.HIGH
@@ -332,15 +334,15 @@ export class LineHandler extends Line {
 
     /**
      * this function needs to do 2 edit, 1 is to add new string at position
-     * 0,0 and delete rest of the un-justified strings. 
+     * 0,0 and delete rest of the un-justified strings.
      * 
      * @param range
      * @returns
      * 
      */
-    public blockCommentWordCountJustifyAlign = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
-        const currentTextLine : vscode.TextLine = this.getTextLineFromRange(range);
-        const lineTextInArray : string[] = [];
+    public blockCommentWordCountJustifyAlign = (range: vscode.Range): LineType.LineEditInfo | undefined => {
+        const currentTextLine: vscode.TextLine = this.getTextLineFromRange(range);
+        const lineTextInArray: string[] = [];
         if (LineUtil.isBlockComment(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
             const indentIndex = currentTextLine.text.indexOf("*");
             const indentString = currentTextLine.text.substring(0, indentIndex + 1);
@@ -350,11 +352,11 @@ export class LineHandler extends Line {
                 };
 
                 const lineIteration = this.iterateNextLine(range,
-                                                            LineUtil.isBlockComment,
-                                                            LineUtil.isJSdocTag,
-                                                            trueConditionCallback);
+                    LineUtil.isBlockComment,
+                    LineUtil.isJSdocTag,
+                    trueConditionCallback);
 
-                let newString : string = "";
+                let newString: string = "";
                 let newLine = indentString + " ";
                 for (const [index, str] of lineTextInArray.entries()) {
                     if (str.length > 0) {
@@ -368,7 +370,7 @@ export class LineHandler extends Line {
                         newString += newLine + this.getEndofLine();
                     }
                 }
-                
+
                 if (lineIteration) {
                     return {
                         name: 'blockCommentWordCountJustifyAlign',
@@ -391,13 +393,13 @@ export class LineHandler extends Line {
 
     /**
      * funciton to print current datetime where the cursor is. - locale
-     * - iso - custom 
+     * - iso - custom
      * 
      * @param range target range, whichi will be the very starting of line.
      * @returns object descripting where/how to edit the line or undefined if no condition is met.
      * 
      */
-    public setNowDateTimeOnLine = (range : vscode.Range) : LineType.LineEditInfo | undefined => {
+    public setNowDateTimeOnLine = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         return {
             name: 'setNowDateTimeOnLine',
             range: range,

@@ -1,54 +1,52 @@
 import * as vscode from "vscode";
 import { Line } from "../editor/Line";
 
-export class LineUtil {
-    private constructor() {
-        // this is static class
-    }
-    
-    public static removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, " ");
+// asdasdasdasdasd
 
-    public static findTrailingWhiteSpaceString = (line: string): number => line.search(/\s+$/m);
+export namespace LineUtil {
+    export const removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, " ");
 
-    public static findNonWhitespaceIndex = (line: string): number => line.search(/\S/g);
+    export const findTrailingWhiteSpaceString = (line: string): number => line.search(/\s+$/m);
 
-    public static findReverseNonWhitespaceIndex = (line: string): number => line.search(/\S(?=\s*$)/g);
+    export const findNonWhitespaceIndex = (line: string): number => line.search(/\S/g);
 
-    public static removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
+    export const findReverseNonWhitespaceIndex = (line: string): number => line.search(/\S(?=\s*$)/g);
 
-    public static findMultipleWhiteSpaceString = (line: string): boolean => line.search(/(?<=\S)\s+\s(?=\S)/) !== -1;
+    export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
 
-    public static isLineCommented = (line: string): boolean => line.search(/^\s*\/\//g) !== -1;
+    export const findMultipleWhiteSpaceString = (line: string): boolean => line.search(/(?<=\S)\s+\s(?=\S)/) !== -1;
 
-    public static isLineInlineComment = (line: string): boolean => line.indexOf('//') !== -1;
+    export const isLineCommented = (line: string): boolean => line.search(/^\s*\/\//g) !== -1;
 
-    public static getInlineCommentFirstWhitespaces = (line: string) => line.match(/(?<=\/\/)\s+/g);
+    export const isLineInlineComment = (line: string): boolean => line.startsWith('//');
 
-    public static isEmptyBlockComment = (line: string) : boolean => line.search(/^\s*\*\s*$/s) !== -1;
+    export const getInlineCommentFirstWhitespaces = (line: string) => line.match(/(?<=\/\/)\s+/g);
 
-    public static isBlockComment = (line: string) : boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
-    
-    public static isBlockCommentStartingLine = (line: string) : boolean => line.search(/^\s*\/.*\s*$/) !== -1;
+    export const isEmptyBlockComment = (line: string): boolean => line.search(/^\s*\*\s*$/s) !== -1;
 
-    public static isBlockCommentEndingLine = (line: string) : boolean => line.search(/^\s*\*\//) !== -1;
+    export const isBlockComment = (line: string): boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
 
-    public static isJSdocTag = (line: string) : boolean => line.search(/^\s*\*?\s*\@.*/s) !== -1;
+    export const isBlockCommentStartingLine = (line: string): boolean => line.search(/^\s*\/.*\s*$/) !== -1;
 
-    public static cleanBlockComment = (line: string) : string => line.replace(/(?<=\*).*/, "");
+    export const isBlockCommentEndingLine = (line: string): boolean => line.search(/^\s*\*\//) !== -1;
 
-    public static getlineCommentIndex = (line : string) : number => line.indexOf("//");
+    export const isJSdocTag = (line: string): boolean => line.search(/^\s*\*?\s*\@.*/s) !== -1;
 
-    public static removeLineComment = (line : string) : string => line.substring(0, line.indexOf("//"));
+    export const cleanBlockComment = (line: string): string => line.replace(/(?<=\*).*/, "");
 
-    public static pushMessage = (message: string): vscode.ProviderResult<typeof message> => {
+    export const getlineCommentIndex = (line: string): number => line.indexOf("//");
+
+    export const removeLineComment = (line: string): string => line.substring(0, line.indexOf("//"));
+
+    export const pushMessage = (message: string): vscode.ProviderResult<typeof message> => {
         return vscode.window.showInformationMessage(message);
     };
 
-    public static splitStringOn<T>(slicable: string | T[], ...indices: number[]): (string | T[])[] {
-        return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
-    }
+    // export const splitStringOn<T>(slicable: string | T[], ...indices: number[]): (string | T[])[] {
+    // return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));
+    // }
 
-    public static getNowDateTimeStamp = ((): { locale: () => string, iso: () => string, custom: () => string } => ({
+    export const getNowDateTimeStamp = ((): { locale: () => string, iso: () => string, custom: () => string } => ({
         custom: () => {
             function formatDate(date: Date): string {
                 const options: Intl.DateTimeFormatOptions = {
@@ -59,13 +57,13 @@ export class LineUtil {
                     minute: '2-digit',
                     hour12: true,
                 };
-            
+
                 const locale = Intl.DateTimeFormat().resolvedOptions().locale;
                 const formatter = new Intl.DateTimeFormat(locale, options);
                 const parts = formatter.formatToParts(date);
-            
+
                 let year = '', month = '', day = '', hour = '', minute = '', ampm = '';
-                
+
                 parts.forEach(part => {
                     switch (part.type) {
                         case 'year':
@@ -82,10 +80,10 @@ export class LineUtil {
                             ampm = part.value.toUpperCase(); break;
                     }
                 });
-            
+
                 return `${year}-${month}-${day} (${hour}:${minute} ${ampm})`;
             }
-            
+
             const currentDate = new Date();
             return formatDate(currentDate);
         },
