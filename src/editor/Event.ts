@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { EventEmitter } from 'events';
 import packageInfo from '../../package.json' assert { type: 'json' };
+import { EventEmitter } from 'events';
 import { config } from "../common/config";
 
 enum EventKind {
@@ -68,6 +68,14 @@ class Event extends EventEmitter {
 
     public onDidChangeConfiguration = (): vscode.Disposable => {
         return vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+            if (event.affectsConfiguration(packageInfo.name + 'blockCommentCharacterBoundaryToleranceLength')) {
+                const value = config.of.blockCommentCharacterBoundaryToleranceLength;
+                if (value < 5) {
+                    this.pushMessage('Block Comment Length Tolerance can not be less than 10');
+                    config.update("blockCommentCharacterBoundaryToleranceLength", 10, vscode.ConfigurationTarget.Global);
+                }
+            }
+            
             config.updateConfig();
             this.#directCall = true;
         });

@@ -2,7 +2,8 @@
 
 ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mutekey.landle) <br>
 
-This is my rehab code and may not be fully complete.
+This is my rehab code and may not be fully complete. I do not like any of well known other formatters.
+Linters in today, or other formatters are too opinionated.
 i wanted a extension like this although a linter can do this sort of things but need non-language specific generic formatter.
 I did not aim to make a functions which formatters can do already.
 

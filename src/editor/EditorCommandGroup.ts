@@ -1,12 +1,12 @@
 import { EditorCommand } from "./EditorCommand";
-import { LineType as LT } from "./Line";
+import { LineType as LT } from "./Handler/Line";
 
 /**
  * this class handles information about the editor comamnds to be bound.
  * because this class might be used to other than just editor comnand,
  * i wanted to explicitily control the editor related command so it is
  * probably the best not to inherit from other classes and use them as
- * composition. 
+ * composition.
  * 
  */
 export class EditorCommandGroup extends EditorCommand {
@@ -19,7 +19,7 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
-            // this.blockCommentWordCountJustifyAlign(),
+            this.blockCommentWordCountJustifyAlign(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };
@@ -29,7 +29,7 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),
             this.removeMulitpleEmptyLinesFromSelection(),
-            // this.blockCommentWordCountJustifyAlign(),
+            this.blockCommentWordCountJustifyAlign(),
             this.removeMultipleWhitespaceFromSelection()
         ].filter((fn) => fn !== undefined);
     };
@@ -43,7 +43,7 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
-            // this.blockCommentWordCountJustifyAlign(),
+            this.blockCommentWordCountJustifyAlign(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };

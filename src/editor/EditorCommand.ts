@@ -4,10 +4,12 @@
  * will need to revise to make it either even more generic or even more
  * to specific use-case.
  * 
+ * 이거 다시쓰자. 조합하기가 너무 번거롭다.
+ * 
  */
 import { ActiveEditor } from "./ActiveEditor";
-import { LineType } from "./Line";
-import { LineHandler } from "./LineHandler";
+import { LineType } from "./Handler/Line";
+import { LineHandler } from "./Handler/LineHandler";
 import { config } from "../common/config";
 import packageInfo from '../../package.json' assert { type: 'json' };
 
@@ -17,7 +19,7 @@ export type EditorCommandParameterType = {
     autoSaveAfterEdit: boolean
 }
 
-export const editorCommandId : string[]= (() => {
+export const editorCommandId: string[] = (() => {
     return packageInfo.contributes.commands.map(c => {
         const cArray = c.command.split('.');
         return cArray[1];
@@ -25,10 +27,10 @@ export const editorCommandId : string[]= (() => {
 })();
 
 /**
- * this class handles information about the editor comamnds to be bound. because this class might be used to other than just editor comnand,
- * i wanted to explicitily control the editor related command so it is
- * probably the best not to inherit from other classes and use them as
- * composition.
+ * this class handles information about the editor comamnds to be bound.
+ * becausethis class might be used to other than just editor comnand, i
+ * wantedto explicitily control the editor related command so it is probably
+ * thebest not to inherit from other classes and use them as composition.
  * 
  */
 export class EditorCommand {
@@ -76,9 +78,9 @@ export class EditorCommand {
     };
 
     /**
-     * removes multiple empty lines with EOL. this function will check
-     * if the currnt range and next range are both whitespace lines and
-     * if true, delete current range with EOL. function type is; line.de.
+     * removes multiple empty lines with EOL. this function will check if
+     * thecurrnt range and next range are both whitespace lines and if true,
+     * deletecurrent range with EOL. function type is
      * 
      */
     public removeMulitpleEmptyLinesFromSelection = (): LineType.LineEditDefintion => {
@@ -183,6 +185,16 @@ export class EditorCommand {
                 priority: LineType.LineEditBlockPriority.HIGH
             }
         } : undefined;
+    };
+
+    public genericFixBlockCommentLine = (): LineType.LineEditDefintion | undefined => {
+        return {
+            func: this.#lineHandler.genericFixBlockCommentLine,
+            type: LineType.LineEditType.REPLACE | LineType.LineEditType.DELETE,
+            block: {
+                priority: LineType.LineEditBlockPriority.HIGH
+            }
+        };
     };
 
     public removeEmptyLinesBetweenBlockCommantAndCode = (): LineType.LineEditDefintion => {

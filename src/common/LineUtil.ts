@@ -1,9 +1,19 @@
 import * as vscode from "vscode";
-import { Line } from "../editor/Line";
-
-// asdasdasdasdasd
 
 export namespace LineUtil {
+
+    export const generic = {
+
+    };
+
+    export const blockComment = {
+
+    };
+
+    export const comment = {
+
+    };
+
     export const removeTrailingWhiteSpaceString = (line: string): string => line.replace(/[ \t]+$/, " ");
 
     export const findTrailingWhiteSpaceString = (line: string): number => line.search(/\s+$/m);
@@ -14,33 +24,45 @@ export namespace LineUtil {
 
     export const removeMultipleWhiteSpaceString = (line: string): string => line.replace(/\s\s+/g, " ");
 
-    export const findMultipleWhiteSpaceString = (line: string): boolean => line.search(/(?<=\S)\s+\s(?=\S)/) !== -1;
+    export const isMultipleWhiteSpace = (line: string): boolean => /(?<=\S)\s+\s(?=\S)/.test(line);
 
-    export const isLineCommented = (line: string): boolean => line.search(/^\s*\/\//g) !== -1;
+    export const findNextMultipleWhiteSpace = (line: string): RegExpStringIterator<RegExpExecArray> => line.matchAll(/(?<=\S)\s+\s(?=\S)/g);
+
+    export const ifMultipleWhiteSpaceIsStringLiteral = (line: string): boolean => /(['"])\s{2,}\1/.test(line);
+
+    export const isLineCommented = (line: string): boolean => /^\s*\/\//g.test(line);
 
     export const isLineInlineComment = (line: string): boolean => line.startsWith('//');
 
-    export const getInlineCommentFirstWhitespaces = (line: string) => line.match(/(?<=\/\/)\s+/g);
+    export const getInlineCommentFirstWhitespaces = (line: string): RegExpMatchArray | null => line.match(/(?<=\/\/)\s+/g);
+    
+    export const lineCommentWithWhitespace = (line: string): RegExpExecArray | null => /\s+\/\//g.exec(line);
 
-    export const isEmptyBlockComment = (line: string): boolean => line.search(/^\s*\*\s*$/s) !== -1;
+    // export const lineCommentWithWhitespaceWithoutFirstWhitespace = (line: string): RegExpExecArray | null => /(?<=\s) \s+\/\//g.exec(line);
+    
+    // export const lineCommentWithWhitespace = (line: string): RegExpExecArray | null => /(?<=(\s+\/\/))/g.exec(line);
+    export const isBlockComment2 = (line: string): boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
+    
+    export const isEmptyBlockComment = (line: string): boolean => /^\s*\*\s*$/.test(line);
 
-    export const isBlockComment = (line: string): boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
+    export const isBlockComment = (line: string): boolean => /^\s*\*+/s.test(line);
 
-    export const isBlockCommentStartingLine = (line: string): boolean => line.search(/^\s*\/.*\s*$/) !== -1;
+    export const isBlockCommentWithCharacter = (line: string): boolean => /^\s*\*+\s+\S+/s.test(line);
+    
+    export const checkBlockCommentNeedAlign = (line: string): boolean => /^\s*\*\s*([-]|\d+\s*[-.])\s*/s.test(line);
+    // export const checkBlockCommentNeedAlign = (line: string): boolean => line.search(/^\s*\*\s*([-]|[0-9]\s*\-|[0-9]\.)\s*/s) >= 0;
 
-    export const isBlockCommentEndingLine = (line: string): boolean => line.search(/^\s*\*\//) !== -1;
+    export const isBlockCommentStartingLine = (line: string): boolean => /^\s*\/.*\s*$/.test(line);
 
-    export const isJSdocTag = (line: string): boolean => line.search(/^\s*\*?\s*\@.*/s) !== -1;
+    export const isBlockCommentEndingLine = (line: string): boolean => /^\s*\*\//.test(line);
+
+    export const isJSdocTag = (line: string): boolean => /^\s*\*?\s*\@.*/s.test(line);
 
     export const cleanBlockComment = (line: string): string => line.replace(/(?<=\*).*/, "");
 
     export const getlineCommentIndex = (line: string): number => line.indexOf("//");
 
     export const removeLineComment = (line: string): string => line.substring(0, line.indexOf("//"));
-
-    export const pushMessage = (message: string): vscode.ProviderResult<typeof message> => {
-        return vscode.window.showInformationMessage(message);
-    };
 
     // export const splitStringOn<T>(slicable: string | T[], ...indices: number[]): (string | T[])[] {
     // return [0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]));

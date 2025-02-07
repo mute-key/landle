@@ -7,6 +7,9 @@ export namespace LineType {
      * need to perform multiple edits with single callback, this will be
      * very useful and ActiveEditor.#editSwitch need be rewriten other
      * than switch.
+     * 
+     * - asdasd
+     * - asdasdasd
      *
      */
     export const enum LineEditType {
@@ -179,8 +182,8 @@ export abstract class Line {
      *
      * @param range
      * @param callback
-     * @returns
-     *
+     * @returns LineType.LineEditInfo[]
+     * 
      */
     #callbackIteration = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         let currentLineEdit: LineType.LineEditInfo[] = [];
@@ -220,7 +223,9 @@ export abstract class Line {
      * mismatch forces to return either a typed object or undefined becasuse
      * the will have a return type. this means the reseult of the iteration
      * will contain undefiend item if callback returns undefined and it
+     * 
      * makes to iterate twice to filter them for each every line. further
+     * 
      * explanation continues
      *
      * @param range
@@ -292,11 +297,11 @@ export abstract class Line {
             return this.doc.lineAt(range + lineDelta);
         }
 
-        if (range.start.line + lineDelta < 0) {
+        if ((range.start.line + lineDelta) < 0) {
             return this.doc.lineAt(range.start.line);
         }
 
-        if (this.doc.lineCount > range.start.line + lineDelta) {
+        if (this.doc.lineCount > (range.start.line + lineDelta)) {
             return this.doc.lineAt(range.start.line + lineDelta);
         }
 
@@ -330,36 +335,91 @@ export abstract class Line {
         );
     };
 
-    protected iterateNextLine = (range: vscode.Range,
+    // protected iterateNextLine = (range: vscode.Range,
+    // lineCondition: ((text: string) => boolean) | string,
+    // extraBreakCallback?: (line: string) => boolean,
+    // trueConditionCallback?: (line: vscode.TextLine) => void
+    // ): LineType.IterateNextLineType | undefined => {
+
+    // let lineNumber: number = range.start.line;
+    // let newRange: vscode.Range | undefined = undefined;
+    // let newTextLine: vscode.TextLine;
+    // let condition: boolean = true;
+    // const lineSkip: number[] = [];
+    // while (lineNumber < this.doc.lineCount) {
+    // newTextLine = this.getTextLineFromRange(lineNumber);
+    // if (typeof lineCondition === "function") {
+    // condition = lineCondition(newTextLine.text);
+    // } else if (typeof lineCondition === "string") {
+    // condition = newTextLine[lineCondition];
+    // }
+
+    // if (extraBreakCallback) {
+    // if (extraBreakCallback(newTextLine.text)) {
+    // break;
+    // }
+    // }
+
+    // if (condition) {
+    // if (trueConditionCallback) {
+    // trueConditionCallback(newTextLine);
+    // }
+    // newRange = newTextLine.range;
+    // lineSkip.push(lineNumber);
+    // lineNumber++;
+    // } else {
+    // break;
+    // }
+    // };
+
+    // if (newRange) {
+    // return {
+    // lineNumber: lineNumber,
+    // lineSkip: lineSkip
+    // };
+    // }
+    // };
+
+    protected iterateNextLine = (
+        range: vscode.Range,
         lineCondition: ((text: string) => boolean) | string,
-        extraBreakCallback?: (line: string) => boolean,
+        currLineBreakCallback?: (line: string) => boolean,
+        nextLineBreakCallback?: ((line: string) => boolean) | null,
         trueConditionCallback?: (line: vscode.TextLine) => void
     ): LineType.IterateNextLineType | undefined => {
 
         let lineNumber: number = range.start.line;
         let newRange: vscode.Range | undefined = undefined;
-        let newTextLine: vscode.TextLine;
+        let currTextLine: vscode.TextLine;
+        let nextTextLine: vscode.TextLine;
         let condition: boolean = true;
         const lineSkip: number[] = [];
         while (lineNumber < this.doc.lineCount) {
-            newTextLine = this.getTextLineFromRange(lineNumber);
+            currTextLine = this.getTextLineFromRange(lineNumber);
+            nextTextLine = this.getTextLineFromRange(lineNumber + 1);
             if (typeof lineCondition === "function") {
-                condition = lineCondition(newTextLine.text);
+                condition = lineCondition(currTextLine.text);
             } else if (typeof lineCondition === "string") {
-                condition = newTextLine[lineCondition];
+                condition = currTextLine[lineCondition];
             }
 
-            if (extraBreakCallback) {
-                if (extraBreakCallback(newTextLine.text)) {
+            if (currLineBreakCallback) {
+                if (currLineBreakCallback(currTextLine.text)) {
+                    break;
+                }
+            }
+
+            if (nextLineBreakCallback) {
+                if (nextLineBreakCallback(nextTextLine.text)) {
                     break;
                 }
             }
 
             if (condition) {
                 if (trueConditionCallback) {
-                    trueConditionCallback(newTextLine);
+                    trueConditionCallback(currTextLine);
                 }
-                newRange = newTextLine.range;
+                newRange = currTextLine.range;
                 lineSkip.push(lineNumber);
                 lineNumber++;
             } else {
@@ -374,7 +434,6 @@ export abstract class Line {
             };
         }
     };
-
     // =============================================================================
     // > PUBLIC FUNCTIONS:
     // =============================================================================

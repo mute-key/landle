@@ -1,5 +1,8 @@
 /**
- * this is the main module to bind functions with commands.
+ * this is the main module to bind functions with commands. asd asd as
+ * d as d as d as d asdasdasdasd
+ * 
+
  * 
  */
 import * as vscode from 'vscode';

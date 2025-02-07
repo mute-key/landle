@@ -3,7 +3,7 @@
     "publisher": "mutekey",
     "displayName": "landle",
     "description": "Generic code clean up extension",
-    "version": "0.9.2075",
+    "version": "0.9.2077",
     "icon": "./misc/icon2.png",
     "repository": {
         "type": "git",
@@ -210,17 +210,22 @@
                 "landle.blockCommentWordCountJustifyAlign": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable delete comment command also delete block-comments"
+                    "description": "Enable block-comment lines justitfy align based on line character length."
                 },
                 "landle.blockCommentCharacterBoundaryBaseLength": {
                     "type": "number",
                     "default": 70,
                     "description": "Block-comment auto length configuration for base length"
                 },
-                "landle.blockCommentCharacterBoundaryTolanceLength": {
+                "landle.blockCommentCharacterBoundaryToleranceLength": {
                     "type": "number",
-                    "default": 5,
+                    "default": 10,
                     "description": "Block-comment auto length configurations for tolance length"
+                },
+                "landle.removeWhitespaceBeforeInlineComment": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Remove Whitespace Of Inline Comment."
                 }
             }
         }

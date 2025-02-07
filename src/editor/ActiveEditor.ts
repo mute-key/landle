@@ -4,8 +4,8 @@
  */
 import * as vscode from 'vscode';
 import { config } from "../common/config";
-import { LineType } from './Line';
-import { LineHandler } from './LineHandler';
+import { LineType } from './Handler/Line';
+import { LineHandler } from './Handler/LineHandler';
 import { EditorCommandParameterType } from './EditorCommand';
 import { eventInstance, EventKind } from '../editor/Event';
 
@@ -32,9 +32,12 @@ export class ActiveEditor {
      * get current active text editor
      * 
      * @returns
+     * 
      */
     #setActiveEditor = (): void => {
+
         const activeEditor = vscode.window.activeTextEditor;
+        
         if (activeEditor) {
             this.#editor = activeEditor;
             this.#lineHandler.setCurrentDocument(this.#editor);
@@ -50,13 +53,16 @@ export class ActiveEditor {
      * 
      */
     #selectionReset = (): void => {
-        let resetLine = 0;
+
+        let resetLine : number = 0;
+
         if (this.#cursorReposition.moveUp !== 0 || this.#cursorReposition.moveDown !== 0) {
             resetLine = this.#cursorLine + this.#cursorReposition.moveUp - this.#cursorReposition.moveDown;
             this.#cursorReposition = { moveDown: 0, moveUp: 0 };
         } else {
             resetLine = this.#cursorSelection.end.line;
         }
+
         this.#editor.selection = new vscode.Selection(
             new vscode.Position(resetLine, this.#cursorPosition),
             new vscode.Position(resetLine, this.#cursorPosition)
@@ -64,17 +70,19 @@ export class ActiveEditor {
     };
 
     #cursorControl = (range: vscode.Range): void => {
+
         const rangeLineCount: number = range.end.line - range.start.line;
-        const isDeleteSingleLine: boolean = (rangeLineCount === 1);
+        const isDeleteSingleLine: boolean = (rangeLineCount === 1) && range.isSingleLine;
         const startLine: number = range.start.line;
         const endLine: number = range.end.line;
+        const isCursorInRange: boolean = (this.#cursorLine >= startLine && this.#cursorLine <= endLine);
+
         if (!isDeleteSingleLine) {
-            const isCursorInRange = (this.#cursorLine >= startLine && this.#cursorLine <= endLine);
             if (isCursorInRange) {
                 this.#cursorLine = startLine;
             } else {
                 if (this.#cursorLine >= endLine) {
-                    this.#cursorReposition.moveDown = this.#cursorReposition.moveDown + rangeLineCount;
+                    this.#cursorReposition.moveDown += rangeLineCount;
                 }
             }
         } else {
@@ -93,6 +101,7 @@ export class ActiveEditor {
      * - true when no argument supplied indicate the editor has been cached.
      * - true when argument supplied indicate document has not been modified.
      * - false when arguement supplied indiciate document has been modified.
+     * 
      */
     #documentSnapshot = (editorText: string | undefined = undefined): boolean => {
         if (editorText === undefined) {
@@ -195,13 +204,13 @@ export class ActiveEditor {
 
             if (editSchedule.length > 0) {
                 this.editInRange(editSchedule).catch(err => {
-                    console.error('Handling rejected promise:', err);
+                    console.error('Edit Failed:', err);
                 }).finally(() => {
                     this.#selectionReset();
                 });
             } else {
                 this.#selectionReset();
-                console.log('No edit found');
+                console.log('No edit found.');
             }
         }
     };
@@ -211,6 +220,7 @@ export class ActiveEditor {
      * 
      * @param lineCallback collecion of edits for the document how and where to edit.
      * @returns Promise<void>
+     * 
      */
     public editInRange = async (lineCallback: LineType.LineEditInfo[]): Promise<void> => {
         try {
