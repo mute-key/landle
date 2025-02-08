@@ -33,11 +33,12 @@ export namespace LineType {
      *
      */
     export const enum LineEditBlockPriority {
-        UNSET = 0,
-        LOW = 1,
-        MID = 2,
-        HIGH = 3,
-        VERYHIGH = 4,
+        UNSET = 1 << 0,
+        LOW = 1 << 1,
+        MID = 1 << 2,
+        HIGH = 1 << 3,
+        VERYHIGH = 1 << 4,
+        SKIPLINE = 1 << 5,
     }
 
     /**
@@ -185,7 +186,7 @@ export abstract class Line {
      * @returns LineType.LineEditInfo[]
      * 
      */
-    #callbackIteration = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
+    #handleLineEdit = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         let currentLineEdit: LineType.LineEditInfo[] = [];
         let priority = LineType.LineEditBlockPriority.UNSET;
         let blockFlag: boolean = false;
@@ -244,7 +245,7 @@ export abstract class Line {
                 continue;
             }
 
-            const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
+            const currentLineEdit = this.#handleLineEdit(this.lineFullRange(currentLineNumber), callback);
             if (currentLineEdit.length > 0) {
                 if (currentLineEdit[0].block) {
                     if (currentLineEdit[0].block.lineSkip) {
@@ -335,104 +336,47 @@ export abstract class Line {
         );
     };
 
-    // protected iterateNextLine = (range: vscode.Range,
-    // lineCondition: ((text: string) => boolean) | string,
-    // extraBreakCallback?: (line: string) => boolean,
-    // trueConditionCallback?: (line: vscode.TextLine) => void
-    // ): LineType.IterateNextLineType | undefined => {
-
-    // let lineNumber: number = range.start.line;
-    // let newRange: vscode.Range | undefined = undefined;
-    // let newTextLine: vscode.TextLine;
-    // let condition: boolean = true;
-    // const lineSkip: number[] = [];
-    // while (lineNumber < this.doc.lineCount) {
-    // newTextLine = this.getTextLineFromRange(lineNumber);
-    // if (typeof lineCondition === "function") {
-    // condition = lineCondition(newTextLine.text);
-    // } else if (typeof lineCondition === "string") {
-    // condition = newTextLine[lineCondition];
-    // }
-
-    // if (extraBreakCallback) {
-    // if (extraBreakCallback(newTextLine.text)) {
-    // break;
-    // }
-    // }
-
-    // if (condition) {
-    // if (trueConditionCallback) {
-    // trueConditionCallback(newTextLine);
-    // }
-    // newRange = newTextLine.range;
-    // lineSkip.push(lineNumber);
-    // lineNumber++;
-    // } else {
-    // break;
-    // }
-    // };
-
-    // if (newRange) {
-    // return {
-    // lineNumber: lineNumber,
-    // lineSkip: lineSkip
-    // };
-    // }
-    // };
-
     protected iterateNextLine = (
         range: vscode.Range,
-        lineCondition: ((text: string) => boolean) | string,
-        currLineBreakCallback?: (line: string) => boolean,
-        nextLineBreakCallback?: ((line: string) => boolean) | null,
-        trueConditionCallback?: (line: vscode.TextLine) => void
+        lineCondition: ((line: vscode.TextLine) => boolean),
+        continueCheck?: ((line: vscode.TextLine) => boolean),
+        trueConditionTask?: (line: vscode.TextLine) => void
     ): LineType.IterateNextLineType | undefined => {
 
         let lineNumber: number = range.start.line;
-        let newRange: vscode.Range | undefined = undefined;
         let currTextLine: vscode.TextLine;
-        let nextTextLine: vscode.TextLine;
         let condition: boolean = true;
         const lineSkip: number[] = [];
-        while (lineNumber < this.doc.lineCount) {
+        const lineCount: number = this.doc.lineCount;
+
+        while (lineNumber < lineCount) {
+            
             currTextLine = this.getTextLineFromRange(lineNumber);
-            nextTextLine = this.getTextLineFromRange(lineNumber + 1);
+            
+            // condition check
             if (typeof lineCondition === "function") {
-                condition = lineCondition(currTextLine.text);
-            } else if (typeof lineCondition === "string") {
-                condition = currTextLine[lineCondition];
+                condition = lineCondition(currTextLine);
+                // console.log('condition', lineNumber, ' : ',condition);
             }
 
-            if (currLineBreakCallback) {
-                if (currLineBreakCallback(currTextLine.text)) {
-                    break;
-                }
-            }
-
-            if (nextLineBreakCallback) {
-                if (nextLineBreakCallback(nextTextLine.text)) {
-                    break;
-                }
-            }
-
-            if (condition) {
-                if (trueConditionCallback) {
-                    trueConditionCallback(currTextLine);
-                }
-                newRange = currTextLine.range;
-                lineSkip.push(lineNumber);
-                lineNumber++;
-            } else {
+            if (!condition) {
                 break;
             }
+
+            lineSkip.push(lineNumber);
+            lineNumber++;
+
+            if (continueCheck?.(currTextLine)) {
+                continue;
+            }
+
+            trueConditionTask?.(currTextLine);
         };
 
-        if (newRange) {
-            return {
-                lineNumber: lineNumber,
-                lineSkip: lineSkip
-            };
-        }
+        return (lineSkip.length > 0) ? {
+            lineNumber: lineNumber,
+            lineSkip: lineSkip
+        } : undefined ;
     };
     // =============================================================================
     // > PUBLIC FUNCTIONS:
@@ -482,7 +426,7 @@ export abstract class Line {
 
         // on each selection, starting line is: isEmpty or if selection is singleLine
         if (range.isEmpty || range.isSingleLine) {
-            return this.#callbackIteration(this.lineFullRange(targetLine), callback);
+            return this.#handleLineEdit(this.lineFullRange(targetLine), callback);
         }
 
         return this.#lineIteration(

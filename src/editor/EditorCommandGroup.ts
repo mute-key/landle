@@ -44,6 +44,8 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
             this.blockCommentWordCountJustifyAlign(),
+            // this.fixBrokenBlockCommnet(),
+            
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };

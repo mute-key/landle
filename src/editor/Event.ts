@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import packageInfo from '../../package.json' assert { type: 'json' };
 import { EventEmitter } from 'events';
 import { config } from "../common/config";
+import { promises } from "dns";
 
 enum EventKind {
     AUTO_TRIGGER_ON_SAVE_SWITCH = 'AUTO_TRIGGER_ON_SAVE_SWITCH',
@@ -32,8 +33,20 @@ class Event extends EventEmitter {
         vscode.window.showInformationMessage(message);
     };
 
-    public saveActiveEditor = async (editor): Promise<boolean> => {
-        return await editor.document.save();
+    public saveActiveEditor = (editor: vscode.TextEditor): void => {
+        try {
+            // can call formatter or linter stuff here later.
+
+            const save: Thenable<boolean> = editor.document.save();
+            save.then((res) => {
+                console.log('saveActiveEditor', res);
+                if (!res) {
+                    this.pushMessage('Save on active editor failed:');
+                }
+            });
+        } catch(err) {
+            this.pushMessage('Save on active editor failed:' + err);
+        }
     };
 
     public checkKeybindCollision = () => {

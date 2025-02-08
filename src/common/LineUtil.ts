@@ -30,7 +30,9 @@ export namespace LineUtil {
 
     export const ifMultipleWhiteSpaceIsStringLiteral = (line: string): boolean => /(['"])\s{2,}\1/.test(line);
 
-    export const isLineCommented = (line: string): boolean => /^\s*\/\//g.test(line);
+    export const isCommentOnlyLine = (line: string): boolean => /^\s*\/\//g.test(line);
+
+    export const findCommentOnlyIndenetAndWhitespace = (line: string):RegExpMatchArray | null => /^\s*(\/\/\s*)/g.exec(line);
 
     export const isLineInlineComment = (line: string): boolean => line.startsWith('//');
 
@@ -41,6 +43,7 @@ export namespace LineUtil {
     // export const lineCommentWithWhitespaceWithoutFirstWhitespace = (line: string): RegExpExecArray | null => /(?<=\s) \s+\/\//g.exec(line);
     
     // export const lineCommentWithWhitespace = (line: string): RegExpExecArray | null => /(?<=(\s+\/\/))/g.exec(line);
+
     export const isBlockComment2 = (line: string): boolean => line.search(/^\s*\*+\s+\S+/s) !== -1;
     
     export const isEmptyBlockComment = (line: string): boolean => /^\s*\*\s*$/.test(line);
@@ -49,10 +52,38 @@ export namespace LineUtil {
 
     export const isBlockCommentWithCharacter = (line: string): boolean => /^\s*\*+\s+\S+/s.test(line);
     
-    export const checkBlockCommentNeedAlign = (line: string): boolean => /^\s*\*\s*([-]|\d+\s*[-.])\s*/s.test(line);
+    /**
+     * String pattern check.
+     * 
+     * - if string start with dash '[-]'
+     * - if comment start with '[0-9].'
+     * - if comment start with '[0-9]-'
+     * 
+     * @param line
+     * @returns boolean: true if pattern match and false otherwise.
+     * 
+     */
+    export const checkBlockCommentNeedSkip = (line: string): boolean => /^\s*\*\s*([-]|\d+\s*[-.])\s*/s.test(line);
     // export const checkBlockCommentNeedAlign = (line: string): boolean => line.search(/^\s*\*\s*([-]|[0-9]\s*\-|[0-9]\.)\s*/s) >= 0;
 
-    export const isBlockCommentStartingLine = (line: string): boolean => /^\s*\/.*\s*$/.test(line);
+    export const isBlockCommentStartingLine = (line: string): boolean => /^\s*\/\*/.test(line);
+
+    /**
+     * check if the string is block comment openning, and if following line
+     * hasany characters include whitespace
+     * 
+     * @param line
+     * @returns
+     * 
+     */
+    export const findBlockCommentStartingLineWithCharacter = (line: string): RegExpMatchArray | null => /^\s*\/\*\*\s*\S/.exec(line);
+
+    export const isBlockCommentStartingLineWithCharacter = (line: string): boolean => {
+        const regex = /^\s*\/\*\*\s*\S/.exec(line);
+        return regex !== null;
+    };
+
+    // export const isBlockCommentStartingLineWithWhitespace = (line: string): boolean => /^\s*\/\*\*\s*$/.test(line);
 
     export const isBlockCommentEndingLine = (line: string): boolean => /^\s*\*\//.test(line);
 

@@ -226,6 +226,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Remove Whitespace Of Inline Comment."
+                },
+                "landle.removeWhitespaceOflineComment": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Remove All Whitespace Of Line Comment."
                 }
             }
         }

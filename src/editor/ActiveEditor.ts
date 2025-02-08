@@ -122,11 +122,21 @@ export class ActiveEditor {
      * 
      */
     #editSwitch = (edit: LineType.LineEditInfo, editBuilder: vscode.TextEditorEdit): void => {
+        console.log(edit)
         if (edit.type) {
             if (edit.type & LineType.LineEditType.DELETE) {
                 if (!edit.range.isSingleLine) {
                     this.#cursorControl(edit.range);
                 }
+                // if (edit.string) {
+                // if (this.#checkIfRangeTextIsEqual(edit.range, edit.string)) {
+                // return;
+                // } else {
+                // editBuilder.delete(edit.range);
+                // }
+                // } else {
+                // editBuilder.delete(edit.range);
+                // }
                 editBuilder.delete(edit.range);
             }
             if (edit.type & LineType.LineEditType.CLEAR) {

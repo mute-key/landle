@@ -14,7 +14,8 @@ type configType = {
     blockCommentWordCountJustifyAlign: boolean
     blockCommentCharacterBoundaryBaseLength: number,
     blockCommentCharacterBoundaryToleranceLength: number,
-    removeWhitespaceBeforeInlineComment: boolean
+    removeWhitespaceBeforeInlineComment: boolean,
+    removeWhitespaceOflineComment: boolean
 }
 
 const currentConfig = (() => {
@@ -49,6 +50,7 @@ class Config {
             blockCommentCharacterBoundaryBaseLength: this.#checkBlockCommentCharacterBoundaryBaseLength(),
             blockCommentCharacterBoundaryToleranceLength: this.#configuration.get<number>('blockCommentCharacterBoundaryToleranceLength', 10),
             removeWhitespaceBeforeInlineComment: this.#configuration.get<boolean>('removeWhitespaceBeforeInlineComment', true),
+            removeWhitespaceOflineComment: this.#configuration.get<boolean>('removeWhitespaceOflineComment', true),
         };
     }
 

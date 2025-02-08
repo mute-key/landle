@@ -48,6 +48,7 @@ export class EditorCommand {
     // =============================================================================
 
     public execute = (command: LineType.LineEditDefintion[], commandOption: EditorCommandParameterType): void => {
+        console.clear();
         this.#activeEditor.prepareEdit(command, commandOption);
     };
 
@@ -64,7 +65,7 @@ export class EditorCommand {
 
     /**
      * removes trailing whitespace from the line.
-     *
+     * 
      * @param editor unused, future reference
      * @param edit unused, future reference
      * @param args unused, future reference
@@ -187,14 +188,14 @@ export class EditorCommand {
         } : undefined;
     };
 
-    public genericFixBlockCommentLine = (): LineType.LineEditDefintion | undefined => {
-        return {
-            func: this.#lineHandler.genericFixBlockCommentLine,
-            type: LineType.LineEditType.REPLACE | LineType.LineEditType.DELETE,
+    public fixBrokenBlockCommnet = (): LineType.LineEditDefintion | undefined => {
+        return !config.of.blockCommentWordCountJustifyAlign ? {
+            func: this.#lineHandler.fixBrokenBlockCommnet,
+            type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
             block: {
                 priority: LineType.LineEditBlockPriority.HIGH
             }
-        };
+        } : undefined;
     };
 
     public removeEmptyLinesBetweenBlockCommantAndCode = (): LineType.LineEditDefintion => {

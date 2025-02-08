@@ -267,6 +267,11 @@ var package_default = {
           type: "boolean",
           default: false,
           description: "Remove Whitespace Of Inline Comment."
+        },
+        "landle.removeWhitespaceOflineComment": {
+          type: "boolean",
+          default: false,
+          description: "Remove All Whitespace Of Line Comment."
         }
       }
     }
@@ -329,7 +334,8 @@ var Config = class {
       blockCommentWordCountJustifyAlign: this.#configuration.get("blockCommentWordCountJustifyAlign", true),
       blockCommentCharacterBoundaryBaseLength: this.#checkBlockCommentCharacterBoundaryBaseLength(),
       blockCommentCharacterBoundaryToleranceLength: this.#configuration.get("blockCommentCharacterBoundaryToleranceLength", 10),
-      removeWhitespaceBeforeInlineComment: this.#configuration.get("removeWhitespaceBeforeInlineComment", true)
+      removeWhitespaceBeforeInlineComment: this.#configuration.get("removeWhitespaceBeforeInlineComment", true),
+      removeWhitespaceOflineComment: this.#configuration.get("removeWhitespaceOflineComment", true)
     };
   }
   get of() {
@@ -361,8 +367,18 @@ var Event = class extends import_events.EventEmitter {
   pushMessage = (message) => {
     vscode2.window.showInformationMessage(message);
   };
-  saveActiveEditor = async (editor) => {
-    return await editor.document.save();
+  saveActiveEditor = (editor) => {
+    try {
+      const save = editor.document.save();
+      save.then((res) => {
+        console.log("saveActiveEditor", res);
+        if (!res) {
+          this.pushMessage("Save on active editor failed:");
+        }
+      });
+    } catch (err) {
+      this.pushMessage("Save on active editor failed:" + err);
+    }
   };
   checkKeybindCollision = () => {
   };
@@ -425,11 +441,12 @@ var LineType;
   })(RangeKind = LineType2.RangeKind || (LineType2.RangeKind = {}));
   let LineEditBlockPriority;
   ((LineEditBlockPriority2) => {
-    LineEditBlockPriority2[LineEditBlockPriority2["UNSET"] = 0] = "UNSET";
-    LineEditBlockPriority2[LineEditBlockPriority2["LOW"] = 1] = "LOW";
-    LineEditBlockPriority2[LineEditBlockPriority2["MID"] = 2] = "MID";
-    LineEditBlockPriority2[LineEditBlockPriority2["HIGH"] = 3] = "HIGH";
-    LineEditBlockPriority2[LineEditBlockPriority2["VERYHIGH"] = 4] = "VERYHIGH";
+    LineEditBlockPriority2[LineEditBlockPriority2["UNSET"] = 1] = "UNSET";
+    LineEditBlockPriority2[LineEditBlockPriority2["LOW"] = 2] = "LOW";
+    LineEditBlockPriority2[LineEditBlockPriority2["MID"] = 4] = "MID";
+    LineEditBlockPriority2[LineEditBlockPriority2["HIGH"] = 8] = "HIGH";
+    LineEditBlockPriority2[LineEditBlockPriority2["VERYHIGH"] = 16] = "VERYHIGH";
+    LineEditBlockPriority2[LineEditBlockPriority2["SKIPLINE"] = 32] = "SKIPLINE";
   })(LineEditBlockPriority = LineType2.LineEditBlockPriority || (LineType2.LineEditBlockPriority = {}));
 })(LineType || (LineType = {}));
 var Line = class {
@@ -525,9 +542,9 @@ var Line = class {
    * @returns LineType.LineEditInfo[]
    * 
    */
-  #callbackIteration = (range, callback) => {
+  #handleLineEdit = (range, callback) => {
     let currentLineEdit = [];
-    let priority = 0 /* UNSET */;
+    let priority = 1 /* UNSET */;
     let blockFlag = false;
     for (const fn of callback) {
       const result = this.#editedLineInfo(range, fn);
@@ -581,7 +598,7 @@ var Line = class {
         currentLineNumber++;
         continue;
       }
-      const currentLineEdit = this.#callbackIteration(this.lineFullRange(currentLineNumber), callback);
+      const currentLineEdit = this.#handleLineEdit(this.lineFullRange(currentLineNumber), callback);
       if (currentLineEdit.length > 0) {
         if (currentLineEdit[0].block) {
           if (currentLineEdit[0].block.lineSkip) {
@@ -661,89 +678,32 @@ var Line = class {
       new vscode3.Position(lineNuber, endPosition)
     );
   };
-  // protected iterateNextLine = (range: vscode.Range,
-  // lineCondition: ((text: string) => boolean) | string,
-  // extraBreakCallback?: (line: string) => boolean,
-  // trueConditionCallback?: (line: vscode.TextLine) => void
-  // ): LineType.IterateNextLineType | undefined => {
-  // let lineNumber: number = range.start.line;
-  // let newRange: vscode.Range | undefined = undefined;
-  // let newTextLine: vscode.TextLine;
-  // let condition: boolean = true;
-  // const lineSkip: number[] = [];
-  // while (lineNumber < this.doc.lineCount) {
-  // newTextLine = this.getTextLineFromRange(lineNumber);
-  // if (typeof lineCondition === "function") {
-  // condition = lineCondition(newTextLine.text);
-  // } else if (typeof lineCondition === "string") {
-  // condition = newTextLine[lineCondition];
-  // }
-  // if (extraBreakCallback) {
-  // if (extraBreakCallback(newTextLine.text)) {
-  // break;
-  // }
-  // }
-  // if (condition) {
-  // if (trueConditionCallback) {
-  // trueConditionCallback(newTextLine);
-  // }
-  // newRange = newTextLine.range;
-  // lineSkip.push(lineNumber);
-  // lineNumber++;
-  // } else {
-  // break;
-  // }
-  // };
-  // if (newRange) {
-  // return {
-  // lineNumber: lineNumber,
-  // lineSkip: lineSkip
-  // };
-  // }
-  // };
-  iterateNextLine = (range, lineCondition, currLineBreakCallback, nextLineBreakCallback, trueConditionCallback) => {
+  iterateNextLine = (range, lineCondition, continueCheck, trueConditionTask) => {
     let lineNumber = range.start.line;
-    let newRange = void 0;
     let currTextLine;
-    let nextTextLine;
     let condition = true;
     const lineSkip = [];
-    while (lineNumber < this.doc.lineCount) {
+    const lineCount = this.doc.lineCount;
+    while (lineNumber < lineCount) {
       currTextLine = this.getTextLineFromRange(lineNumber);
-      nextTextLine = this.getTextLineFromRange(lineNumber + 1);
       if (typeof lineCondition === "function") {
-        condition = lineCondition(currTextLine.text);
-      } else if (typeof lineCondition === "string") {
-        condition = currTextLine[lineCondition];
+        condition = lineCondition(currTextLine);
       }
-      if (currLineBreakCallback) {
-        if (currLineBreakCallback(currTextLine.text)) {
-          break;
-        }
-      }
-      if (nextLineBreakCallback) {
-        if (nextLineBreakCallback(nextTextLine.text)) {
-          break;
-        }
-      }
-      if (condition) {
-        if (trueConditionCallback) {
-          trueConditionCallback(currTextLine);
-        }
-        newRange = currTextLine.range;
-        lineSkip.push(lineNumber);
-        lineNumber++;
-      } else {
+      if (!condition) {
         break;
       }
+      lineSkip.push(lineNumber);
+      lineNumber++;
+      if (continueCheck?.(currTextLine)) {
+        continue;
+      }
+      trueConditionTask?.(currTextLine);
     }
     ;
-    if (newRange) {
-      return {
-        lineNumber,
-        lineSkip
-      };
-    }
+    return lineSkip.length > 0 ? {
+      lineNumber,
+      lineSkip
+    } : void 0;
   };
   // =============================================================================
   // > PUBLIC FUNCTIONS:
@@ -786,7 +746,7 @@ var Line = class {
   prepareLines = (range, callback) => {
     const targetLine = range.start.line;
     if (range.isEmpty || range.isSingleLine) {
-      return this.#callbackIteration(this.lineFullRange(targetLine), callback);
+      return this.#handleLineEdit(this.lineFullRange(targetLine), callback);
     }
     return this.#lineIteration(
       range,
@@ -822,6 +782,7 @@ var ActiveEditor = class {
    * get current active text editor
    * 
    * @returns
+   * 
    */
   #setActiveEditor = () => {
     const activeEditor = vscode4.window.activeTextEditor;
@@ -880,6 +841,7 @@ var ActiveEditor = class {
    * - true when no argument supplied indicate the editor has been cached.
    * - true when argument supplied indicate document has not been modified.
    * - false when arguement supplied indiciate document has been modified.
+   * 
    */
   #documentSnapshot = (editorText = void 0) => {
     if (editorText === void 0) {
@@ -899,6 +861,7 @@ var ActiveEditor = class {
    * 
    */
   #editSwitch = (edit, editBuilder) => {
+    console.log(edit);
     if (edit.type) {
       if (edit.type & LineType.LineEditType.DELETE) {
         if (!edit.range.isSingleLine) {
@@ -987,6 +950,7 @@ var ActiveEditor = class {
    * 
    * @param lineCallback collecion of edits for the document how and where to edit.
    * @returns Promise<void>
+   * 
    */
   editInRange = async (lineCallback) => {
     try {
@@ -1029,7 +993,8 @@ var LineUtil;
   LineUtil2.isMultipleWhiteSpace = (line) => /(?<=\S)\s+\s(?=\S)/.test(line);
   LineUtil2.findNextMultipleWhiteSpace = (line) => line.matchAll(/(?<=\S)\s+\s(?=\S)/g);
   LineUtil2.ifMultipleWhiteSpaceIsStringLiteral = (line) => /(['"])\s{2,}\1/.test(line);
-  LineUtil2.isLineCommented = (line) => /^\s*\/\//g.test(line);
+  LineUtil2.isCommentOnlyLine = (line) => /^\s*\/\//g.test(line);
+  LineUtil2.findCommentOnlyIndenetAndWhitespace = (line) => /^\s*(\/\/\s*)/g.exec(line);
   LineUtil2.isLineInlineComment = (line) => line.startsWith("//");
   LineUtil2.getInlineCommentFirstWhitespaces = (line) => line.match(/(?<=\/\/)\s+/g);
   LineUtil2.lineCommentWithWhitespace = (line) => /\s+\/\//g.exec(line);
@@ -1037,8 +1002,13 @@ var LineUtil;
   LineUtil2.isEmptyBlockComment = (line) => /^\s*\*\s*$/.test(line);
   LineUtil2.isBlockComment = (line) => /^\s*\*+/s.test(line);
   LineUtil2.isBlockCommentWithCharacter = (line) => /^\s*\*+\s+\S+/s.test(line);
-  LineUtil2.checkBlockCommentNeedAlign = (line) => /^\s*\*\s*([-]|\d+\s*[-.])\s*/s.test(line);
-  LineUtil2.isBlockCommentStartingLine = (line) => /^\s*\/.*\s*$/.test(line);
+  LineUtil2.checkBlockCommentNeedSkip = (line) => /^\s*\*\s*([-]|\d+\s*[-.])\s*/s.test(line);
+  LineUtil2.isBlockCommentStartingLine = (line) => /^\s*\/\*/.test(line);
+  LineUtil2.findBlockCommentStartingLineWithCharacter = (line) => /^\s*\/\*\*\s*\S/.exec(line);
+  LineUtil2.isBlockCommentStartingLineWithCharacter = (line) => {
+    const regex = /^\s*\/\*\*\s*\S/.exec(line);
+    return regex !== null;
+  };
   LineUtil2.isBlockCommentEndingLine = (line) => /^\s*\*\//.test(line);
   LineUtil2.isJSdocTag = (line) => /^\s*\*?\s*\@.*/s.test(line);
   LineUtil2.cleanBlockComment = (line) => line.replace(/(?<=\*).*/, "");
@@ -1096,6 +1066,9 @@ var LineHandler = class extends Line {
   constructor() {
     super();
   }
+  #checkIfRangeTextIsEqual = (range, newText) => {
+    return this.editor.document.getText(range) === newText;
+  };
   /**
    * check if the document is starting with empty line and removes them.
    * 
@@ -1106,7 +1079,7 @@ var LineHandler = class extends Line {
   removeDocumentStartingEmptyLine = (range) => {
     let lineNumber = range.start.line;
     if (lineNumber === 0) {
-      const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
+      const lineIteration = this.iterateNextLine(range, (line) => line.isEmptyOrWhitespace);
       if (lineIteration) {
         return {
           name: "removeDocumentStartingEmptyLine",
@@ -1124,7 +1097,7 @@ var LineHandler = class extends Line {
     return;
   };
   /**
-   * remove trailing whitespace lines from range if there is non-whitespace-character
+   * remove trailing whitespace lines from range if there is non-whitespace-character 
    * present.
    * 
    * @param range target range
@@ -1136,6 +1109,13 @@ var LineHandler = class extends Line {
     let whitespacePos = LineUtil.findTrailingWhiteSpaceString(textline.text);
     let endPos = textline.text.length;
     if (LineUtil.isEmptyBlockComment(textline.text)) {
+      if (whitespacePos < 0) {
+        return;
+      } else {
+        if (whitespacePos === textline.text.indexOf("*") + 1) {
+          return;
+        }
+      }
       whitespacePos += 1;
     }
     if (whitespacePos > 0 && textline.text.length >= whitespacePos + 1 && textline.text.length > 0 && !textline.isEmptyOrWhitespace) {
@@ -1165,18 +1145,19 @@ var LineHandler = class extends Line {
     const textLine = this.getTextLineFromRange(range);
     let startPosition = textLine.firstNonWhitespaceCharacterIndex;
     if (LineUtil.isMultipleWhiteSpace(textLine.text) && !textLine.isEmptyOrWhitespace) {
-      if (LineUtil.isBlockCommentWithCharacter(textLine.text)) {
-        startPosition = textLine.text.indexOf("*");
-      }
-      if (LineUtil.isLineInlineComment(textLine.text)) {
-        return;
-      }
       const newLineText = textLine.text.trim();
       let stringLiteral = false;
       const length = newLineText.length;
       let i = 0;
       let result = "";
       let lineComment = LineUtil.lineCommentWithWhitespace(newLineText);
+      if (LineUtil.isBlockCommentWithCharacter(textLine.text)) {
+        startPosition = textLine.text.indexOf("*");
+      }
+      const commentOnly = LineUtil.findCommentOnlyIndenetAndWhitespace(textLine.text);
+      if (commentOnly) {
+        return;
+      }
       while (i++ < length) {
         const char = newLineText[i - 1];
         const isQuote = char === '"' || char === "'";
@@ -1229,7 +1210,7 @@ var LineHandler = class extends Line {
     const currentLine = this.getTextLineFromRange(range);
     if (range.end.line <= this.editor.document.lineCount && range.start.line > 0) {
       const nextLine = this.getTextLineFromRange(range, 1);
-      if (currentLine.isEmptyOrWhitespace && nextLine.isEmptyOrWhitespace) {
+      if (currentLine.isEmptyOrWhitespace && nextLine.isEmptyOrWhitespace && !LineUtil.isBlockComment(previousLine.text)) {
         return {
           name: "removeMulitpleEmptyLine",
           range: new vscode5.Range(
@@ -1251,7 +1232,7 @@ var LineHandler = class extends Line {
   removeCommentedLine = (range) => {
     const lineText = this.getText(range);
     const commentIndex = LineUtil.getlineCommentIndex(lineText);
-    if (LineUtil.isLineCommented(lineText)) {
+    if (LineUtil.isCommentOnlyLine(lineText)) {
       return {
         name: "removeCommentedLine",
         range: this.lineFullRangeWithEOL(range)
@@ -1313,7 +1294,7 @@ var LineHandler = class extends Line {
     const beforeLine = this.getTextLineFromRange(range, -1);
     const blockCommentStart = LineUtil.isBlockCommentStartingLine(beforeLine.text);
     if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
-      const lineIteration = this.iterateNextLine(range, LineUtil.isEmptyBlockComment);
+      const lineIteration = this.iterateNextLine(range, (line) => LineUtil.isEmptyBlockComment(line.text));
       if (lineIteration) {
         return {
           name: "removeEmptyBlockCommentLineOnStart",
@@ -1339,30 +1320,16 @@ var LineHandler = class extends Line {
    * 
    */
   removeMultipleEmptyBlockCommentLine = (range) => {
-    const previousLine = this.getTextLineFromRange(range, -1);
-    const currentLine = this.getTextLineFromRange(range);
-    const nextLine = this.getTextLineFromRange(range, 1);
-    const nextLineIsBlockCommend = LineUtil.isEmptyBlockComment(nextLine.text);
-    const LineIsBlockCommend = LineUtil.isEmptyBlockComment(currentLine.text);
-    const beforeLine = this.getTextLineFromRange(range, -1);
-    const blockCommentStart = LineUtil.isBlockCommentStartingLine(beforeLine.text);
-    if (LineUtil.isBlockCommentWithCharacter(previousLine.text) && previousLine.isEmptyOrWhitespace) {
-      const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
-      if (lineIteration) {
-        return {
-          name: "removeMultipleEmptyBlockCommentLine",
-          range: new vscode5.Range(
-            new vscode5.Position(range.start.line, 0),
-            new vscode5.Position(lineIteration.lineNumber, 0)
-          ),
-          block: {
-            priority: LineType.LineEditBlockPriority.MID,
-            lineSkip: lineIteration.lineSkip
-          }
-        };
-      }
-    }
-    if (LineIsBlockCommend && nextLineIsBlockCommend && !blockCommentStart) {
+    const prevTextLine = this.getTextLineFromRange(range, -1);
+    const currTextLine = this.getTextLineFromRange(range);
+    const nextTextLine = this.getTextLineFromRange(range, 1);
+    const nextLineIsBlockCommend = LineUtil.isEmptyBlockComment(nextTextLine.text);
+    const currLineIsBlockCommend = LineUtil.isEmptyBlockComment(currTextLine.text);
+    const prevLineblockCommentStart = LineUtil.isBlockCommentStartingLine(prevTextLine.text);
+    const isNextLineBlockCommentClose = LineUtil.isBlockCommentEndingLine(nextTextLine.text);
+    const isCurrLineJsDoc = LineUtil.isJSdocTag(nextTextLine.text);
+    if (currLineIsBlockCommend && nextLineIsBlockCommend && !prevLineblockCommentStart) {
+      console.log("removeMultipleEmptyBlockCommentLine1", currTextLine.lineNumber);
       return {
         name: "removeMultipleEmptyBlockCommentLine",
         range: this.lineFullRangeWithEOL(range)
@@ -1402,7 +1369,7 @@ var LineHandler = class extends Line {
     const currentTextLine = this.getTextLineFromRange(range);
     const previousTextLine = this.getTextLineFromRange(range, -1);
     if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
-      const lineIteration = this.iterateNextLine(range, "isEmptyOrWhitespace");
+      const lineIteration = this.iterateNextLine(range, (line) => line.isEmptyOrWhitespace);
       if (lineIteration) {
         return {
           name: "removeEmptyLinesBetweenBlockCommantAndCode",
@@ -1428,118 +1395,98 @@ var LineHandler = class extends Line {
    * @returns
    * 
    */
-  // public blockCommentWordCountJustifyAlign = (range: vscode.Range): LineType.LineEditInfo | undefined => {
-  // const currentTextLine: vscode.TextLine = this.getTextLineFromRange(range);
-  // const lineTextInArray: string[] = [];
-  // if (LineUtil.isBlockComment2(currentTextLine.text) && !LineUtil.isJSdocTag(currentTextLine.text)) {
-  // const indentIndex = currentTextLine.text.indexOf("*");
-  // const indentString = currentTextLine.text.substring(0, indentIndex + 1);
-  // if (currentTextLine.text.length < (config.of.blockCommentCharacterBoundaryBaseLength) || currentTextLine.text.length > (config.of.blockCommentCharacterBoundaryBaseLength + config.of.blockCommentCharacterBoundaryToleranceLength)) {
-  // const trueConditionCallback = (line: vscode.TextLine) => {
-  // lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/));
-  // };
-  // const lineIteration = this.iterateNextLine(range,
-  // LineUtil.isBlockComment2,
-  // LineUtil.isJSdocTag,
-  // trueConditionCallback);
-  // let newString: string = "";
-  // let newLine = indentString + " ";
-  // for (const [index, str] of lineTextInArray.entries()) {
-  // if (str.length > 0) {
-  // newLine += str + " ";
-  // if (newLine.length > config.of.blockCommentCharacterBoundaryBaseLength) {
-  // newString += newLine + this.getEndofLine();
-  // newLine = indentString + " ";
-  // }
-  // }
-  // if (index === lineTextInArray.length - 1) {
-  // newString += newLine + this.getEndofLine();
-  // }
-  // }
-  // console.log('oor', range.start.line, currentTextLine.text.length, config.of.blockCommentCharacterBoundaryBaseLength)
-  // console.log(newString, lineIteration)
-  // if (lineIteration) {
-  // if ()
-  // return {
-  // name: 'blockCommentWordCountJustifyAlign',
-  // range: new vscode.Range(
-  // new vscode.Position(range.start.line, 0),
-  // new vscode.Position(lineIteration.lineNumber, 0)
-  // ),
-  // type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
-  // string: newString,
-  // block: {
-  // lineSkip: lineIteration.lineSkip,
-  // priority: LineType.LineEditBlockPriority.HIGH
-  // }
-  // };
-  // }
-  // }
-  // }
-  // return;
-  // };
   blockCommentWordCountJustifyAlign = (range) => {
-    const prevTextLine = this.getTextLineFromRange(range, -1);
     const currTextLine = this.getTextLineFromRange(range);
-    const nextTextLine = this.getTextLineFromRange(range, 1);
-    const lineTextInArray = [];
-    if (LineUtil.isBlockCommentWithCharacter(currTextLine.text) && !LineUtil.isJSdocTag(currTextLine.text) && !LineUtil.isBlockCommentEndingLine(currTextLine.text)) {
-      const indentIndex = currTextLine.text.indexOf("*");
-      const indentString = currTextLine.text.substring(0, indentIndex + 1) + " ";
-      const textLineLessThanBase = currTextLine.text.length < config.of.blockCommentCharacterBoundaryBaseLength;
-      const textLineBiggerThanBaseWithTol = currTextLine.text.length > config.of.blockCommentCharacterBoundaryBaseLength + config.of.blockCommentCharacterBoundaryToleranceLength;
-      if (LineUtil.checkBlockCommentNeedAlign(currTextLine.text)) {
-        return;
+    const isCurrBlockCommentStartingLine = LineUtil.isBlockCommentStartingLine(currTextLine.text);
+    let includeOpenningLine = false;
+    let lineRange = range;
+    if (isCurrBlockCommentStartingLine) {
+      let LineString = "";
+      if (LineUtil.isBlockCommentStartingLineWithCharacter(currTextLine.text)) {
+        includeOpenningLine = true;
       }
-      if (!textLineBiggerThanBaseWithTol) {
+    }
+    if ((LineUtil.isBlockCommentWithCharacter(currTextLine.text) || includeOpenningLine) && !LineUtil.isJSdocTag(currTextLine.text) && !LineUtil.isBlockCommentEndingLine(currTextLine.text)) {
+      const lineTextInArray = [];
+      let indentIndex = currTextLine.text.indexOf("*");
+      let indentString = currTextLine.text.substring(0, indentIndex + 1) + " ";
+      let startPosition = 0;
+      let newLine = indentString;
+      let newString = "";
+      let newStringArr = [];
+      if (includeOpenningLine) {
+        lineTextInArray.push(...currTextLine.text.replaceAll("/**", "").trim().split(/\s+/).filter((s) => s.length > 0));
+        const nextTextLine = this.getTextLineFromRange(range, 1);
+        indentIndex = nextTextLine.text.indexOf("*");
+        indentString = nextTextLine.text.substring(0, indentIndex + 1) + " ";
+        newLine = "";
+        startPosition = currTextLine.text.indexOf("/**") + 3;
+        newString += this.getEndofLine() + indentString;
+        newStringArr.push(this.getEndofLine(), indentString);
+        console.log("includeOpenningLine", indentIndex, range.start.line);
+        lineRange = new vscode5.Range(
+          new vscode5.Position(range.start.line + 1, 0),
+          new vscode5.Position(range.end.line + 1, 0)
+        );
       }
-      if (textLineBiggerThanBaseWithTol) {
-        if (textLineLessThanBase && LineUtil.isEmptyBlockComment(nextTextLine.text)) {
+      const lineCondition = (line) => {
+        let lineText = line.text;
+        if (LineUtil.isEmptyBlockComment(lineText)) {
+          return false;
+        }
+        const cond1 = LineUtil.isBlockCommentWithCharacter(lineText);
+        const cond2 = LineUtil.isBlockCommentStartingLineWithCharacter(lineText);
+        if (cond1 || cond2) {
+          const fixedLine = this.fixBrokenBlockCommnet(range);
+          if (fixedLine && fixedLine.string) {
+            lineText = fixedLine.string;
+            return true;
+          }
+          return true;
+        }
+        if (LineUtil.checkBlockCommentNeedSkip(lineText)) {
+          return false;
+        }
+        const textLineLessThanBase = lineText.length < config.of.blockCommentCharacterBoundaryBaseLength;
+        const textLineBiggerThanBaseAndTolerance = lineText.length > config.of.blockCommentCharacterBoundaryBaseLength + config.of.blockCommentCharacterBoundaryToleranceLength;
+        if (textLineBiggerThanBaseAndTolerance || textLineLessThanBase) {
+          return true;
+        }
+        return false;
+      };
+      const continueCheck = (line) => {
+        return LineUtil.isJSdocTag(line.text);
+      };
+      const trueConditionTask = (line) => {
+        lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/).filter((s) => s.length > 0));
+      };
+      const lineIteration = this.iterateNextLine(lineRange, lineCondition, continueCheck, trueConditionTask);
+      for (const str of lineTextInArray) {
+        if (newLine.length - 1 > config.of.blockCommentCharacterBoundaryBaseLength) {
+          newString += newLine.trimEnd() + this.getEndofLine();
+          newLine = indentString;
+        }
+        newLine += str + " ";
+      }
+      newString += newLine.trimEnd() + this.getEndofLine();
+      if (lineIteration) {
+        const newRange = new vscode5.Range(
+          new vscode5.Position(range.start.line, startPosition),
+          new vscode5.Position(lineIteration.lineNumber, 0)
+        );
+        if (this.#checkIfRangeTextIsEqual(newRange, newString)) {
           return;
         }
-        const trueConditionCallback = (line) => {
-          lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/));
-        };
-        const lineIteration = this.iterateNextLine(
-          range,
-          LineUtil.isBlockCommentWithCharacter,
-          LineUtil.isJSdocTag,
-          null,
-          trueConditionCallback
-        );
-        let newString = "";
-        let newLine = indentString;
-        for (const [index, str] of lineTextInArray.entries()) {
-          if (str.length > 0) {
-            if (newLine.length - 1 > config.of.blockCommentCharacterBoundaryBaseLength) {
-              newString += newLine + this.getEndofLine();
-              newLine = indentString + str;
-            } else {
-              newLine += str + " ";
-            }
-            if (index === lineTextInArray.length - 1) {
-              newString += newLine + this.getEndofLine();
-            }
-            console.log(newString);
-            console.log(newLine);
+        return {
+          name: "blockCommentWordCountJustifyAlign",
+          range: newRange,
+          type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
+          string: newString,
+          block: {
+            lineSkip: lineIteration.lineSkip,
+            priority: LineType.LineEditBlockPriority.HIGH
           }
-        }
-        console.log(lineIteration);
-        if (lineIteration) {
-          return {
-            name: "blockCommentWordCountJustifyAlign",
-            range: new vscode5.Range(
-              new vscode5.Position(range.start.line, 0),
-              new vscode5.Position(lineIteration.lineNumber, 0)
-            ),
-            type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
-            string: newString,
-            block: {
-              lineSkip: lineIteration.lineSkip,
-              priority: LineType.LineEditBlockPriority.HIGH
-            }
-          };
-        }
+        };
       }
       return;
     }
@@ -1548,9 +1495,25 @@ var LineHandler = class extends Line {
   /**
    * @param range
    * @returns
+   * 
    */
-  genericFixBlockCommentLine = (range) => {
-    return;
+  fixBrokenBlockCommnet = (range) => {
+    const prevTextLine = this.getTextLineFromRange(range, -1);
+    const currTextLine = this.getTextLineFromRange(range);
+    const nextTextLine = this.getTextLineFromRange(range, 1);
+    const isPrevBlockCommentStartingLine = LineUtil.isBlockCommentStartingLine(prevTextLine.text);
+    const isCurrBlockCommentStartingLine = LineUtil.isBlockCommentStartingLine(currTextLine.text);
+    const isNextLineBlockComment = LineUtil.isBlockComment(currTextLine.text);
+    const isNextLineEmptyLine = LineUtil.isBlockCommentStartingLine(currTextLine.text);
+    const isNextLineNotBlockCommenNonWhitespace = LineUtil.isBlockCommentStartingLine(currTextLine.text);
+    LineUtil.isBlockCommentStartingLineWithCharacter(prevTextLine.text);
+    if (config.of.blockCommentWordCountJustifyAlign) {
+    } else {
+    }
+    return {
+      range,
+      string: ""
+    };
   };
   /**
    * funciton to print current datetime where the cursor is.
@@ -1590,6 +1553,7 @@ var EditorCommand = class {
   // > PUBLIC FUNCTIONS:
   // =============================================================================
   execute = (command, commandOption) => {
+    console.clear();
     this.#activeEditor.prepareEdit(command, commandOption);
   };
   /**
@@ -1604,7 +1568,7 @@ var EditorCommand = class {
   };
   /**
    * removes trailing whitespace from the line.
-   *
+   * 
    * @param editor unused, future reference
    * @param edit unused, future reference
    * @param args unused, future reference
@@ -1717,14 +1681,14 @@ var EditorCommand = class {
       }
     } : void 0;
   };
-  genericFixBlockCommentLine = () => {
-    return {
-      func: this.#lineHandler.genericFixBlockCommentLine,
-      type: LineType.LineEditType.REPLACE | LineType.LineEditType.DELETE,
+  fixBrokenBlockCommnet = () => {
+    return !config.of.blockCommentWordCountJustifyAlign ? {
+      func: this.#lineHandler.fixBrokenBlockCommnet,
+      type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
       block: {
         priority: LineType.LineEditBlockPriority.HIGH
       }
-    };
+    } : void 0;
   };
   removeEmptyLinesBetweenBlockCommantAndCode = () => {
     return {
@@ -1776,6 +1740,7 @@ var EditorCommandGroup = class extends EditorCommand {
       this.removeMultipleEmptyBlockCommentLine(),
       this.insertEmptyBlockCommentLineOnEnd(),
       this.blockCommentWordCountJustifyAlign(),
+      // this.fixBrokenBlockCommnet(),
       this.removeEmptyLinesBetweenBlockCommantAndCode()
     ].filter((fn) => fn !== void 0);
   };
