@@ -2,16 +2,22 @@ import * as vscode from "vscode";
 import packageInfo from '../../package.json' assert { type: 'json' };
 import { EventEmitter } from 'events';
 import { config } from "../common/config";
-import { promises } from "dns";
+import { BaseHandler } from "./Handler/BaseHandler";
+import { LineHandler } from "./Handler/LineHandler";
+import { CommentHandler } from "./Handler/CommentHandler";
 
 enum EventKind {
     AUTO_TRIGGER_ON_SAVE_SWITCH = 'AUTO_TRIGGER_ON_SAVE_SWITCH',
+    ACTIVE_EDITOR_CHANGED = 'ACTIVE_EDITOR_CHANGED',
 }
 
 /**
  * EventEmitter is maybe an overkill but to make it expendable in future.
  * thus, this will be a good template to work on for async events in future.
  * <-- here is bug
+ * 
+ * 한가지 확실한건, 만일 에디터가 변하면 베이스 핸들러가 이벤트를 받아야 한다는거다
+ * EventEmitter 가 있는건 좋은데, 베이스 핸들러한테 관련없는 이벤트들이 너무 많다는거다
  * 
  */
 class Event extends EventEmitter {
@@ -60,7 +66,9 @@ class Event extends EventEmitter {
     public onDidChangeActiveTextEditor = (editorCommandGroup: vscode.Disposable[]): vscode.Disposable => {
         return vscode.window.onDidChangeActiveTextEditor((editor) => {
             if (editor) {
-                editorCommandGroup;
+                BaseHandler.loadEditor();
+                // LineHandler.setEditor(editor);
+                // CommentHandler.setEditor(editor);
             }
         });
     };

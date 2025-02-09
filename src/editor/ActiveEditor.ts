@@ -4,10 +4,12 @@
  */
 import * as vscode from 'vscode';
 import { config } from "../common/config";
-import { LineType } from './Handler/Line';
+import { Line } from './Collection/Line';
 import { LineHandler } from './Handler/LineHandler';
 import { EditorCommandParameterType } from './EditorCommand';
 import { eventInstance, EventKind } from '../editor/Event';
+import { LineType } from "../type/LineType";
+import { BaseHandler } from "./Handler/BaseHandler";
 
 type CursorRepositionType = {
     moveUp: number,
@@ -18,7 +20,7 @@ export class ActiveEditor {
     // unused. for future reference.
     #editorText: string;
     #editor: vscode.TextEditor;
-    #lineHandler: InstanceType<typeof LineHandler>;
+    // #lineHandler: InstanceType<typeof LineHandler>;
     #cursorLine: number;
     #cursorPosition: number;
     #cursorReposition: CursorRepositionType;
@@ -35,12 +37,10 @@ export class ActiveEditor {
      * 
      */
     #setActiveEditor = (): void => {
-
         const activeEditor = vscode.window.activeTextEditor;
-        
         if (activeEditor) {
+            BaseHandler.loadEditor();
             this.#editor = activeEditor;
-            this.#lineHandler.setCurrentDocument(this.#editor);
             this.#cursorSelection = this.#editor.selections[this.#editor.selections.length - 1];
             this.#cursorLine = this.#cursorSelection.end.line;
             this.#cursorPosition = this.#cursorSelection.end.character;
@@ -54,7 +54,7 @@ export class ActiveEditor {
      */
     #selectionReset = (): void => {
 
-        let resetLine : number = 0;
+        let resetLine: number = 0;
 
         if (this.#cursorReposition.moveUp !== 0 || this.#cursorReposition.moveDown !== 0) {
             resetLine = this.#cursorLine + this.#cursorReposition.moveUp - this.#cursorReposition.moveDown;
@@ -122,7 +122,7 @@ export class ActiveEditor {
      * 
      */
     #editSwitch = (edit: LineType.LineEditInfo, editBuilder: vscode.TextEditorEdit): void => {
-        console.log(edit)
+        console.log(edit);
         if (edit.type) {
             if (edit.type & LineType.LineEditType.DELETE) {
                 if (!edit.range.isSingleLine) {
@@ -140,7 +140,7 @@ export class ActiveEditor {
                 editBuilder.delete(edit.range);
             }
             if (edit.type & LineType.LineEditType.CLEAR) {
-                editBuilder.delete(this.#lineHandler.lineFullRange(edit.range));
+                editBuilder.delete(Line.lineFullRange(edit.range));
             }
             if (edit.type & LineType.LineEditType.APPEND) {
                 editBuilder.insert(edit.range.start, edit.string ?? '');
@@ -168,7 +168,7 @@ export class ActiveEditor {
      * 
      */
     public setLineHandler = (lineHandler: LineHandler): void => {
-        this.#lineHandler = lineHandler;
+        // this.#lineHandler = lineHandler;
     };
 
     /**
@@ -204,11 +204,11 @@ export class ActiveEditor {
                     new vscode.Position(0, 0),
                     new vscode.Position(this.#editor.document.lineCount - 1, 0)
                 );
-                editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+                editSchedule.push(...this.prepareLines(range, callback));
             } else {
                 const selections = this.#editor.selections;
                 selections.forEach((range: vscode.Range) => {
-                    editSchedule.push(...this.#lineHandler.prepareLines(range, callback));
+                    editSchedule.push(...this.prepareLines(range, callback));
                 });
             }
 
@@ -223,6 +223,165 @@ export class ActiveEditor {
                 console.log('No edit found.');
             }
         }
+    };
+
+    /**
+     * this private function is a wrap and shape the return object for
+     * each callback for a line. the function will take current range with
+     * callback and execute to get the information how to edit the line,
+     * which described in object with type of LineEditInfo. this is where
+     * the default blocking value will be set to block additional edit
+     * on line; default for blocking the edit is true, and it is false
+     * if it is not defined in callback object.
+     *
+     * this means that only a function with block:true will be executed
+     * and every other callbacks will be drop for the further.
+     *
+     * @param currntRange
+     * @param fn
+     * @param _lineEdit_
+     * @returns LineType.LineEditInfo | undefined
+     *
+     */
+    #editedLineInfo = (currntRange: vscode.Range, fn: LineType.LineEditDefintion): LineType.LineEditInfo | undefined => {
+        const editInfo: LineType.LineEditInfo | undefined = fn.func(currntRange);
+        if (editInfo) {
+            // edit type override if required.
+            if (fn.block || editInfo.block) {
+                return <LineType.LineEditInfo>{
+                    name: editInfo.name,
+                    range: editInfo.range,
+                    string: editInfo?.string,
+                    type: editInfo.type ? editInfo.type : fn.type,
+                    block: {
+                        priority: editInfo.block?.priority ? editInfo.block?.priority : fn.block?.priority,
+                        lineSkip: editInfo.block?.lineSkip
+                    }
+                };
+            } else {
+                return <LineType.LineEditInfo>{
+                    ...editInfo,
+                    type: editInfo.type ? editInfo.type : fn.type,
+                };
+            }
+        }
+    };
+
+    /**
+     * this is the mian loop to iterate the callbacks that are defined
+     * from command class. there is a object key named block. when the
+     * property block is true, it will drop all the added edit, and assign
+     * itself and stops further iteration to prevent no more changes to
+     * be applied to when the for loop is finished, it will be stacked
+     * into _line_edit_
+     *
+     * this iteration could well have been done in array.reduce but it
+     * does unnecessary exection in the iteartion. so thats why it is for
+     * loop.
+     *
+     * @param range
+     * @param callback
+     * @returns LineType.LineEditInfo[]
+     * 
+     */
+    #handleLineEdit = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
+        let currentLineEdit: LineType.LineEditInfo[] = [];
+        let priority = LineType.LineEditBlockPriority.UNSET;
+        let blockFlag: boolean = false;
+        for (const fn of callback) {
+            const result: LineType.LineEditInfo | undefined = this.#editedLineInfo(range, fn);
+            if (result) {
+                if (result.block) {
+                    if (result.block.priority > priority) {
+                        currentLineEdit = [result];
+                        priority = result.block.priority;
+                        blockFlag = true;
+                    }
+                } else if (!blockFlag) {
+                    currentLineEdit.push(result);
+                }
+            }
+        }
+        return currentLineEdit;
+    };
+    /**
+     * this funciton will iterate each line and stack the line edit object.
+     * iteration will continue unitl the current line number is less than
+     * less than line number of the each selection. the range at this point
+     * of will represent a single range and not entire document. callback
+     * will be a list of callbacks to check/apply to each line. _lineEdit_
+     * variable are being used as a references so no direct assignement
+     * becuase the is what this function will return upon the end of the
+     * iteration.
+     *
+     * there is a for loop that will iterate each every callback. the problem
+     * with js array api is it lacks handling the undefined value being
+     * in api functions rather, you have to chain them. using array api
+     * in object (becuase it is what it needs to iterate on), the type
+     * mismatch forces to return either a typed object or undefined becasuse
+     * the will have a return type. this means the reseult of the iteration
+     * will contain undefiend item if callback returns undefined and it
+     * 
+     * makes to iterate twice to filter them for each every line. further
+     * 
+     * explanation continues
+     *
+     * @param range
+     * @param callback
+     * @param currentLineNumber
+     * @param _lineEdit_
+     * @returns IterateLineType[]
+     *
+     */
+    #lineIteration = (range: vscode.Range, callback: LineType.LineEditDefintion[], currentLineNumber: number, _lineEdit_: LineType.LineEditInfo[], lineSkip?: Set<number>): LineType.LineEditInfo[] => {
+        lineSkip = lineSkip ?? new Set();
+
+        while (currentLineNumber <= range.end.line) {
+            if (lineSkip.has(currentLineNumber)) {
+                currentLineNumber++;
+                continue;
+            }
+
+            const currentLineEdit = this.#handleLineEdit(Line.lineFullRange(currentLineNumber), callback);
+            if (currentLineEdit.length > 0) {
+                if (currentLineEdit[0].block) {
+                    if (currentLineEdit[0].block.lineSkip) {
+                        currentLineEdit[0].block.lineSkip.forEach(line => lineSkip.add(line));
+                    }
+                }
+                _lineEdit_.push(...currentLineEdit);
+            }
+            currentLineNumber++;
+        }
+        return _lineEdit_;
+
+    };
+    /**
+     * take range as a single selection that could be a single line, empty
+     * (cursor only) or mulitple lines. the callback will be defined in
+     * Command.ts. this function will return either a single LineEditInfo
+     * or array of them to schedule the document edit. if the selection
+     * is either of empty (whitespaces only) or a single line, the range
+     * should be the whole line.
+     *
+     * @param range
+     * @param callback
+     * @returns
+     *
+     */
+    public prepareLines = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
+        const targetLine = range.start.line;
+
+        // on each selection, starting line is: isEmpty or if selection is singleLine
+        if (range.isEmpty || range.isSingleLine) {
+            return this.#handleLineEdit(Line.lineFullRange(targetLine), callback);
+        }
+
+        return this.#lineIteration(
+            range,
+            callback,
+            targetLine,
+            <LineType.LineEditInfo[]>[]);
     };
 
     /**

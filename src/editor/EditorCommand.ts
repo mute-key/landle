@@ -8,8 +8,10 @@
  * 
  */
 import { ActiveEditor } from "./ActiveEditor";
-import { LineType } from "./Handler/Line";
 import { LineHandler } from "./Handler/LineHandler";
+import { CommentHandler } from "./Handler/CommentHandler";
+import { LineType } from "../type/LineType";
+
 import { config } from "../common/config";
 import packageInfo from '../../package.json' assert { type: 'json' };
 
@@ -35,12 +37,11 @@ export const editorCommandId: string[] = (() => {
  */
 export class EditorCommand {
     #activeEditor: InstanceType<typeof ActiveEditor>;
-    #lineHandler: InstanceType<typeof LineHandler>;
-
+    // #lineHandler: InstanceType<typeof LineHandler>;
+    // #commentHandler: InstanceType<typeof CommentHandler>;
+    
     constructor() {
-        this.#lineHandler = new LineHandler();
         this.#activeEditor = new ActiveEditor();
-        this.#activeEditor.setLineHandler(this.#lineHandler);
     }
 
     // =============================================================================
@@ -48,7 +49,7 @@ export class EditorCommand {
     // =============================================================================
 
     public execute = (command: LineType.LineEditDefintion[], commandOption: EditorCommandParameterType): void => {
-        console.clear();
+        console.clear()
         this.#activeEditor.prepareEdit(command, commandOption);
     };
 
@@ -58,7 +59,7 @@ export class EditorCommand {
      */
     public removeDocumentStartingEmptyLine = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeDocumentStartingEmptyLine,
+            func: LineHandler.removeDocumentStartingEmptyLine,
             type: LineType.LineEditType.DELETE
         };
     };
@@ -73,7 +74,7 @@ export class EditorCommand {
      */
     public removeTrailingWhitespaceFromSelection = (editor?, edit?, args?): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeTrailingWhiteSpace,
+            func: LineHandler.removeTrailingWhiteSpace,
             type: LineType.LineEditType.DELETE
         };
     };
@@ -86,7 +87,7 @@ export class EditorCommand {
      */
     public removeMulitpleEmptyLinesFromSelection = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeMulitpleEmptyLine,
+            func: LineHandler.removeMulitpleEmptyLine,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.MID
@@ -101,7 +102,7 @@ export class EditorCommand {
      */
     public removeMultipleWhitespaceFromSelection = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeMultipleWhitespace,
+            func: LineHandler.removeMultipleWhitespace,
             type: LineType.LineEditType.REPLACE,
         };
     };
@@ -113,7 +114,7 @@ export class EditorCommand {
      */
     public removeEmptyLinesFromSelection = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeEmptyLine,
+            func: LineHandler.removeEmptyLine,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.LOW
@@ -128,7 +129,7 @@ export class EditorCommand {
      */
     public removeCommentedTextFromSelection = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeCommentedLine,
+            func: LineHandler.removeCommentedLine,
             type: LineType.LineEditType.DELETE,
         };
     };
@@ -140,7 +141,7 @@ export class EditorCommand {
      */
     public removeDuplicateLineFromSelection = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeDuplicateLine,
+            func: LineHandler.removeDuplicateLine,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.LOW
@@ -150,7 +151,7 @@ export class EditorCommand {
 
     public removeEmptyBlockCommentLineOnStart = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeEmptyBlockCommentLineOnStart,
+            func: CommentHandler.removeEmptyBlockCommentLineOnStart,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.VERYHIGH
@@ -160,7 +161,7 @@ export class EditorCommand {
 
     public removeMultipleEmptyBlockCommentLine = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeMultipleEmptyBlockCommentLine,
+            func: CommentHandler.removeMultipleEmptyBlockCommentLine,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.HIGH
@@ -170,7 +171,7 @@ export class EditorCommand {
 
     public insertEmptyBlockCommentLineOnEnd = (): LineType.LineEditDefintion | undefined => {
         return config.of.addExtraLineAtEndOnBlockComment ? {
-            func: this.#lineHandler.insertEmptyBlockCommentLineOnEnd,
+            func: CommentHandler.insertEmptyBlockCommentLineOnEnd,
             type: LineType.LineEditType.APPEND,
             block: {
                 priority: LineType.LineEditBlockPriority.LOW
@@ -180,7 +181,7 @@ export class EditorCommand {
 
     public blockCommentWordCountJustifyAlign = (): LineType.LineEditDefintion | undefined => {
         return config.of.blockCommentWordCountJustifyAlign ? {
-            func: this.#lineHandler.blockCommentWordCountJustifyAlign,
+            func: CommentHandler.blockCommentWordCountJustifyAlign,
             type: LineType.LineEditType.REPLACE,
             block: {
                 priority: LineType.LineEditBlockPriority.HIGH
@@ -188,19 +189,19 @@ export class EditorCommand {
         } : undefined;
     };
 
-    public fixBrokenBlockCommnet = (): LineType.LineEditDefintion | undefined => {
-        return !config.of.blockCommentWordCountJustifyAlign ? {
-            func: this.#lineHandler.fixBrokenBlockCommnet,
-            type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
-            block: {
-                priority: LineType.LineEditBlockPriority.HIGH
-            }
-        } : undefined;
-    };
+    // public fixBrokenBlockCommnet = (): LineType.LineEditDefintion | undefined => {
+    // return !config.of.blockCommentWordCountJustifyAlign ? {
+    // func: CommentHandler.fixBrokenBlockCommnet,
+    // type: LineType.LineEditType.DELETE + LineType.LineEditType.APPEND,
+    // block: {
+    // priority: LineType.LineEditBlockPriority.HIGH
+    // }
+    // } : undefined;
+    // };
 
     public removeEmptyLinesBetweenBlockCommantAndCode = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.removeEmptyLinesBetweenBlockCommantAndCode,
+            func: CommentHandler.removeEmptyLinesBetweenBlockCommantAndCode,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.HIGH
@@ -210,7 +211,7 @@ export class EditorCommand {
 
     public printNowDateTimeOnSelection = (): LineType.LineEditDefintion => {
         return {
-            func: this.#lineHandler.setNowDateTimeOnLine,
+            func: LineHandler.setNowDateTimeOnLine,
             type: LineType.LineEditType.APPEND,
         };
     };

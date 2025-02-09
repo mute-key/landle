@@ -441,12 +441,12 @@ var LineType;
   })(RangeKind = LineType2.RangeKind || (LineType2.RangeKind = {}));
   let LineEditBlockPriority;
   ((LineEditBlockPriority2) => {
-    LineEditBlockPriority2[LineEditBlockPriority2["UNSET"] = 1] = "UNSET";
-    LineEditBlockPriority2[LineEditBlockPriority2["LOW"] = 2] = "LOW";
-    LineEditBlockPriority2[LineEditBlockPriority2["MID"] = 4] = "MID";
-    LineEditBlockPriority2[LineEditBlockPriority2["HIGH"] = 8] = "HIGH";
-    LineEditBlockPriority2[LineEditBlockPriority2["VERYHIGH"] = 16] = "VERYHIGH";
-    LineEditBlockPriority2[LineEditBlockPriority2["SKIPLINE"] = 32] = "SKIPLINE";
+    LineEditBlockPriority2[LineEditBlockPriority2["UNSET"] = 0] = "UNSET";
+    LineEditBlockPriority2[LineEditBlockPriority2["LOW"] = 1] = "LOW";
+    LineEditBlockPriority2[LineEditBlockPriority2["MID"] = 2] = "MID";
+    LineEditBlockPriority2[LineEditBlockPriority2["HIGH"] = 3] = "HIGH";
+    LineEditBlockPriority2[LineEditBlockPriority2["VERYHIGH"] = 4] = "VERYHIGH";
+    LineEditBlockPriority2[LineEditBlockPriority2["SKIP_LINE"] = 5] = "SKIP_LINE";
   })(LineEditBlockPriority = LineType2.LineEditBlockPriority || (LineType2.LineEditBlockPriority = {}));
 })(LineType || (LineType = {}));
 var Line = class {
@@ -544,7 +544,7 @@ var Line = class {
    */
   #handleLineEdit = (range, callback) => {
     let currentLineEdit = [];
-    let priority = 1 /* UNSET */;
+    let priority = 0 /* UNSET */;
     let blockFlag = false;
     for (const fn of callback) {
       const result = this.#editedLineInfo(range, fn);
@@ -678,19 +678,25 @@ var Line = class {
       new vscode3.Position(lineNuber, endPosition)
     );
   };
-  iterateNextLine = (range, lineCondition, continueCheck, trueConditionTask) => {
+  iterateNextLine = (range, lineCondition, continueCheck, trueConditionTask, lineModifiyTask) => {
     let lineNumber = range.start.line;
     let currTextLine;
     let condition = true;
+    let lineMod = "";
     const lineSkip = [];
     const lineCount = this.doc.lineCount;
     while (lineNumber < lineCount) {
-      currTextLine = this.getTextLineFromRange(lineNumber);
+      currTextLine = this.getTextLineFromRange(lineNumber).text;
+      lineMod = lineModifiyTask?.(currTextLine);
+      if (lineMod) {
+        currTextLine = lineMod;
+      }
       if (typeof lineCondition === "function") {
         condition = lineCondition(currTextLine);
       }
       if (!condition) {
         break;
+      } else {
       }
       lineSkip.push(lineNumber);
       lineNumber++;
@@ -1079,7 +1085,7 @@ var LineHandler = class extends Line {
   removeDocumentStartingEmptyLine = (range) => {
     let lineNumber = range.start.line;
     if (lineNumber === 0) {
-      const lineIteration = this.iterateNextLine(range, (line) => line.isEmptyOrWhitespace);
+      const lineIteration = this.iterateNextLine(range, (line) => line.trim().length === 0);
       if (lineIteration) {
         return {
           name: "removeDocumentStartingEmptyLine",
@@ -1294,7 +1300,7 @@ var LineHandler = class extends Line {
     const beforeLine = this.getTextLineFromRange(range, -1);
     const blockCommentStart = LineUtil.isBlockCommentStartingLine(beforeLine.text);
     if (blockCommentStart && LineUtil.isEmptyBlockComment(currentLine.text)) {
-      const lineIteration = this.iterateNextLine(range, (line) => LineUtil.isEmptyBlockComment(line.text));
+      const lineIteration = this.iterateNextLine(range, (line) => LineUtil.isEmptyBlockComment(line));
       if (lineIteration) {
         return {
           name: "removeEmptyBlockCommentLineOnStart",
@@ -1369,7 +1375,7 @@ var LineHandler = class extends Line {
     const currentTextLine = this.getTextLineFromRange(range);
     const previousTextLine = this.getTextLineFromRange(range, -1);
     if (currentTextLine.isEmptyOrWhitespace && LineUtil.isBlockCommentEndingLine(previousTextLine.text)) {
-      const lineIteration = this.iterateNextLine(range, (line) => line.isEmptyOrWhitespace);
+      const lineIteration = this.iterateNextLine(range, (line) => line.trim().length === 0);
       if (lineIteration) {
         return {
           name: "removeEmptyLinesBetweenBlockCommantAndCode",
@@ -1430,22 +1436,27 @@ var LineHandler = class extends Line {
         );
       }
       const lineCondition = (line) => {
-        let lineText = line.text;
-        if (LineUtil.isEmptyBlockComment(lineText)) {
+        let lineText = line;
+        if (LineUtil.isEmptyBlockComment(line)) {
           return false;
         }
-        const cond1 = LineUtil.isBlockCommentWithCharacter(lineText);
-        const cond2 = LineUtil.isBlockCommentStartingLineWithCharacter(lineText);
+        if (LineUtil.isBlockCommentEndingLine(line)) {
+          return false;
+        }
+        const cond1 = LineUtil.isBlockCommentWithCharacter(line);
+        const cond2 = LineUtil.isBlockCommentStartingLineWithCharacter(line);
         if (cond1 || cond2) {
           const fixedLine = this.fixBrokenBlockCommnet(range);
           if (fixedLine && fixedLine.string) {
-            lineText = fixedLine.string;
             return true;
           }
           return true;
         }
-        if (LineUtil.checkBlockCommentNeedSkip(lineText)) {
-          return false;
+        if (LineUtil.checkBlockCommentNeedSkip(line)) {
+          return true;
+        }
+        if (LineUtil.isJSdocTag(line)) {
+          return true;
         }
         const textLineLessThanBase = lineText.length < config.of.blockCommentCharacterBoundaryBaseLength;
         const textLineBiggerThanBaseAndTolerance = lineText.length > config.of.blockCommentCharacterBoundaryBaseLength + config.of.blockCommentCharacterBoundaryToleranceLength;
@@ -1455,12 +1466,15 @@ var LineHandler = class extends Line {
         return false;
       };
       const continueCheck = (line) => {
-        return LineUtil.isJSdocTag(line.text);
+        return LineUtil.isEmptyBlockComment(line);
       };
       const trueConditionTask = (line) => {
-        lineTextInArray.push(...line.text.replaceAll("*", "").trim().split(/\s+/).filter((s) => s.length > 0));
+        lineTextInArray.push(...line.replaceAll("*", "").trim().split(/\s+/).filter((s) => s.length > 0));
       };
-      const lineIteration = this.iterateNextLine(lineRange, lineCondition, continueCheck, trueConditionTask);
+      const lineModTask = (line) => {
+        return "";
+      };
+      const lineIteration = this.iterateNextLine(lineRange, lineCondition, continueCheck, trueConditionTask, lineModTask);
       for (const str of lineTextInArray) {
         if (newLine.length - 1 > config.of.blockCommentCharacterBoundaryBaseLength) {
           newString += newLine.trimEnd() + this.getEndofLine();
