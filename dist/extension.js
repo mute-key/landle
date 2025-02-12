@@ -1366,7 +1366,6 @@ var Comment = class extends Line {
    */
   static blockCommentAligned = (range, line) => {
     if (line) {
-      console.log(line);
       let indentIndex = 0;
       let indentString = "";
       let baseLine = range.start.line;
@@ -1434,7 +1433,6 @@ var Comment = class extends Line {
         }
       }
       newString.unshift("/**".padStart(indentIndex + 3, " ") + this.getEndOfLine());
-      console.log("newString", newString);
       const newRange = new vscode7.Range(
         new vscode7.Position(range.start.line, 0),
         new vscode7.Position(range.start.line + line.length + 1, 0)
@@ -1656,10 +1654,7 @@ var CommentHandler = class extends BaseHandler {
     const nextLineIsBlockCommend = LineUtil.isEmptyBlockComment(nextTextLine.text);
     const currLineIsBlockCommend = LineUtil.isEmptyBlockComment(currTextLine.text);
     const prevLineblockCommentStart = LineUtil.isBlockCommentStartingLine(prevTextLine.text);
-    const isNextLineBlockCommentClose = LineUtil.isBlockCommentEndingLine(nextTextLine.text);
-    const isCurrLineJsDoc = LineUtil.isJSdocTag(nextTextLine.text);
     if (currLineIsBlockCommend && nextLineIsBlockCommend && !prevLineblockCommentStart) {
-      console.log("removeMultipleEmptyBlockCommentLine1", currTextLine.lineNumber);
       return {
         name: "removeMultipleEmptyBlockCommentLine",
         range: Line.lineFullRangeWithEOL(range)

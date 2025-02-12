@@ -26,7 +26,6 @@ export abstract class Comment extends Line {
              * this code block need to do too much at this point imo.
              * 
              */
-            console.log(line)
             let indentIndex = 0;
             let indentString = '';
             let baseLine = range.start.line;
@@ -59,7 +58,6 @@ export abstract class Comment extends Line {
                 if (line.length === 0) {
                     return [Line.getEndOfLine()];
                 } else {
-                    // .push(Line.getEndOfLine())
                     const splitLine = line.split(/\s+/);
                     splitLine.push(Line.getEndOfLine());
                     return splitLine;
@@ -127,8 +125,6 @@ export abstract class Comment extends Line {
             // if (config.of.addExtraLineAtEndOnBlockComment) {
             // newString.push(indentString + this.getEndOfLine());
             // }
-
-            console.log('newString', newString);
 
             const newRange = new vscode.Range(
                 new vscode.Position(range.start.line, 0),

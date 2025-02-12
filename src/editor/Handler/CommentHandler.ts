@@ -55,12 +55,7 @@ export abstract class CommentHandler extends BaseHandler {
         const currLineIsBlockCommend: boolean = LineUtil.isEmptyBlockComment(currTextLine.text);
         const prevLineblockCommentStart: boolean = LineUtil.isBlockCommentStartingLine(prevTextLine.text);
 
-        const isNextLineBlockCommentClose = LineUtil.isBlockCommentEndingLine(nextTextLine.text);
-        const isCurrLineJsDoc = LineUtil.isJSdocTag(nextTextLine.text);
-
         if (currLineIsBlockCommend && nextLineIsBlockCommend && !prevLineblockCommentStart) {
-            // && !isNextLineBlockCommentClose
-            console.log('removeMultipleEmptyBlockCommentLine1', currTextLine.lineNumber);
             return {
                 name: 'removeMultipleEmptyBlockCommentLine',
                 range: Line.lineFullRangeWithEOL(range)
