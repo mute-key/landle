@@ -253,7 +253,6 @@
                     "default": true,
                     "description": "Add empty block comment in between Annotations."
                 }
-                
             }
         }
     },

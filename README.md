@@ -147,6 +147,16 @@ Shortcut key : __`ctrl + alt + a`__<br>
 
 <br>
 
+************************************************************************************************************************************
+
+> Command -> __fixBrokenBlockComment__<br>
+
+Shortcut key : __`ctrl + alt + f`__<br>
+
+- fix any broken block comment line
+
+<img src="https://github.com/mute-key/landle/blob/main/demo/fixBrokenBlockComment.gif" alt ="GIF" style="border: solid 3px black" height ="280">
+
 ## Commands group
 
 Here are the list of commands that combined multiple commands.

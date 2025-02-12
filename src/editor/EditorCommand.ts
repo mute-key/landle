@@ -187,13 +187,13 @@ export class EditorCommand {
     };
 
     public fixBrokenBlockComment = (): LineType.LineEditDefintion | undefined => {
-        return !config.of.blockCommentWordCountJustifyAlign ? {
+        return {
             func: CommentHandler.fixBrokenBlockComment,
             type: LineType.LineEditType.DELETE,
             block: {
                 priority: LineType.LineEditBlockPriority.VERYHIGH
             }
-        } : undefined;
+        };
     };
 
     public removeEmptyLinesBetweenBlockCommantAndCode = (): LineType.LineEditDefintion => {

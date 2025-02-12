@@ -86,7 +86,7 @@ export abstract class Comment extends Line {
                         if (LineUtil.isJSdocTag(newLine)) {
                             annotationLine = true;
                         }
-    
+
                         if (annotationLine) {
                             if (newLine === indentString) {
                                 continue;
@@ -122,9 +122,9 @@ export abstract class Comment extends Line {
             // }
             // }
 
-            // if (config.of.addExtraLineAtEndOnBlockComment) {
-            // newString.push(indentString + this.getEndOfLine());
-            // }
+            if (config.of.addExtraLineAtEndOnBlockComment) {
+                newString.push(indentString + this.getEndOfLine());
+            }
 
             const newRange = new vscode.Range(
                 new vscode.Position(range.start.line, 0),

@@ -367,18 +367,21 @@ export class ActiveEditor {
         return _lineEdit_;
 
     };
+    
     /**
      * take range as a single selection that could be a single line, empty
-     * (cursor only) or mulitple lines. the callback will be defined in
-     * Command.ts. this function will return either a single LineEditInfo
-     * or array of them to schedule the document edit. if the selection
-     * is either of empty (whitespaces only) or a single line, the range
-     * should be the whole line.
-     *
+     * (cursor only) or mulitple lines. this function will return LineEditInfo
+     * array to schedule the document edit.
+     * 
+     * 
+     * 
+     * 
      * @param range
      * @param callback
      * @returns
      *
+     * 
+     * 
      */
     public prepareLines = (range: vscode.Range, callback: LineType.LineEditDefintion[]): LineType.LineEditInfo[] => {
         const targetLine = range.start.line;
@@ -396,6 +399,7 @@ export class ActiveEditor {
     };
 
     /**
+     * performes aysnc edit and aplit it all at once they are complete.
      * performes aysnc edit and aplit it all at once they are complete.
      * 
      * @param lineCallback collecion of edits for the document how and where to edit.

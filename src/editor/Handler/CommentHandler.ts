@@ -153,13 +153,9 @@ export abstract class CommentHandler extends BaseHandler {
     };
 
     public static fixBrokenBlockComment = (range: vscode.Range): LineType.LineEditInfo | undefined => {
-
         const currTextLine: vscode.TextLine = Line.getTextLineFromRange(range);
-
         if (LineUtil.isBlockCommentStartingLine(currTextLine.text)) {
-
             const fixedComment = Comment.fixedBlockComment(range, currTextLine.text.indexOf('/*'));
-
             if (fixedComment) {
                 return {
                     name: 'fixBrokenBlockCommnet',
@@ -188,12 +184,10 @@ export abstract class CommentHandler extends BaseHandler {
     public static blockCommentWordCountJustifyAlign = (range: vscode.Range): LineType.LineEditInfo | undefined => {
         const fixedBlockComment = this.fixBrokenBlockComment(range);
         if (fixedBlockComment) {
-            // console.log(fixedBlockComment, fixedBlockComment.string?.split(Line.getEndofLine()).filter(s => s.length > 0))
             return Comment.blockCommentAligned(range, fixedBlockComment.string?.split(Line.getEndOfLine()).filter(s => s.length > 0));
         } else {
             return Comment.blockCommentAligned(range);
         }
-
         return;
     };
 }

@@ -1433,6 +1433,9 @@ var Comment = class extends Line {
         }
       }
       newString.unshift("/**".padStart(indentIndex + 3, " ") + this.getEndOfLine());
+      if (config.of.addExtraLineAtEndOnBlockComment) {
+        newString.push(indentString + this.getEndOfLine());
+      }
       const newRange = new vscode7.Range(
         new vscode7.Position(range.start.line, 0),
         new vscode7.Position(range.start.line + line.length + 1, 0)
@@ -1905,13 +1908,13 @@ var EditorCommand = class {
     } : void 0;
   };
   fixBrokenBlockComment = () => {
-    return !config.of.blockCommentWordCountJustifyAlign ? {
+    return {
       func: CommentHandler.fixBrokenBlockComment,
       type: LineType.LineEditType.DELETE,
       block: {
         priority: LineType.LineEditBlockPriority.VERYHIGH
       }
-    } : void 0;
+    };
   };
   removeEmptyLinesBetweenBlockCommantAndCode = () => {
     return {
@@ -1963,7 +1966,6 @@ var EditorCommandGroup = class extends EditorCommand {
       this.removeMultipleEmptyBlockCommentLine(),
       this.insertEmptyBlockCommentLineOnEnd(),
       this.blockCommentWordCountJustifyAlign(),
-      this.fixBrokenBlockComment(),
       this.removeEmptyLinesBetweenBlockCommantAndCode()
     ].filter((fn) => fn !== void 0);
   };
