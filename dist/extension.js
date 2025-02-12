@@ -44,7 +44,7 @@ var package_default = {
   publisher: "mutekey",
   displayName: "landle",
   description: "Generic code clean up extension",
-  version: "0.9.2077",
+  version: "0.9.2078",
   icon: "./misc/icon2.png",
   repository: {
     type: "git",
@@ -390,9 +390,7 @@ var Event = class extends import_events.EventEmitter {
   };
   saveActiveEditor = (editor) => {
     try {
-      const save = editor.document.save();
-      save.then((res) => {
-        console.log("saveActiveEditor", res);
+      editor.document.save().then((res) => {
         if (!res) {
           this.pushMessage("Save on active editor failed:");
         }
@@ -1038,7 +1036,7 @@ var LineUtil;
 ((LineUtil2) => {
   LineUtil2.generic = {};
   LineUtil2.blockComment = {};
-  LineUtil2.comment = {};
+  LineUtil2.inlineComment = {};
   LineUtil2.removeTrailingWhiteSpaceString = (line) => line.replace(/[ \t]+$/, " ");
   LineUtil2.findTrailingWhiteSpaceString = (line) => line.search(/\s+$/m);
   LineUtil2.findNonWhitespaceIndex = (line) => line.search(/\S/g);
@@ -1057,6 +1055,7 @@ var LineUtil;
   LineUtil2.isBlockComment = (line) => /^\s*\*+/s.test(line);
   LineUtil2.isBlockCommnetDouble = (line) => /\*.+\*/s.test(line);
   LineUtil2.isBlockCommentWithCharacter = (line) => /^\s*\*+\s+\S+/s.test(line);
+  LineUtil2.isBlockCommentNotEmpty = (line) => /^\s*\*+\s\S+/s.test(line);
   LineUtil2.checkBlockCommentNeedSkip = (line) => /^\s*\*\s*([-]|\d+\s*[-.])\s*/s.test(line);
   LineUtil2.isBlockCommentStartingLine = (line) => /^\s*\/\*/.test(line);
   LineUtil2.findBlockCommentStartingLineWithCharacter = (line) => /^\s*\/\*\*\s*\S/.exec(line);
@@ -1404,7 +1403,27 @@ var Comment = class extends Line {
       let newString = [];
       let removeEmptyStartLine = true;
       let annotationLine = false;
-      for (const str of lineList) {
+      for (const [index, str] of lineList.entries()) {
+        if (LineUtil.isJSdocTag(str) && !annotationLine) {
+          annotationLine = true;
+          newString.push(indentString + this.getEndOfLine());
+          newLine = indentString;
+        }
+        const textLineBiggerThanBase = newLine.length > config.of.blockCommentCharacterBoundaryBaseLength;
+        const textLineLessThanBase = newLine.length < config.of.blockCommentCharacterBoundaryBaseLength;
+        if (!annotationLine) {
+          if (textLineBiggerThanBase) {
+            newString.push(newLine + this.getEndOfLine());
+            newLine = indentString;
+            continue;
+          }
+          const strIsEOL = str === Line.getEndOfLine();
+          const nextStrEOL = lineList[index + 1] === Line.getEndOfLine();
+          if (textLineLessThanBase && strIsEOL && !nextStrEOL) {
+            newLine += str + " ";
+            continue;
+          }
+        }
         if (str === Line.getEndOfLine()) {
           if (newLine !== indentString) {
             removeEmptyStartLine = false;
@@ -1413,9 +1432,6 @@ var Comment = class extends Line {
             continue;
           }
           if (config.of.removeWhitespaceBetweenAnnotation) {
-            if (LineUtil.isJSdocTag(newLine)) {
-              annotationLine = true;
-            }
             if (annotationLine) {
               if (newLine === indentString) {
                 continue;
@@ -1425,6 +1441,20 @@ var Comment = class extends Line {
           if (newLine === indentString) {
             newString.push(newLine + this.getEndOfLine());
           } else {
+            if (newLine.indexOf(this.getEndOfLine()) !== -1) {
+              const lineSplit = newLine.split(this.getEndOfLine());
+              if (lineSplit.length > 1) {
+                lineSplit.forEach((split) => {
+                  if (split.indexOf("*") !== -1) {
+                    newString.push(split + this.getEndOfLine());
+                  } else {
+                    newString.push(indentString + split.trim() + this.getEndOfLine());
+                  }
+                  newLine = indentString;
+                });
+                continue;
+              }
+            }
             newString.push(newLine.trimEnd() + this.getEndOfLine());
           }
           newLine = indentString;
@@ -1477,7 +1507,6 @@ var Comment = class extends Line {
           startPosition = currTextLine.text.indexOf("/**") + 3;
           newString += this.getEndOfLine() + indentString;
           newStringArr.push(this.getEndOfLine(), indentString);
-          console.log("includeOpenningLine", indentIndex, range.start.line);
           lineRange = new vscode7.Range(
             new vscode7.Position(range.start.line + 1, 0),
             new vscode7.Position(range.end.line + 1, 0)
@@ -1570,10 +1599,10 @@ var Comment = class extends Line {
     const trueConditionTask = (line) => {
     };
     const lineModTask = (line) => {
+      const indent = "".padStart(indentSize + 1, " ") + "* ";
       if (LineUtil.isBlockCommentStartingLine(line)) {
         return line;
       }
-      const indent = "".padStart(indentSize + 1, " ") + "* ";
       if (LineUtil.isBlockComment(line)) {
         if (LineUtil.isBlockCommnetDouble(line)) {
           return indent + line.replaceAll("*", "").trimStart().split(/\s+/).filter((s) => s.length > 0).join(" ");

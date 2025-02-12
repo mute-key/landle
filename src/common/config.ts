@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
 import packageInfo from '../../package.json' assert { type: 'json' };
 
-// "editor.insertSpaces": true
-// "files.trimTrailingWhitespace": true
-// "files.trimFinalNewlines": true
-
 type configType = {
     editAsync: boolean,
     addExtraLineAtEndOnBlockComment: boolean,

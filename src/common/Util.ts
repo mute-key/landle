@@ -10,7 +10,7 @@ export namespace LineUtil {
 
     };
 
-    export const comment = {
+    export const inlineComment = {
 
     };
 
@@ -53,6 +53,8 @@ export namespace LineUtil {
     export const isBlockCommnetDouble = (line: string): boolean => /\*.+\*/s.test(line);
     
     export const isBlockCommentWithCharacter = (line: string): boolean => /^\s*\*+\s+\S+/s.test(line);
+
+    export const isBlockCommentNotEmpty = (line: string): boolean => /^\s*\*+\s\S+/s.test(line);
     
     /**
      * String pattern check.

@@ -8,6 +8,10 @@ I did not aim to make a functions which formatters can do already.
 
 <br>
 
+## Features and use case
+
+- Remove all empty lines in selection in editor.
+
 ## Configurations
 
 - autoSaveAfterEdit: enum[commandList:string] (default = "disabled")
@@ -214,6 +218,11 @@ Shortcut key : __`ctrl + alt + c`__<br>
 - removeCommentedLine improvement to be ablet to delete block comment if it is in selection.
 
 ## changelog
+
+version 0.9.2078
+
+- Command `fixBrokenBlockComment` has been implemented.
+- Command `fixBrokenBlockComment` this works with Command `blockCommentWordCountJustifyAlign` when Config `blockCommentWordCountJustifyAlign` is `true`.
 
 version 0.9.2073
 

@@ -14,10 +14,6 @@ enum EventKind {
 /**
  * EventEmitter is maybe an overkill but to make it expendable in future.
  * thus, this will be a good template to work on for async events in future.
- * <-- here is bug
- * 
- * 한가지 확실한건, 만일 에디터가 변하면 베이스 핸들러가 이벤트를 받아야 한다는거다
- * EventEmitter 가 있는건 좋은데, 베이스 핸들러한테 관련없는 이벤트들이 너무 많다는거다
  * 
  */
 class Event extends EventEmitter {
@@ -42,10 +38,7 @@ class Event extends EventEmitter {
     public saveActiveEditor = (editor: vscode.TextEditor): void => {
         try {
             // can call formatter or linter stuff here later.
-
-            const save: Thenable<boolean> = editor.document.save();
-            save.then((res) => {
-                console.log('saveActiveEditor', res);
+            editor.document.save().then((res) => {
                 if (!res) {
                     this.pushMessage('Save on active editor failed:');
                 }

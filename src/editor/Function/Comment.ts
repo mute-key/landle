@@ -21,6 +21,7 @@ export abstract class Comment extends Line {
      */
     public static blockCommentAligned = (range: vscode.Range, line?: string[]) => {
         if (line) {
+            
             /**
              * if the block comment was malformed and fixed previosuly.
              * this code block need to do too much at this point imo.
@@ -69,8 +70,34 @@ export abstract class Comment extends Line {
             let removeEmptyStartLine = true;
             let annotationLine = false;
 
-            // rebuild lines
-            for (const str of lineList) {
+            // rebuild lines from split characters.
+            for (const [index, str] of lineList.entries()) {
+
+                if (LineUtil.isJSdocTag(str) && !annotationLine) {
+                    annotationLine = true;
+                    newString.push(indentString + this.getEndOfLine());
+                    newLine = indentString;
+                }
+
+                const textLineBiggerThanBase = newLine.length > config.of.blockCommentCharacterBoundaryBaseLength;
+                const textLineLessThanBase = newLine.length < config.of.blockCommentCharacterBoundaryBaseLength;
+
+                if (!annotationLine) {
+                    if (textLineBiggerThanBase) {
+                        newString.push(newLine + this.getEndOfLine());
+                        newLine = indentString;
+                        continue;
+                    }
+
+                    const strIsEOL = str === Line.getEndOfLine();
+                    const nextStrEOL = lineList[index + 1] === Line.getEndOfLine();
+
+                    if (textLineLessThanBase && strIsEOL && !nextStrEOL) {
+                        newLine += str + ' ';
+                        continue;
+                    }
+                }
+
                 if (str === Line.getEndOfLine()) {
                     // removes starting empty block comment
                     if (newLine !== indentString) {
@@ -82,11 +109,8 @@ export abstract class Comment extends Line {
                         continue;
                     }
 
+                    // remove empty lines in between annotations
                     if (config.of.removeWhitespaceBetweenAnnotation) {
-                        if (LineUtil.isJSdocTag(newLine)) {
-                            annotationLine = true;
-                        }
-
                         if (annotationLine) {
                             if (newLine === indentString) {
                                 continue;
@@ -97,6 +121,21 @@ export abstract class Comment extends Line {
                     if (newLine === indentString) {
                         newString.push(newLine + this.getEndOfLine());
                     } else {
+                        // fix multi-line string as if EOL is in the middle of the string.
+                        if (newLine.indexOf(this.getEndOfLine()) !== -1) {
+                            const lineSplit = newLine.split(this.getEndOfLine());
+                            if (lineSplit.length > 1) {
+                                lineSplit.forEach((split) => {
+                                    if (split.indexOf('*') !== -1) {
+                                        newString.push(split + this.getEndOfLine());
+                                    } else {
+                                        newString.push(indentString + split.trim() + this.getEndOfLine());
+                                    }
+                                    newLine = indentString;
+                                });
+                                continue;
+                            }
+                        }
                         newString.push(newLine.trimEnd() + this.getEndOfLine());
                     }
                     newLine = indentString;
@@ -105,32 +144,21 @@ export abstract class Comment extends Line {
                 }
             }
 
+            // prepend openning commnet.
             newString.unshift('/**'.padStart(indentIndex + 3, ' ') + this.getEndOfLine());
 
-            // let newStringCleanUp = newString;
-
-            // if (config.of.removeWhitespaceBetweenAnnotation && !config.of.addEmptyBlockCommentLineInAnnotation) {
-
-            // } else if (!config.of.removeWhitespaceBetweenAnnotation && config.of.addEmptyBlockCommentLineInAnnotation) {
-
-            // }
-
-            // for (const [index, line] of newStringCleanUp.reverse().entries()) {
-            // if (LineUtil.isBlockCommentWithCharacter(line)) {
-            // newString.splice(index, newStringCleanUp.length - index);
-            // break;
-            // }
-            // }
-
+            // add extra empty lines at the end of block comment.
             if (config.of.addExtraLineAtEndOnBlockComment) {
                 newString.push(indentString + this.getEndOfLine());
             }
 
+            // block comment lines range.
             const newRange = new vscode.Range(
                 new vscode.Position(range.start.line, 0),
                 new vscode.Position(range.start.line + line.length + 1, 0)
             );
 
+            // return object literal for when block has been fixed and aligned.
             return {
                 name: 'blockCommentAligned',
                 range: newRange,
@@ -180,7 +208,6 @@ export abstract class Comment extends Line {
                     startPosition = currTextLine.text.indexOf('/**') + 3;
                     newString += this.getEndOfLine() + indentString;
                     newStringArr.push(this.getEndOfLine(), indentString);
-                    console.log('includeOpenningLine', indentIndex, range.start.line);
                     lineRange = new vscode.Range(
                         new vscode.Position(range.start.line + 1, 0),
                         new vscode.Position(range.end.line + 1, 0)
@@ -295,11 +322,16 @@ export abstract class Comment extends Line {
         };
 
         const lineModTask = (line: string): string => {
-            if (LineUtil.isBlockCommentStartingLine(line)) {
-                return line;
-            }
 
             const indent = ''.padStart(indentSize + 1, ' ') + '* ';
+
+            if (LineUtil.isBlockCommentStartingLine(line)) {
+                // if (line.indexOf('*') !== indentSize && LineUtil.isBlockCommentStartingLineWithCharacter(line)) {
+            
+                // return indent + line.replaceAll('/','').replaceAll('*','').trim() + Line.getEndOfLine() + indent;
+                // }
+                return line;
+            }
 
             if (LineUtil.isBlockComment(line)) {
                 if (LineUtil.isBlockCommnetDouble(line)) {
