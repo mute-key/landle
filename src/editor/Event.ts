@@ -63,10 +63,10 @@ class Event extends EventEmitter {
         // WSL_DISTRO_NAME
     };
 
-    public onDidChangeActiveTextEditor = (editorCommandGroup: vscode.Disposable[]): vscode.Disposable => {
+    public onDidChangeActiveTextEditor = (): vscode.Disposable => {
         return vscode.window.onDidChangeActiveTextEditor((editor) => {
             if (editor) {
-                BaseHandler.loadEditor();
+                // BaseHandler.loadEditor();
                 // LineHandler.setEditor(editor);
                 // CommentHandler.setEditor(editor);
             }

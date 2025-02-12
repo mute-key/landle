@@ -10,10 +10,11 @@ import packageInfo from '../package.json' assert { type: 'json' };
 
 import { config } from "./common/config";
 import { eventInstance } from './editor/Event';
-import { EditorCommandParameterType, editorCommandId } from './editor/EditorCommand';
+import { editorCommandId } from './editor/EditorCommand';
 import { EditorCommandGroup } from './editor/EditorCommandGroup';
+import { CommandType } from './type/CommandType.d';
 
-const defaultParam : EditorCommandParameterType = {
+const defaultParam : CommandType.EditorCommandParameterType = {
     includeEveryLine: false,
     autoSaveAfterEdit: config.of.autoSaveAfterEdit,
     editAsync: config.of.editAsync,
@@ -23,7 +24,7 @@ const registerTextEditorCommand = (context, commandId : string[], command) : vsc
     return commandId.map((id) => {
         if (id in command) {
             const commandString = [packageInfo.name, id].join('.');
-            return vscode.commands.registerTextEditorCommand(commandString, (editor, edit, params: EditorCommandParameterType = defaultParam) => {
+            return vscode.commands.registerTextEditorCommand(commandString, (editor, edit, params: CommandType.EditorCommandParameterType = defaultParam) => {
                 const fn = Array.isArray(command[id]()) ? command[id]() : [command[id]()];
                 command.execute(fn , params);
             });
@@ -41,6 +42,7 @@ export const Register = (
     const editorCommandGroup = registerTextEditorCommand(context, editorCommandId, new EditorCommandGroup());
 
     disposable.push(...editorCommandGroup);
+    disposable.push(eventInstance.onDidChangeActiveTextEditor());
     disposable.push(eventInstance.onDidChangeConfiguration());
     disposable.push(eventInstance.autoTriggerOnSaveEvent());
     disposable.push(eventInstance.autoTriggerOnSaveResetEvent());

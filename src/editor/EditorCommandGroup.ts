@@ -1,5 +1,5 @@
 import { EditorCommand } from "./EditorCommand";
-import { LineType as LT } from "./Handler/Line";
+import { LineType } from "../type/LineType.d";
 
 /**
  * this class handles information about the editor comamnds to be bound.
@@ -14,7 +14,7 @@ export class EditorCommandGroup extends EditorCommand {
         super();
     }
 
-    public cleanUpBlockCommentCommand = () : LT.LineEditDefintion[] => {
+    public cleanUpBlockCommentCommand = () : LineType.LineEditDefintion[] => {
         return [
             this.removeEmptyBlockCommentLineOnStart(),
             this.removeMultipleEmptyBlockCommentLine(),
@@ -24,7 +24,7 @@ export class EditorCommandGroup extends EditorCommand {
         ].filter((fn) => fn !== undefined);
     };
 
-    public cleanUpCodeCommand = () : LT.LineEditDefintion[] => {
+    public cleanUpCodeCommand = () : LineType.LineEditDefintion[] => {
         return [
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),
@@ -34,7 +34,7 @@ export class EditorCommandGroup extends EditorCommand {
         ].filter((fn) => fn !== undefined);
     };
 
-    public cleanUpDocumentCommand = () : LT.LineEditDefintion[] => {
+    public cleanUpDocumentCommand = () : LineType.LineEditDefintion[] => {
         return [
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),
@@ -44,13 +44,12 @@ export class EditorCommandGroup extends EditorCommand {
             this.removeMultipleEmptyBlockCommentLine(),
             this.insertEmptyBlockCommentLineOnEnd(),
             this.blockCommentWordCountJustifyAlign(),
-            // this.fixBrokenBlockCommnet(),
-            
+            this.fixBrokenBlockComment(),
             this.removeEmptyLinesBetweenBlockCommantAndCode(),
         ].filter((fn) => fn !== undefined);
     };
     
-    public cleanUpComments = () : LT.LineEditDefintion[] => {
+    public cleanUpComments = () : LineType.LineEditDefintion[] => {
         return [
             this.removeDocumentStartingEmptyLine(),
             this.removeTrailingWhitespaceFromSelection(),

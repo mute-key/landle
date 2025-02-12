@@ -1,23 +1,12 @@
 import * as vscode from "vscode";
-import {
-    Line
-} from "../Collection/Line";
-import { LineType } from "../../type/LineType";
+import { Line } from "../Function/Line";
 import { LineUtil } from "../../common/Util";
 import { config } from "../../common/config";
 import { BaseHandler } from "./BaseHandler";
-
-// export interface Edithandler {
-//     removeTrailingWhiteSpace: (range: vscode.Range) => LineType.LineEditInfo | undefined,
-//     removeMultipleWhitespace: (range: vscode.Range) => LineType.LineEditInfo | undefined,
-//     removeMulitpleEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
-//     removeCommentedLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
-//     removeEmptyLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
-//     removeDuplicateLine: (range: vscode.Range) => LineType.LineEditInfo | undefined,
-//     setNowDateTimeOnLine: (range: vscode.Range) => LineType.LineEditInfo | undefined
-// }
+import { LineType } from "../../type/LineType.d";
 
 export abstract class LineHandler extends BaseHandler {
+    
     /**
      * check if the document is starting with empty line and removes them.
      * 

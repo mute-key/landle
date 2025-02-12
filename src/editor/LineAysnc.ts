@@ -1,128 +1,241 @@
-import * as vscode from "vscode";
-
-export namespace LineType {
-
-    /**
-     * bitmask to check multiple edit.type. if, it comes down to editor
-     * need to perform multiple edits with single callback, this will be
-     * very useful and ActiveEditor.#editSwitch need be rewriten other than
-     * switch.
-     * 
-     * - asdasd - asdasdasd
-     *
-     */
-    export const enum LineEditType {
-        APPEND = 1 << 0,
-        PREPEND = 1 << 1,
-        REPLACE = 1 << 2,
-        CLEAR = 1 << 3,
-        DELETE = 1 << 4
-    };
-
-    export const enum RangeKind {
-        DOCUMENT = 1 << 0,
-        MULTILINE = 1 << 1,
-        LINE = 1 << 2
-    }
-
-    /**
-     * this is to check if more than one edit is trying to perform the edit
-     * on overlapping range which will throw runtime error. but this is
-     * not.
-     *
-     */
-    export const enum LineEditBlockPriority {
-        UNSET = 0,
-        LOW = 1,
-        MID = 2,
-        HIGH = 3,
-        VERYHIGH = 4,
-    }
-
-    /**
-     * type of to check the priority of which edit to perform as well as
-     * if the block requires to skip lines.
-     *
-     */
-    export type lineEditBlockType = {
-        priority: LineEditBlockPriority
-        lineSkip?: number[],
-    }
-
-    /**
-     * detail about line edit, to be performed.
-     *
-     */
-    export type LineEditInfo = {
-        range: vscode.Range,
-        string?: string,
-        type?: LineEditType,
-        block?: lineEditBlockType
-        name?: string,
-    }
-
-    /**
-     * detail about line edit, to check on each line.
-     *
-     */
-    export type LineEditDefintion = {
-        func: (range: vscode.Range) => LineEditInfo | undefined,
-        type: LineEditType,
-        block?: lineEditBlockType
-    }
-
-    export type IterateNextLineType = {
-        lineNumber: number,
-        lineSkip: number[]
-    }
-}
-
 /**
- * class handles the lines and range in editor
- *
+ * this class handles the editor itself and selections.
+ * 
  */
-export abstract class Line {
-    protected doc: vscode.TextDocument;
-    protected editor: vscode.TextEditor;
+import * as vscode from 'vscode';
+import { config } from "../common/config";
+import { Line } from './Function/Line';
+import { LineHandler } from './Handler/LineHandler';
+import { eventInstance, EventKind } from '../editor/Event';
+import { BaseHandler } from "./Handler/BaseHandler";
+import { CommandType } from '../type/CommandType.d';
+import { LineType } from "../type/LineType.d";
+import { ActiveEditorType } from "../type/ActiveEditorType";
+
+export class ActiveEditor {
+    // unused. for future reference.
+    #editorText: string;
+    #editor: vscode.TextEditor;
+    // #lineHandler: InstanceType<typeof LineHandler>;
+    #cursorLine: number;
+    #cursorPosition: number;
+    #cursorReposition: ActiveEditorType.CursorRepositionType;
+    #cursorSelection: vscode.Selection;
 
     constructor() {
-
-        // this.setCurrentDocument()
-        // this.editor = vscode.window.activeTextEditor;
-        if (vscode.window.activeTextEditor) {
-            this.setCurrentDocument(vscode.window.activeTextEditor);
-        }
+        this.#documentSnapshot();
     }
 
-    // =============================================================================
-    // > PRIVATE FUNCTIONS:
-    // =============================================================================
-
     /**
-     * unused. for future reference.
-     *
-     * @param range unused
-     * @returns unused
-     *
+     * get current active text editor
+     * 
+     * @returns
+     * 
      */
-    #getLineNumbersFromRange = (range: vscode.Range): { startLine: number, endLine: number } => {
-        const startLine = range.start.line;
-        const endLine = range.end.line;
-        return { startLine, endLine };
+    #setActiveEditor = (): void => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            this.#editor = activeEditor;
+            this.#cursorSelection = this.#editor.selections[this.#editor.selections.length - 1];
+            this.#cursorLine = this.#cursorSelection.end.line;
+            this.#cursorPosition = this.#cursorSelection.end.character;
+            this.#cursorReposition = { moveDown: 0, moveUp: 0 };
+            // 이건 스태틱 클래스가 아니라서 그게 안되는데 어쩌지
+            // 사용하는 인스턴스가 하나뿐이긴 한데 그렇다고 이걸 통째로 스태틱으로 바꾸자니
+            // 그렇다고 사실 인스턴스가 하나 이상일 이유는 없긴한데
+            // 아래 처럼 그냥 스태틱이면 클래스 자체로 컨트롤 가능하긴 한데
+            // 만약에, 워크스페이스에서 열려있는 모든 에디터에서 수정작업이 가능하게 하려면
+            // 이것마져도 스태틱으로 바꾸는게 낫지 않을까?
+            // 그럼 모든 에디터에 대한 작업을 하나로 묶어서 동기화 할수있을텐데
+            // 아, 생각해보니까 만일 여러 에디터에 대한 작업을 하려면 함수화 되는게 더 나은가?
+            // 그럼 에디터들 마다 비동기로 작업이 가능하니까?
+            // 근데 이미 핸들러들이 스태틱인데?
+            // 그건 프로미스화 시켜서 하면되려나?
+            // 뭐 일단 정렬하던것부터 고치자
+            // 액티브 에디터도 추상화 클래스로 바꾸자
+            // 죄다 스태틱으로 만들고
+            // 이거 그렇다고 모듈함수형으로 만들면 코드 너무 지저분해
+
+            BaseHandler.loadEditor();
+            Line.setCurrentEditor(activeEditor);
+        }
     };
 
     /**
-     * unused. staple for future reference.
-     *
-     * @param range unused
-     * @returns unused
-     *
+     * reset cursor position as well as the selection.
+     * 
      */
-    #editLineBindOnCondition = (range: vscode.Range, callback: LineType.LineEditDefintion, cond: boolean): LineType.LineEditInfo | undefined => {
-        return cond ? <LineType.LineEditInfo>{
-            ...callback.func(this.lineFullRange(range)),
-            type: callback.type
-        } : undefined;
+    #selectionReset = (): void => {
+
+        let resetLine: number = 0;
+
+        if (this.#cursorReposition.moveUp !== 0 || this.#cursorReposition.moveDown !== 0) {
+            resetLine = this.#cursorLine + this.#cursorReposition.moveUp - this.#cursorReposition.moveDown;
+            this.#cursorReposition = { moveDown: 0, moveUp: 0 };
+        } else {
+            resetLine = this.#cursorSelection.end.line;
+        }
+
+        this.#editor.selection = new vscode.Selection(
+            new vscode.Position(resetLine, this.#cursorPosition),
+            new vscode.Position(resetLine, this.#cursorPosition)
+        );
+    };
+
+    #cursorControl = (range: vscode.Range): void => {
+
+        const rangeLineCount: number = range.end.line - range.start.line;
+        const isDeleteSingleLine: boolean = (rangeLineCount === 1) && range.isSingleLine;
+        const startLine: number = range.start.line;
+        const endLine: number = range.end.line;
+        const isCursorInRange: boolean = (this.#cursorLine >= startLine && this.#cursorLine <= endLine);
+
+        if (!isDeleteSingleLine) {
+            if (isCursorInRange) {
+                this.#cursorLine = startLine;
+            } else {
+                if (this.#cursorLine >= endLine) {
+                    this.#cursorReposition.moveDown += rangeLineCount;
+                }
+            }
+        } else {
+            if (this.#cursorLine >= endLine) {
+                this.#cursorReposition.moveDown++;
+            }
+        }
+    };
+
+    /**
+     * function that store current document if no arugment is supplied.
+     * if arguement supplied in function call; it compares last cached document
+     * with argument and comparing if the document has been modified. @param
+     * editorText @returns boolean - true when no argument supplied indicate
+     * the editor has been cached. - true when argument supplied indicate
+     * document has not been modified. - false when arguement supplied indiciate
+     * document has been modified.
+     * 
+     */
+    #documentSnapshot = (editorText: string | undefined = undefined): boolean => {
+        if (editorText === undefined) {
+            if (editorText !== this.#editorText) {
+                this.#editorText = this.#editor.document.getText();
+            }
+            return true;
+        } else {
+            return editorText === this.#editorText;
+        }
+    };
+
+    /**
+     * this function will perform edit with it's given range with string.
+     * 
+     * @param edit :LineType.LineEditType will have the; range, type, string
+     * @param editBuilder as it's type.
+     * 
+     */
+    #editSwitch = (edit: LineType.LineEditInfo, editBuilder: vscode.TextEditorEdit): void => {
+        
+        if (edit.type) {
+            if (edit.type & LineType.LineEditType.DELETE) {
+                if (!edit.range.isSingleLine) {
+                    this.#cursorControl(edit.range);
+                }
+                // if (edit.string) {
+                // if (this.#checkIfRangeTextIsEqual(edit.range, edit.string)) {
+                // return;
+                // } else {
+                // editBuilder.delete(edit.range);
+                // }
+                // } else {
+                // editBuilder.delete(edit.range);
+                // }
+                editBuilder.delete(edit.range);
+            }
+            if (edit.type & LineType.LineEditType.CLEAR) {
+                editBuilder.delete(Line.lineFullRange(edit.range));
+            }
+            if (edit.type & LineType.LineEditType.APPEND) {
+                console.log(edit);
+                editBuilder.insert(edit.range.start, edit.string ?? '');
+            }
+            if (edit.type & LineType.LineEditType.REPLACE) {
+                editBuilder.replace(edit.range, edit.string ?? '');
+            }
+            if (edit.type & LineType.LineEditType.PREPEND) {
+
+            }
+        };
+    };
+
+    // =============================================================================
+    // > PUBLIC FUNCTIONS:
+    // =============================================================================
+
+    public setCurrentEditor = (editor) => {
+        this.#editor = editor;
+    };
+
+    /**
+     * returns object literal of class linHandler with it's method. @return
+     * private instance of lineHandler
+     * 
+     */
+    public setLineHandler = (lineHandler: LineHandler): void => {
+        // this.#lineHandler = lineHandler;
+    };
+
+    /**
+     * it picks up current editor then, will iterate for each selection
+     * range in the curernt open editor, and stack the callback function
+     * references. each selection could be either; empty or singleline or
+     * multiple lines but they will be handled in the Line class.
+     * 
+     * it could have not started to ieterate if the selection is not a multiple
+     * line, however then it more conditions need to be checked in this
+     * class function. beside, if choose not to iterate, means, will not
+     * use array, the arugment and it's type will not be an array or either
+     * explicitly use array with a single entry. that will end up line handling
+     * to either recieve array or an single callback object which is inconsistance.
+     * plus, it is better to handle at one execution point and that would
+     * be not here.
+     * 
+     * @param callback line edit function and there could be more than one edit required.
+     * @param includeCursorLine unused. for future reference.
+     * 
+     */
+    public prepareEdit = (callback: LineType.LineEditDefintion[], commandOption: CommandType.EditorCommandParameterType): void => {
+
+        this.#setActiveEditor();
+
+        if (commandOption.editAsync) {
+
+        } else {
+            const editSchedule: LineType.LineEditInfo[] = [];
+
+            if (commandOption.includeEveryLine) {
+                const range = new vscode.Selection(
+                    new vscode.Position(0, 0),
+                    new vscode.Position(this.#editor.document.lineCount - 1, 0)
+                );
+                editSchedule.push(...this.prepareLines(range, callback));
+            } else {
+                const selections = this.#editor.selections;
+                selections.forEach((range: vscode.Range) => {
+                    editSchedule.push(...this.prepareLines(range, callback));
+                });
+            }
+
+            if (editSchedule.length > 0) {
+                this.editInRange(editSchedule).catch(err => {
+                    console.error('Edit Failed:', err);
+                }).finally(() => {
+                    this.#selectionReset();
+                });
+            } else {
+                this.#selectionReset();
+                console.log('No edit found.');
+            }
+        }
     };
 
     /**
@@ -202,7 +315,6 @@ export abstract class Line {
         }
         return currentLineEdit;
     };
-
     /**
      * this funciton will iterate each line and stack the line edit object.
      * iteration will continue unitl the current line number is less than
@@ -241,7 +353,7 @@ export abstract class Line {
                 continue;
             }
 
-            const currentLineEdit = this.#handleLineEdit(this.lineFullRange(currentLineNumber), callback);
+            const currentLineEdit = this.#handleLineEdit(Line.lineFullRange(currentLineNumber), callback);
             if (currentLineEdit.length > 0) {
                 if (currentLineEdit[0].block) {
                     if (currentLineEdit[0].block.lineSkip) {
@@ -252,158 +364,9 @@ export abstract class Line {
             }
             currentLineNumber++;
         }
-
         return _lineEdit_;
+
     };
-
-    // =============================================================================
-    // > PROTECTED FUNCTIONS:
-    // =============================================================================
-
-    /**
-     * get EOL of current document set
-     *
-     * @returns
-     *
-     */
-    protected getEndofLine = () => this.editor?.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
-
-    /**
-     * get text as string from range
-     *
-     * @param range target range
-     * @returns text as string
-     *
-     */
-    protected getText = (range: vscode.Range): string => {
-        return this.doc.getText(range);
-    };
-
-    /**
-     * get TextLine object from range or from line number.
-     *
-     * @param range target range
-     * @returns TextLine object of range or line.
-     *
-     */
-    protected getTextLineFromRange = (range: vscode.Range | number, lineDelta = 0): vscode.TextLine => {
-        if (typeof range === 'number') {
-            if (range + lineDelta >= this.doc.lineCount) {
-                return this.doc.lineAt(range);
-            }
-            return this.doc.lineAt(range + lineDelta);
-        }
-
-        if ((range.start.line + lineDelta) < 0) {
-            return this.doc.lineAt(range.start.line);
-        }
-
-        if (this.doc.lineCount > (range.start.line + lineDelta)) {
-            return this.doc.lineAt(range.start.line + lineDelta);
-        }
-
-        return this.doc.lineAt(range.start.line);
-    };
-
-    /**
-     * get the range of entire line including EOL.
-     *
-     * @param range target range
-     * @returns
-     *
-     */
-    protected lineFullRangeWithEOL = (range: vscode.Range): vscode.Range => {
-        return this.getTextLineFromRange(range).rangeIncludingLineBreak;
-    };
-
-    /**
-     * create new range with line number, starting position and end position
-     *
-     * @param lineNuber line number of new range object
-     * @param startPosition starting position of range
-     * @param endPosition end position of range
-     * @returns
-     *
-     */
-    protected newRangeZeroBased = (lineNuber: number, startPosition: number, endPosition: number): vscode.Range => {
-        return new vscode.Range(
-            new vscode.Position(lineNuber, startPosition),
-            new vscode.Position(lineNuber, endPosition)
-        );
-    };
-
-    protected iterateNextLine = (
-        range: vscode.Range,
-        lineCondition: ((line: vscode.TextLine) => boolean),
-        continueCheck?: ((line: vscode.TextLine) => boolean),
-        trueConditionTask?: (line: vscode.TextLine) => void
-    ): LineType.IterateNextLineType | undefined => {
-
-        let lineNumber: number = range.start.line;
-        let currTextLine: vscode.TextLine;
-        let condition: boolean = true;
-        const lineSkip: number[] = [];
-        const lineCount: number = this.doc.lineCount;
-
-        while (lineNumber < lineCount) {
-            
-            currTextLine = this.getTextLineFromRange(lineNumber);
-            
-            // condition check
-            if (typeof lineCondition === "function") {
-                condition = lineCondition(currTextLine);
-                // console.log('condition', lineNumber, ' : ',condition);
-            }
-
-            if (!condition) {
-                break;
-            }
-
-            lineSkip.push(lineNumber);
-            lineNumber++;
-
-            if (continueCheck?.(currTextLine)) {
-                continue;
-            }
-
-            trueConditionTask?.(currTextLine);
-        };
-
-        return (lineSkip.length > 0) ? {
-            lineNumber: lineNumber,
-            lineSkip: lineSkip
-        } : undefined ;
-    };
-    // =============================================================================
-    // > PUBLIC FUNCTIONS:
-    // =============================================================================
-
-    /**
-     * get the range of line with any characters including whitespaces.
-     *
-     * @param range vscode.Range | number.
-     * @returns first line of the range or whole line of the the line number.
-     *
-     */
-    public lineFullRange = (range: vscode.Range | number): vscode.Range => {
-        if (typeof range === 'number') {
-            return this.doc?.lineAt(<number>range).range;
-        }
-        return this.doc?.lineAt(range.start.line).range;
-    };
-
-    public rangeKind = (range: vscode.Range,): LineType.RangeKind => {
-        if (range.isEmpty || range.isSingleLine) {
-            return LineType.RangeKind.LINE;
-        }
-
-        if (range.start.line === 0 && range.end.line === this.editor.document.lineCount) {
-            return LineType.RangeKind.DOCUMENT;
-        }
-
-        return LineType.RangeKind.MULTILINE;
-    };
-
     /**
      * take range as a single selection that could be a single line, empty
      * (cursor only) or mulitple lines. the callback will be defined in
@@ -422,7 +385,7 @@ export abstract class Line {
 
         // on each selection, starting line is: isEmpty or if selection is singleLine
         if (range.isEmpty || range.isSingleLine) {
-            return this.#handleLineEdit(this.lineFullRange(targetLine), callback);
+            return this.#handleLineEdit(Line.lineFullRange(targetLine), callback);
         }
 
         return this.#lineIteration(
@@ -433,11 +396,35 @@ export abstract class Line {
     };
 
     /**
-     * @returns
-     *
+     * performes aysnc edit and aplit it all at once they are complete.
+     * 
+     * @param lineCallback collecion of edits for the document how and where to edit.
+     * @returns Promise<void>
+     * 
      */
-    public setCurrentDocument = (editor: vscode.TextEditor): void => {
-        this.editor = editor;
-        this.doc = this.editor.document;
+    public editInRange = async (lineCallback: LineType.LineEditInfo[]): Promise<void> => {
+        try {
+            const success = await this.#editor.edit((editBuilder: vscode.TextEditorEdit) => {
+                lineCallback.forEach((edit: LineType.LineEditInfo) => this.#editSwitch(edit, editBuilder));
+            });
+
+            if (!success) {
+                throw new Error('Failed to apply edit.');
+            }
+
+            this.#documentSnapshot();
+            console.log('Edit applied successfully!');
+
+            if (config.of.autoSaveAfterEdit) {
+                eventInstance.emit(EventKind.AUTO_TRIGGER_ON_SAVE_SWITCH, false);
+                eventInstance.saveActiveEditor(this.#editor);
+            }
+            if (!this.#documentSnapshot(vscode.window.activeTextEditor?.document.getText())) {
+                console.log('Duplicate edit entry');
+            }
+        } catch (err) {
+            console.error('Error applying edit:', err);
+            return Promise.reject(err);
+        }
     };
 }

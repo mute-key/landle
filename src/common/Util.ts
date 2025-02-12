@@ -50,6 +50,8 @@ export namespace LineUtil {
 
     export const isBlockComment = (line: string): boolean => /^\s*\*+/s.test(line);
 
+    export const isBlockCommnetDouble = (line: string): boolean => /\*.+\*/s.test(line);
+    
     export const isBlockCommentWithCharacter = (line: string): boolean => /^\s*\*+\s+\S+/s.test(line);
     
     /**

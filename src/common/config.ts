@@ -15,7 +15,9 @@ type configType = {
     blockCommentCharacterBoundaryBaseLength: number,
     blockCommentCharacterBoundaryToleranceLength: number,
     removeWhitespaceBeforeInlineComment: boolean,
-    removeWhitespaceOflineComment: boolean
+    removeWhitespaceOflineComment: boolean,
+    removeWhitespaceBetweenAnnotation: boolean,
+    addEmptyBlockCommentLineInAnnotation: boolean,
 }
 
 const currentConfig = (() => {
@@ -51,6 +53,8 @@ class Config {
             blockCommentCharacterBoundaryToleranceLength: this.#configuration.get<number>('blockCommentCharacterBoundaryToleranceLength', 10),
             removeWhitespaceBeforeInlineComment: this.#configuration.get<boolean>('removeWhitespaceBeforeInlineComment', true),
             removeWhitespaceOflineComment: this.#configuration.get<boolean>('removeWhitespaceOflineComment', true),
+            removeWhitespaceBetweenAnnotation: this.#configuration.get<boolean>('removeWhitespaceBetweenAnnotation', true),
+            addEmptyBlockCommentLineInAnnotation: this.#configuration.get<boolean>('addEmptyBlockCommentLineInAnnotation', true),
         };
     }
 

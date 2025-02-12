@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { LineType } from "../../type/LineType";
+
+import { LineType } from "../../type/LineType.d";
 
 /**
  * class handles the lines and range in editor
@@ -10,7 +11,7 @@ export abstract class Line {
     protected static editor: vscode.TextEditor;
 
     // constructor() {
-        
+
     // }
 
     // =============================================================================
@@ -29,7 +30,7 @@ export abstract class Line {
         const endLine = range.end.line;
         return { startLine, endLine };
     };
-
+    
     /**
      * unused. staple for future reference.
      *
@@ -43,7 +44,7 @@ export abstract class Line {
             type: callback.type
         } : undefined;
     };
-    
+
     // =============================================================================
     // > PROTECTED FUNCTIONS:
     // =============================================================================
@@ -58,7 +59,7 @@ export abstract class Line {
      * @returns
      *
      */
-    public static getEndofLine = () => this.editor.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
+    public static getEndOfLine = () => this.editor.document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
 
     /**
      * get text as string from range
@@ -130,24 +131,25 @@ export abstract class Line {
         continueCheck?: (line: string) => boolean,
         trueConditionTask?: (line: string) => void,
         lineModifiyTask?: (line: string) => string,
-    ): LineType.IterateNextLineType | undefined => {
+    ): LineType.LineFunctionType | undefined => {
 
         let lineNumber: number = range.start.line;
         let currTextLine: string;
         let condition: boolean = true;
-        let lineMod : string | undefined = '';
+        let newLine: string = '';
+        let lineMod: string | undefined = undefined;
         const lineSkip: number[] = [];
         const lineCount: number = this.editor.document.lineCount;
 
         while (lineNumber < lineCount) {
-            
+
             currTextLine = this.getTextLineFromRange(lineNumber).text;
             lineMod = lineModifiyTask?.(currTextLine);
 
             if (lineMod) {
                 currTextLine = lineMod;
             }
-            
+
             // condition check
             if (typeof lineCondition === "function") {
                 condition = lineCondition(currTextLine);
@@ -155,10 +157,9 @@ export abstract class Line {
 
             if (!condition) {
                 break;
-            } else {
-                
             }
 
+            newLine += currTextLine + this.getEndOfLine();
             lineSkip.push(lineNumber);
             lineNumber++;
 
@@ -171,8 +172,24 @@ export abstract class Line {
 
         return (lineSkip.length > 0) ? {
             lineNumber: lineNumber,
-            lineSkip: lineSkip
-        } : undefined ;
+            lineSkip: lineSkip,
+            string: newLine,
+            range: new vscode.Range(
+                new vscode.Position(range.start.line, 0),
+                new vscode.Position(lineNumber, 0)
+            )
+        } : undefined;
+    };
+
+    public static iterateNextLineOfLineArray = (
+        range: vscode.Range,
+        lineCondition: (line: string) => boolean,
+        continueCheck?: (line: string) => boolean,
+        trueConditionTask?: (line: string) => void,
+        lineModifiyTask?: (line: string) => string,
+    ): LineType.LineFunctionType | undefined => {
+        
+        return;
     };
 
     public static checkIfRangeTextIsEqual = (range: vscode.Range, newText: string): boolean => {
@@ -212,8 +229,7 @@ export abstract class Line {
      * @returns
      *
      */
-    // public setCurrentDocument = (editor: vscode.TextEditor): void => {
-    // this.editor = editor;
-    // this.editor.document = this.editor.document;
-    // };
+    public static setCurrentEditor = (editor: vscode.TextEditor): void => {
+        this.editor = editor;
+    };
 }

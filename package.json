@@ -107,6 +107,12 @@
                 "command": "landle.cleanUpComments",
                 "title": "Clean-up Code From Selection"
             }
+            ,
+            {
+                "command": "landle.fixBrokenBlockComment",
+                "title": "Fix broken block comment format"
+            }
+            
         ],
         "keybindings": [
             {
@@ -163,6 +169,11 @@
                 "command": "landle.cleanUpCodeCommand",
                 "key": "ctrl+alt+x",
                 "when": "editorTextFocus || editorFocus"
+            },
+            {
+                "command": "landle.fixBrokenBlockComment",
+                "key": "ctrl+alt+f",
+                "when": "editorTextFocus || editorFocus"
             }
         ],
         "configuration": {
@@ -199,7 +210,7 @@
                 },
                 "landle.addExtraLineAtEndOnBlockComment": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "To add extra empty block comment line at the block ends"
                 },
                 "landle.deleteCommentAlsoDeleteBlockComment": {
@@ -231,7 +242,18 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Remove All Whitespace Of Line Comment."
+                },
+                "landle.removeWhitespaceBetweenAnnotation": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Remove All Whitespace Of Line Comment."
+                },
+                "landle.addEmptyBlockCommentLineInAnnotation": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Add empty block comment in between Annotations."
                 }
+                
             }
         }
     },

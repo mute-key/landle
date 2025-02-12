@@ -75,6 +75,12 @@ export namespace LineType {
 
     export type IterateNextLineType = {
         lineNumber: number,
-        lineSkip: number[]
+        lineSkip: number[],
+        
     }
+
+    export type LineFunctionType = {
+        range?: vscode.Range;
+        string?: string;
+    } & IterateNextLineType;
 }

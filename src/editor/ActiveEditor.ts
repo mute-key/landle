@@ -4,17 +4,13 @@
  */
 import * as vscode from 'vscode';
 import { config } from "../common/config";
-import { Line } from './Collection/Line';
+import { Line } from './Function/Line';
 import { LineHandler } from './Handler/LineHandler';
-import { EditorCommandParameterType } from './EditorCommand';
 import { eventInstance, EventKind } from '../editor/Event';
-import { LineType } from "../type/LineType";
 import { BaseHandler } from "./Handler/BaseHandler";
-
-type CursorRepositionType = {
-    moveUp: number,
-    moveDown: number
-}
+import { CommandType } from '../type/CommandType.d';
+import { LineType } from "../type/LineType.d";
+import { ActiveEditorType } from "../type/ActiveEditorType";
 
 export class ActiveEditor {
     // unused. for future reference.
@@ -23,7 +19,7 @@ export class ActiveEditor {
     // #lineHandler: InstanceType<typeof LineHandler>;
     #cursorLine: number;
     #cursorPosition: number;
-    #cursorReposition: CursorRepositionType;
+    #cursorReposition: ActiveEditorType.CursorRepositionType;
     #cursorSelection: vscode.Selection;
 
     constructor() {
@@ -39,12 +35,29 @@ export class ActiveEditor {
     #setActiveEditor = (): void => {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
-            BaseHandler.loadEditor();
             this.#editor = activeEditor;
             this.#cursorSelection = this.#editor.selections[this.#editor.selections.length - 1];
             this.#cursorLine = this.#cursorSelection.end.line;
             this.#cursorPosition = this.#cursorSelection.end.character;
             this.#cursorReposition = { moveDown: 0, moveUp: 0 };
+            // 이건 스태틱 클래스가 아니라서 그게 안되는데 어쩌지
+            // 사용하는 인스턴스가 하나뿐이긴 한데 그렇다고 이걸 통째로 스태틱으로 바꾸자니
+            // 그렇다고 사실 인스턴스가 하나 이상일 이유는 없긴한데
+            // 아래 처럼 그냥 스태틱이면 클래스 자체로 컨트롤 가능하긴 한데
+            // 만약에, 워크스페이스에서 열려있는 모든 에디터에서 수정작업이 가능하게 하려면
+            // 이것마져도 스태틱으로 바꾸는게 낫지 않을까?
+            // 그럼 모든 에디터에 대한 작업을 하나로 묶어서 동기화 할수있을텐데
+            // 아, 생각해보니까 만일 여러 에디터에 대한 작업을 하려면 함수화 되는게 더 나은가?
+            // 그럼 에디터들 마다 비동기로 작업이 가능하니까?
+            // 근데 이미 핸들러들이 스태틱인데?
+            // 그건 프로미스화 시켜서 하면되려나?
+            // 뭐 일단 정렬하던것부터 고치자
+            // 액티브 에디터도 추상화 클래스로 바꾸자
+            // 죄다 스태틱으로 만들고
+            // 이거 그렇다고 모듈함수형으로 만들면 코드 너무 지저분해
+
+            BaseHandler.loadEditor();
+            Line.setCurrentEditor(activeEditor);
         }
     };
 
@@ -122,7 +135,7 @@ export class ActiveEditor {
      * 
      */
     #editSwitch = (edit: LineType.LineEditInfo, editBuilder: vscode.TextEditorEdit): void => {
-        console.log(edit);
+        
         if (edit.type) {
             if (edit.type & LineType.LineEditType.DELETE) {
                 if (!edit.range.isSingleLine) {
@@ -143,6 +156,7 @@ export class ActiveEditor {
                 editBuilder.delete(Line.lineFullRange(edit.range));
             }
             if (edit.type & LineType.LineEditType.APPEND) {
+                console.log(edit);
                 editBuilder.insert(edit.range.start, edit.string ?? '');
             }
             if (edit.type & LineType.LineEditType.REPLACE) {
@@ -190,7 +204,7 @@ export class ActiveEditor {
      * @param includeCursorLine unused. for future reference.
      * 
      */
-    public prepareEdit = (callback: LineType.LineEditDefintion[], commandOption: EditorCommandParameterType): void => {
+    public prepareEdit = (callback: LineType.LineEditDefintion[], commandOption: CommandType.EditorCommandParameterType): void => {
 
         this.#setActiveEditor();
 

@@ -2,8 +2,7 @@
 
 ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mutekey.landle) <br>
 
-This is my rehab code and may not be fully complete. I do not like any of well known other formatters.
-Linters in today, or other formatters are too opinionated.
+This is my rehab code and may not be fully complete nor optmised in some parts. I do not like any of well known other formatters, Linters in today, or other formatters are too opinionated.
 i wanted a extension like this although a linter can do this sort of things but need non-language specific generic formatter.
 I did not aim to make a functions which formatters can do already.
 
@@ -32,7 +31,7 @@ Shortcut key : __`not assigned`__<br>
 
 - Removes doucment starting empty-lines if document starting line is in selection.
 
-<img src="./demo/removeDocumentStartingEmptyLine.gif" alt ="GIF" height ="280" style="border: solid 3px black">
+<img src="https://github.com/mute-key/landle/blob/main/demo/removeDocumentStartingEmptyLine.gif" alt ="GIF" height ="280" style="border: solid 3px black">
 
 ************************************************************************************************************************************
 
@@ -42,7 +41,7 @@ Shortcut key : __`ctrl + alt + w`__<br>
 
 - Removes trailing whitespaces from the lines in selection.
 
-<img src="./demo/removeTrailingWhitespaceFromSelection.gif" alt ="GIF" height ="240" style="border: solid 3px black">
+<img src="https://github.com/mute-key/landle/blob/main/demo/removeTrailingWhitespaceFromSelection.gif" alt ="GIF" height ="240" style="border: solid 3px black">
 
 ************************************************************************************************************************************
 
@@ -52,7 +51,7 @@ Shortcut key : __`ctrl + alt + m`__<br>
 
 - Remove lines either empty or whitespace only in selection range but leaving 1 empty lines to keep the contents block.
 
-<img src="./demo/removeMulitpleEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
+<img src="https://github.com/mute-key/landle/blob/main/demo/removeMulitpleEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
 ************************************************************************************************************************************
 
@@ -62,7 +61,7 @@ Shortcut key : __`ctrl + alt + e`__<br>
 
 - Removes lines either empty or whitespace only in selection range.
 
-<img src="./demo/removeEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
+<img src="https://github.com/mute-key/landle/blob/main/demo/removeEmptyLinesFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
 ************************************************************************************************************************************
 
@@ -73,7 +72,7 @@ Shortcut key : __`ctrl + alt + space`__<br>
 - Removes whitespaces characters that are longer than size of 1.<br>
 this command ignores indentation.
 
-<img src="./demo/removeMultipleWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
+<img src="https://github.com/mute-key/landle/blob/main/demo/removeMultipleWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="240">
 
 ************************************************************************************************************************************
 
@@ -144,7 +143,7 @@ Shortcut key : __`ctrl + alt + a`__<br>
 
 - Read the line and count the length, trigger funciton if the character count is bigger than `config.blockCommentCharacterBoundaryBaseLength` + `config.blockCommentCharacterBoundaryTolanceLength`. if the character count is less, the function will concatinate next line words until it is bigger than `config.blockCommentCharacterBoundaryBaseLength` and will continue unitl the line is not empty-block-comment line.
 
-<img src="./demo/blockCommentWordCountJustifyAlig.gif" alt ="GIF" style="border: solid 3px black" height ="280">
+<img src="https://github.com/mute-key/landle/blob/main/demo/blockCommentWordCountJustifyAlig.gif" alt ="GIF" style="border: solid 3px black" height ="280">
 
 <br>
 
@@ -162,7 +161,7 @@ Shortcut key : __`ctrl + alt + b`__<br>
 - Insert empty-block-comment-lines before block-comment-ending-lines and non-empty-block-comment-lines.
 - blockCommentWordCountJustifyAlign
 
-<img src="./demo/cleanUpBlockCommentFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="270">
+<img src="https://github.com/mute-key/landle/blob/main/demo/cleanUpBlockCommentFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="270">
 <br><br><br>
 
 > Command -> __cleanUpCodeCommand__<br>
@@ -176,7 +175,8 @@ Shortcut key : __`ctrl + alt + x`__<br>
 - blockCommentWordCountJustifyAlign
 
 <br>
-<img src="./demo/cleanUpCodeCommand.gif" alt ="GIF" style="border: solid 3px black" height ="330">
+
+<img src="https://github.com/mute-key/landle/blob/main/demo/cleanUpCodeCommand.gif" alt ="GIF" style="border: solid 3px black" height ="330">
 <br><br><br>
 
 > Command -> __cleanUpDocumentCommand__<br>
@@ -193,7 +193,7 @@ Shortcut key : __`ctrl + alt + c`__<br>
 - Removes multiple whitespace-lines that are more than 1 but keeping 1.
 - blockCommentWordCountJustifyAlign
 
-<img src="./demo/cleanUpWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="330">
+<img src="https://github.com/mute-key/landle/blob/main/demo/cleanUpWhitespaceFromSelection.gif" alt ="GIF" style="border: solid 3px black" height ="330">
 
 ## backlog
 
